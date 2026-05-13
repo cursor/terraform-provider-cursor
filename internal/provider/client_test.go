@@ -122,11 +122,15 @@ func TestIsAPIKey(t *testing.T) {
 		{"key_abc123", true},
 		{"key_", true},
 		{"  key_abc123", true}, // trimmed
+		{"crsr_abc123", true},
+		{"crsr_", true},
+		{"  crsr_abc123", true}, // trimmed
 		{"session_token_here", false},
 		{"eyJhbGciOi...", false},
 		{"", false},
 		{"KEY_abc", false}, // case-sensitive
 		{"bearer key_abc", false},
+		{"bearer crsr_abc", false},
 	}
 	for _, tt := range tests {
 		if got := isAPIKey(tt.token); got != tt.want {

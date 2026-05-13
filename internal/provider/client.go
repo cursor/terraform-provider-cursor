@@ -26,8 +26,8 @@ func newAPIClient(endpoint string, token string, version string) (*apiClient, er
 	}
 	httpClient := &http.Client{Timeout: 30 * time.Second}
 
-	// If the token is a raw API key (key_ prefix), exchange it for a session
-	// token before building the Connect client.
+	// If the token is a raw API key, exchange it for a session token before
+	// building the Connect client.
 	bearerToken, err := resolveToken(httpClient, endpoint, token)
 	if err != nil {
 		return nil, fmt.Errorf("failed to exchange API key for session token: %w", err)
@@ -53,9 +53,10 @@ func newAPIClient(endpoint string, token string, version string) (*apiClient, er
 }
 
 // isAPIKey returns true when the token looks like a raw Cursor user API key
-// (prefixed with "key_") that must be exchanged before use.
+// that must be exchanged before use.
 func isAPIKey(token string) bool {
-	return strings.HasPrefix(strings.TrimSpace(token), "key_")
+	trimmed := strings.TrimSpace(token)
+	return strings.HasPrefix(trimmed, "key_") || strings.HasPrefix(trimmed, "crsr_")
 }
 
 // exchangeResponse is the JSON body returned by /auth/exchange_user_api_key.
