@@ -167,6 +167,8 @@ type slackTriggerModel struct {
 	MessageContains                types.String `tfsdk:"message_contains"`
 	MessageContainsIsRegex         types.Bool   `tfsdk:"message_contains_is_regex"`
 	BlockUnauthenticatedSlackUsers types.Bool   `tfsdk:"block_unauthenticated_slack_users"`
+	CompletionReactionMode         types.String `tfsdk:"completion_reaction_mode"`
+	CompletionReactionCustomEmoji  types.String `tfsdk:"completion_reaction_custom_emoji"`
 }
 
 type linearTriggerModel struct {
@@ -413,6 +415,14 @@ func (r *platformWorkflowResource) Schema(_ context.Context, _ resource.SchemaRe
 								"block_unauthenticated_slack_users": schema.BoolAttribute{
 									Optional:    true,
 									Description: "If true, only Slack users who linked Cursor can trigger. Omit/false = anyone (default).",
+								},
+								"completion_reaction_mode": schema.StringAttribute{
+									Optional:    true,
+									Description: `Controls the emoji reaction added to the triggering Slack message when the automation completes successfully: "on" (default Cursor reaction), "off" (no reaction), or "custom" (use completion_reaction_custom_emoji). Leave unset to use the Cursor default.`,
+								},
+								"completion_reaction_custom_emoji": schema.StringAttribute{
+									Optional:    true,
+									Description: `Custom Slack reaction emoji in ":emoji_name:" form. Only used when completion_reaction_mode is "custom".`,
 								},
 							},
 						},
@@ -1533,6 +1543,9 @@ func triggerModelToProto(ctx context.Context, t *triggerModel) (*v1.Trigger, err
 		if !slack.BlockUnauthenticatedSlackUsers.IsNull() && !slack.BlockUnauthenticatedSlackUsers.IsUnknown() && slack.BlockUnauthenticatedSlackUsers.ValueBool() {
 			st.BlockUnauthenticatedSlackUsers = true
 		}
+		if err := applySlackCompletionReaction(st, slack.CompletionReactionMode, slack.CompletionReactionCustomEmoji); err != nil {
+			return nil, err
+		}
 		trigger.Trigger = &v1.Trigger_SlackTrigger{SlackTrigger: st}
 	}
 
@@ -1662,6 +1675,67 @@ func triggerModelToProto(ctx context.Context, t *triggerModel) (*v1.Trigger, err
 	}
 
 	return trigger, nil
+}
+
+// applySlackCompletionReaction translates the Terraform completion reaction
+// fields onto a SlackTrigger proto, validating the relationship between the
+// mode and the custom emoji.
+func applySlackCompletionReaction(st *v1.SlackTrigger, mode types.String, customEmoji types.String) error {
+	hasMode := !mode.IsNull() && !mode.IsUnknown()
+	hasEmoji := !customEmoji.IsNull() && !customEmoji.IsUnknown() && customEmoji.ValueString() != ""
+
+	if !hasMode {
+		if hasEmoji {
+			return fmt.Errorf("slack.completion_reaction_custom_emoji can only be set when slack.completion_reaction_mode is \"custom\"")
+		}
+		return nil
+	}
+
+	parsedMode, err := parseSlackCompletionReactionMode(mode.ValueString())
+	if err != nil {
+		return err
+	}
+
+	if parsedMode == v1.SlackCompletionReactionMode_SLACK_COMPLETION_REACTION_MODE_CUSTOM {
+		if !hasEmoji {
+			return fmt.Errorf("slack.completion_reaction_custom_emoji is required when slack.completion_reaction_mode is \"custom\"")
+		}
+	} else if hasEmoji {
+		return fmt.Errorf("slack.completion_reaction_custom_emoji can only be set when slack.completion_reaction_mode is \"custom\"")
+	}
+
+	st.SlackCompletionReactionMode = &parsedMode
+	if hasEmoji {
+		emoji := customEmoji.ValueString()
+		st.SlackCompletionReactionCustomEmoji = &emoji
+	}
+	return nil
+}
+
+func parseSlackCompletionReactionMode(s string) (v1.SlackCompletionReactionMode, error) {
+	switch strings.ToLower(strings.TrimSpace(s)) {
+	case "on":
+		return v1.SlackCompletionReactionMode_SLACK_COMPLETION_REACTION_MODE_ON, nil
+	case "off":
+		return v1.SlackCompletionReactionMode_SLACK_COMPLETION_REACTION_MODE_OFF, nil
+	case "custom":
+		return v1.SlackCompletionReactionMode_SLACK_COMPLETION_REACTION_MODE_CUSTOM, nil
+	default:
+		return 0, fmt.Errorf("invalid slack.completion_reaction_mode %q, must be \"on\", \"off\", or \"custom\"", s)
+	}
+}
+
+func slackCompletionReactionModeToString(m v1.SlackCompletionReactionMode) string {
+	switch m {
+	case v1.SlackCompletionReactionMode_SLACK_COMPLETION_REACTION_MODE_ON:
+		return "on"
+	case v1.SlackCompletionReactionMode_SLACK_COMPLETION_REACTION_MODE_OFF:
+		return "off"
+	case v1.SlackCompletionReactionMode_SLACK_COMPLETION_REACTION_MODE_CUSTOM:
+		return "custom"
+	default:
+		return ""
+	}
 }
 
 func parsePrAction(s string) (v1.GitPullRequestAction, error) {
@@ -1939,6 +2013,17 @@ func protoTriggerToModel(ctx context.Context, t *v1.Trigger) (triggerModel, erro
 			sm.BlockUnauthenticatedSlackUsers = types.BoolValue(true)
 		} else {
 			sm.BlockUnauthenticatedSlackUsers = types.BoolNull()
+		}
+		if slack.SlackCompletionReactionMode != nil &&
+			slack.GetSlackCompletionReactionMode() != v1.SlackCompletionReactionMode_SLACK_COMPLETION_REACTION_MODE_UNSPECIFIED {
+			sm.CompletionReactionMode = types.StringValue(slackCompletionReactionModeToString(slack.GetSlackCompletionReactionMode()))
+		} else {
+			sm.CompletionReactionMode = types.StringNull()
+		}
+		if slack.GetSlackCompletionReactionCustomEmoji() != "" {
+			sm.CompletionReactionCustomEmoji = types.StringValue(slack.GetSlackCompletionReactionCustomEmoji())
+		} else {
+			sm.CompletionReactionCustomEmoji = types.StringNull()
 		}
 		tm.Slack = sm
 		tm.UserAllowlist = types.ListNull(types.StringType)

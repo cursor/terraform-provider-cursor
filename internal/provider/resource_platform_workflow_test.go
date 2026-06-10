@@ -737,6 +737,209 @@ func TestGitRepoTargetMetadata(t *testing.T) {
 	}
 }
 
+func TestSlackTriggerCompletionReactionRoundTrip(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("model_to_proto_on", func(t *testing.T) {
+		m := &platformWorkflowModel{
+			Prompt: types.StringValue("respond to slack"),
+			Triggers: []triggerModel{
+				{
+					Slack: &slackTriggerModel{
+						Channel:                       types.StringValue("C0123456789"),
+						CompletionReactionMode:        types.StringValue("on"),
+						CompletionReactionCustomEmoji: types.StringNull(),
+					},
+					UserAllowlist: types.ListNull(types.StringType),
+				},
+			},
+		}
+
+		wf, err := modelToWorkflow(ctx, m)
+		if err != nil {
+			t.Fatalf("modelToWorkflow() error: %v", err)
+		}
+		slack := wf.Triggers[0].GetSlackTrigger()
+		if slack == nil {
+			t.Fatal("expected slack trigger in proto")
+		}
+		if got, want := slack.GetSlackCompletionReactionMode(), v1.SlackCompletionReactionMode_SLACK_COMPLETION_REACTION_MODE_ON; got != want {
+			t.Fatalf("completion reaction mode = %v, want %v", got, want)
+		}
+		if slack.SlackCompletionReactionCustomEmoji != nil {
+			t.Fatalf("expected no custom emoji, got %q", slack.GetSlackCompletionReactionCustomEmoji())
+		}
+	})
+
+	t.Run("model_to_proto_custom", func(t *testing.T) {
+		m := &platformWorkflowModel{
+			Prompt: types.StringValue("respond to slack"),
+			Triggers: []triggerModel{
+				{
+					Slack: &slackTriggerModel{
+						Channel:                       types.StringValue("C0123456789"),
+						CompletionReactionMode:        types.StringValue("custom"),
+						CompletionReactionCustomEmoji: types.StringValue(":tada:"),
+					},
+					UserAllowlist: types.ListNull(types.StringType),
+				},
+			},
+		}
+
+		wf, err := modelToWorkflow(ctx, m)
+		if err != nil {
+			t.Fatalf("modelToWorkflow() error: %v", err)
+		}
+		slack := wf.Triggers[0].GetSlackTrigger()
+		if got, want := slack.GetSlackCompletionReactionMode(), v1.SlackCompletionReactionMode_SLACK_COMPLETION_REACTION_MODE_CUSTOM; got != want {
+			t.Fatalf("completion reaction mode = %v, want %v", got, want)
+		}
+		if got, want := slack.GetSlackCompletionReactionCustomEmoji(), ":tada:"; got != want {
+			t.Fatalf("custom emoji = %q, want %q", got, want)
+		}
+	})
+
+	t.Run("model_to_proto_custom_requires_emoji", func(t *testing.T) {
+		m := &platformWorkflowModel{
+			Prompt: types.StringValue("respond to slack"),
+			Triggers: []triggerModel{
+				{
+					Slack: &slackTriggerModel{
+						Channel:                       types.StringValue("C0123456789"),
+						CompletionReactionMode:        types.StringValue("custom"),
+						CompletionReactionCustomEmoji: types.StringNull(),
+					},
+					UserAllowlist: types.ListNull(types.StringType),
+				},
+			},
+		}
+
+		_, err := modelToWorkflow(ctx, m)
+		if err == nil {
+			t.Fatal("expected error when custom mode has no emoji")
+		}
+		if !strings.Contains(err.Error(), "completion_reaction_custom_emoji is required") {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
+
+	t.Run("model_to_proto_emoji_requires_custom_mode", func(t *testing.T) {
+		m := &platformWorkflowModel{
+			Prompt: types.StringValue("respond to slack"),
+			Triggers: []triggerModel{
+				{
+					Slack: &slackTriggerModel{
+						Channel:                       types.StringValue("C0123456789"),
+						CompletionReactionMode:        types.StringValue("on"),
+						CompletionReactionCustomEmoji: types.StringValue(":tada:"),
+					},
+					UserAllowlist: types.ListNull(types.StringType),
+				},
+			},
+		}
+
+		_, err := modelToWorkflow(ctx, m)
+		if err == nil {
+			t.Fatal("expected error when emoji set without custom mode")
+		}
+		if !strings.Contains(err.Error(), "can only be set when slack.completion_reaction_mode is \"custom\"") {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
+
+	t.Run("model_to_proto_invalid_mode", func(t *testing.T) {
+		m := &platformWorkflowModel{
+			Prompt: types.StringValue("respond to slack"),
+			Triggers: []triggerModel{
+				{
+					Slack: &slackTriggerModel{
+						Channel:                types.StringValue("C0123456789"),
+						CompletionReactionMode: types.StringValue("sometimes"),
+					},
+					UserAllowlist: types.ListNull(types.StringType),
+				},
+			},
+		}
+
+		_, err := modelToWorkflow(ctx, m)
+		if err == nil {
+			t.Fatal("expected error for invalid completion_reaction_mode")
+		}
+		if !strings.Contains(err.Error(), "invalid slack.completion_reaction_mode") {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
+
+	t.Run("proto_to_model_custom", func(t *testing.T) {
+		customEmoji := ":tada:"
+		mode := v1.SlackCompletionReactionMode_SLACK_COMPLETION_REACTION_MODE_CUSTOM
+		input := &v1.AutomationWithOwner{
+			Workflow: &v1.Automation{
+				Workflow: &v1.Workflow{
+					Prompts: []*v1.Prompt{{Prompt: "respond to slack"}},
+					Triggers: []*v1.Trigger{
+						{
+							Trigger: &v1.Trigger_SlackTrigger{
+								SlackTrigger: &v1.SlackTrigger{
+									Channel:                            "C0123456789",
+									SlackCompletionReactionMode:        &mode,
+									SlackCompletionReactionCustomEmoji: &customEmoji,
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		model, err := protoToModel(ctx, input)
+		if err != nil {
+			t.Fatalf("protoToModel() error: %v", err)
+		}
+		if model.Triggers[0].Slack == nil {
+			t.Fatal("expected slack trigger in model")
+		}
+		if got, want := model.Triggers[0].Slack.CompletionReactionMode.ValueString(), "custom"; got != want {
+			t.Fatalf("completion_reaction_mode = %q, want %q", got, want)
+		}
+		if got, want := model.Triggers[0].Slack.CompletionReactionCustomEmoji.ValueString(), ":tada:"; got != want {
+			t.Fatalf("completion_reaction_custom_emoji = %q, want %q", got, want)
+		}
+	})
+
+	t.Run("proto_to_model_unset_is_null", func(t *testing.T) {
+		input := &v1.AutomationWithOwner{
+			Workflow: &v1.Automation{
+				Workflow: &v1.Workflow{
+					Prompts: []*v1.Prompt{{Prompt: "respond to slack"}},
+					Triggers: []*v1.Trigger{
+						{
+							Trigger: &v1.Trigger_SlackTrigger{
+								SlackTrigger: &v1.SlackTrigger{Channel: "C0123456789"},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		model, err := protoToModel(ctx, input)
+		if err != nil {
+			t.Fatalf("protoToModel() error: %v", err)
+		}
+		slack := model.Triggers[0].Slack
+		if slack == nil {
+			t.Fatal("expected slack trigger in model")
+		}
+		if !slack.CompletionReactionMode.IsNull() {
+			t.Fatalf("expected completion_reaction_mode to be null, got %q", slack.CompletionReactionMode.ValueString())
+		}
+		if !slack.CompletionReactionCustomEmoji.IsNull() {
+			t.Fatalf("expected completion_reaction_custom_emoji to be null, got %q", slack.CompletionReactionCustomEmoji.ValueString())
+		}
+	})
+}
+
 func TestLinearTriggerRoundTrip(t *testing.T) {
 	ctx := context.Background()
 
