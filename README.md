@@ -90,7 +90,7 @@ Each `trigger` entry must contain exactly one trigger type:
 - `git_pull_request` - Trigger on pull request events.
 - `git_push` - Trigger on git push events.
 - `cron` - Trigger on a cron schedule.
-- `slack` - Trigger on Slack messages.
+- `slack` - Trigger on Slack messages. Supports `channel`, `message_contains`, `message_contains_is_regex`, `block_unauthenticated_slack_users`, and the completion reaction settings below.
 - `linear` - Trigger on Linear events.
 - `webhook` - Trigger on generic webhook POST requests.
 - `microsoft_teams` - Trigger on Microsoft Teams messages.
@@ -123,6 +123,25 @@ trigger = [
 ```
 
 For `git_pull_request`, specify either `orgs` or `repos`, not both, in a single trigger. Use separate trigger entries if you need both org-wide and explicit repo coverage.
+
+#### Slack completion reaction
+
+A `slack` trigger can control the emoji reaction Cursor adds to the triggering Slack message when the automation completes successfully:
+
+- `completion_reaction_mode` - `on` (default Cursor reaction), `off` (no reaction), or `custom` (use `completion_reaction_custom_emoji`). Leave unset to use the Cursor default.
+- `completion_reaction_custom_emoji` - Custom Slack reaction emoji in `:emoji_name:` form. Required when `completion_reaction_mode` is `custom`, and only valid in that mode.
+
+```hcl
+trigger = [
+  {
+    slack = {
+      channel                          = "C0123456789"
+      completion_reaction_mode         = "custom"
+      completion_reaction_custom_emoji = ":white_check_mark:"
+    }
+  }
+]
+```
 
 ### Actions
 
