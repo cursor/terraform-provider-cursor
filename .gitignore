@@ -3,3 +3,7 @@ terraform-provider-cursor_*
 dist/
 tmp-layout/
 *.zip
+
+# Never commit key material
+*.asc
+*.gpg
