@@ -1,0 +1,61 @@
+# Release configuration for the Terraform Registry.
+# See https://goreleaser.com and
+# https://developer.hashicorp.com/terraform/registry/providers/publishing
+version: 2
+before:
+  hooks:
+    - go mod tidy
+builds:
+  - env:
+      # GoReleaser does not work with CGO; static binaries also keep the
+      # provider usable in CI/CD systems where libraries cannot be installed.
+      - CGO_ENABLED=0
+    mod_timestamp: '{{ .CommitTimestamp }}'
+    flags:
+      - -trimpath
+    ldflags:
+      - '-s -w -X main.version={{.Version}}'
+    goos:
+      - freebsd
+      - windows
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - '386'
+      - arm
+      - arm64
+    ignore:
+      - goos: darwin
+        goarch: '386'
+      - goos: windows
+        goarch: arm
+    # The registry requires this exact binary name inside each archive.
+    binary: '{{ .ProjectName }}_v{{ .Version }}'
+archives:
+  - formats:
+      - zip
+    name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+checksum:
+  extra_files:
+    - glob: 'terraform-registry-manifest.json'
+      name_template: '{{ .ProjectName }}_{{ .Version }}_manifest.json'
+  name_template: '{{ .ProjectName }}_{{ .Version }}_SHA256SUMS'
+  algorithm: sha256
+signs:
+  - artifacts: checksum
+    args:
+      # --batch: non-interactive so signing works in GitHub Actions.
+      - "--batch"
+      - "--local-user"
+      - "{{ .Env.GPG_FINGERPRINT }}"
+      - "--output"
+      - "${signature}"
+      - "--detach-sign"
+      - "${artifact}"
+release:
+  extra_files:
+    - glob: 'terraform-registry-manifest.json'
+      name_template: '{{ .ProjectName }}_{{ .Version }}_manifest.json'
+changelog:
+  disable: true
