@@ -42,6 +42,7 @@ func (p *cursorProvider) Metadata(_ context.Context, _ provider.MetadataRequest,
 
 func (p *cursorProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Description: "Manage Cursor Automations. Talks to the Cursor Automations API over Connect RPC.",
 		Attributes: map[string]schema.Attribute{
 			"token": schema.StringAttribute{
 				Optional:    true,

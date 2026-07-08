@@ -1,0 +1,1 @@
+terraform import cursor_platform_workflow.example_review 2a8efc75-f628-4306-aa8f-36d7e9ae9f3d

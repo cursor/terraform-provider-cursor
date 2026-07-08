@@ -282,6 +282,7 @@ func (r *platformWorkflowResource) Metadata(_ context.Context, req resource.Meta
 
 func (r *platformWorkflowResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Description: "Manages a Cursor Automation: a prompt plus triggers (pull requests, pushes, cron, Slack, Linear, webhooks, Microsoft Teams) and actions (PR comments, PRs, reviewers, MCP servers, Slack, Microsoft Teams).",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:    true,

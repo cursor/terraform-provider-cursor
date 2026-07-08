@@ -25,6 +25,7 @@ func (d *platformWorkflowDataSource) Metadata(_ context.Context, req datasource.
 
 func (d *platformWorkflowDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Description: "Reads an existing Cursor Automation by ID.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Required:    true,
@@ -76,136 +77,194 @@ func (d *platformWorkflowDataSource) Schema(_ context.Context, _ datasource.Sche
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"git_pull_request": schema.SingleNestedAttribute{
-							Computed: true,
+							Computed:    true,
+							Description: "Trigger on GitHub pull request events.",
 							Attributes: map[string]schema.Attribute{
 								"orgs": schema.ListAttribute{
 									Computed:    true,
 									ElementType: types.StringType,
+									Description: "GitHub orgs to watch.",
 								},
 								"repos": schema.ListAttribute{
 									Computed:    true,
 									ElementType: types.StringType,
+									Description: "GitHub repos to watch.",
 								},
 								"ignore_draft_prs": schema.BoolAttribute{
-									Computed: true,
+									Computed:    true,
+									Description: "Do not trigger on draft PRs.",
 								},
 								"pr_action": schema.StringAttribute{
-									Computed: true,
+									Computed:    true,
+									Description: "PR action that triggers the automation.",
 								},
 								"comment_contains": schema.StringAttribute{
-									Computed: true,
+									Computed:    true,
+									Description: "Comment text filter for the commented PR action.",
 								},
 							},
 						},
 						"git_push": schema.SingleNestedAttribute{
-							Computed: true,
+							Computed:    true,
+							Description: "Trigger on git push events.",
 							Attributes: map[string]schema.Attribute{
 								"repo": schema.StringAttribute{
-									Computed: true,
+									Computed:    true,
+									Description: "Repository to watch.",
 								},
 								"branch": schema.StringAttribute{
-									Computed: true,
+									Computed:    true,
+									Description: "Branch to watch.",
 								},
 							},
 						},
 						"cron": schema.SingleNestedAttribute{
-							Computed: true,
+							Computed:    true,
+							Description: "Trigger on a cron schedule.",
 							Attributes: map[string]schema.Attribute{
 								"schedule": schema.StringAttribute{
-									Computed: true,
+									Computed:    true,
+									Description: "Cron expression.",
 								},
 							},
 						},
 						"slack": schema.SingleNestedAttribute{
-							Computed: true,
+							Computed:    true,
+							Description: "Trigger on Slack messages.",
 							Attributes: map[string]schema.Attribute{
 								"channel": schema.StringAttribute{
-									Computed: true,
+									Computed:    true,
+									Description: "Slack channel ID.",
 								},
 								"message_contains": schema.StringAttribute{
-									Computed: true,
+									Computed:    true,
+									Description: "Message text filter (case-insensitive).",
 								},
 								"message_contains_is_regex": schema.BoolAttribute{
-									Computed: true,
+									Computed:    true,
+									Description: "Whether message_contains is a regex pattern.",
 								},
 								"block_unauthenticated_slack_users": schema.BoolAttribute{
-									Computed: true,
+									Computed:    true,
+									Description: "Whether only Slack users who linked Cursor can trigger.",
+								},
+								"completion_reaction_mode": schema.StringAttribute{
+									Computed:    true,
+									Description: `Emoji reaction behavior on successful completion: "on", "off", or "custom".`,
+								},
+								"completion_reaction_custom_emoji": schema.StringAttribute{
+									Computed:    true,
+									Description: `Custom Slack reaction emoji in ":emoji_name:" form, used when completion_reaction_mode is "custom".`,
 								},
 							},
 						},
 						"linear": schema.SingleNestedAttribute{
-							Computed: true,
+							Computed:    true,
+							Description: "Trigger on Linear events.",
 							Attributes: map[string]schema.Attribute{
 								"issue_created": schema.SingleNestedAttribute{
-									Computed:   true,
-									Attributes: map[string]schema.Attribute{},
+									Computed:    true,
+									Description: "Trigger when a Linear issue is created.",
+									Attributes:  map[string]schema.Attribute{},
 								},
 								"status_changed": schema.SingleNestedAttribute{
-									Computed: true,
+									Computed:    true,
+									Description: "Trigger when a Linear issue status changes.",
 									Attributes: map[string]schema.Attribute{
 										"status_ids": schema.ListAttribute{
 											Computed:    true,
 											ElementType: types.StringType,
+											Description: "Linear status IDs to match.",
 										},
 									},
 								},
 								"end_of_cycle": schema.SingleNestedAttribute{
-									Computed: true,
+									Computed:    true,
+									Description: "Trigger at the end of a Linear cycle.",
 									Attributes: map[string]schema.Attribute{
 										"cycle_ids": schema.ListAttribute{
 											Computed:    true,
 											ElementType: types.StringType,
+											Description: "Linear cycle IDs to match.",
 										},
 									},
 								},
 								"project_ids": schema.ListAttribute{
 									Computed:    true,
 									ElementType: types.StringType,
+									Description: "Linear project IDs scoping issue events.",
 								},
 								"team_ids": schema.ListAttribute{
 									Computed:    true,
 									ElementType: types.StringType,
+									Description: "Linear team IDs scoping cycle events.",
 								},
 							},
 						},
 						"webhook": schema.SingleNestedAttribute{
-							Computed:   true,
-							Attributes: map[string]schema.Attribute{},
+							Computed:    true,
+							Description: "Trigger on generic webhook POST requests.",
+							Attributes:  map[string]schema.Attribute{},
 						},
 						"microsoft_teams": schema.SingleNestedAttribute{
 							Computed:    true,
 							Description: "Trigger on Microsoft Teams channel messages.",
 							Attributes: map[string]schema.Attribute{
-								"tenant_id": schema.StringAttribute{Computed: true},
-								"team_id":   schema.StringAttribute{Computed: true},
+								"tenant_id": schema.StringAttribute{
+									Computed:    true,
+									Description: "AAD tenant GUID hosting the team.",
+								},
+								"team_id": schema.StringAttribute{
+									Computed:    true,
+									Description: "AAD group ID for a single configured team.",
+								},
 								"team_ids": schema.ListAttribute{
 									Computed:    true,
 									ElementType: types.StringType,
+									Description: "AAD group IDs for multiple teams.",
 								},
 								"channel_ids": schema.ListAttribute{
 									Computed:    true,
 									ElementType: types.StringType,
+									Description: "Microsoft Teams channel IDs. Empty fires for any channel in the configured team(s).",
 								},
-								"message_contains":                  schema.StringAttribute{Computed: true},
-								"message_contains_is_regex":         schema.BoolAttribute{Computed: true},
-								"block_unauthenticated_teams_users": schema.BoolAttribute{Computed: true},
+								"message_contains": schema.StringAttribute{
+									Computed:    true,
+									Description: "Message text filter (case-insensitive).",
+								},
+								"message_contains_is_regex": schema.BoolAttribute{
+									Computed:    true,
+									Description: "Whether message_contains is a regex pattern.",
+								},
+								"block_unauthenticated_teams_users": schema.BoolAttribute{
+									Computed:    true,
+									Description: "Whether only Microsoft Teams users who linked Cursor can trigger.",
+								},
 							},
 						},
 						"microsoft_teams_channel_created": schema.SingleNestedAttribute{
 							Computed:    true,
 							Description: "Trigger when a new Microsoft Teams channel is created.",
 							Attributes: map[string]schema.Attribute{
-								"tenant_id": schema.StringAttribute{Computed: true},
+								"tenant_id": schema.StringAttribute{
+									Computed:    true,
+									Description: "AAD tenant GUID hosting the team.",
+								},
 								"team_ids": schema.ListAttribute{
 									Computed:    true,
 									ElementType: types.StringType,
+									Description: "AAD group IDs to scope to. Empty fires for any team in the tenant.",
 								},
-								"channel_name_contains": schema.StringAttribute{Computed: true},
+								"channel_name_contains": schema.StringAttribute{
+									Computed:    true,
+									Description: "Channel name filter (case-insensitive).",
+								},
 							},
 						},
 						"user_allowlist": schema.ListAttribute{
 							Computed:    true,
 							ElementType: types.StringType,
+							Description: "Git usernames allowed to trigger this automation. Empty means all users.",
 						},
 					},
 				},
@@ -280,16 +339,35 @@ func (d *platformWorkflowDataSource) Schema(_ context.Context, _ datasource.Sche
 							Computed:    true,
 							Description: "Post messages to a Microsoft Teams channel.",
 							Attributes: map[string]schema.Attribute{
-								"tenant_id":  schema.StringAttribute{Computed: true},
-								"team_id":    schema.StringAttribute{Computed: true},
-								"channel_id": schema.StringAttribute{Computed: true},
+								"tenant_id": schema.StringAttribute{
+									Computed:    true,
+									Description: "AAD tenant GUID for the destination team.",
+								},
+								"team_id": schema.StringAttribute{
+									Computed:    true,
+									Description: "AAD group ID of the destination team.",
+								},
+								"channel_id": schema.StringAttribute{
+									Computed:    true,
+									Description: "Microsoft Teams channel ID to post to.",
+								},
 								"channel_ids": schema.ListAttribute{
 									Computed:    true,
 									ElementType: types.StringType,
+									Description: "Multiple Teams channel IDs. Takes precedence over channel_id.",
 								},
-								"generalized":       schema.BoolAttribute{Computed: true},
-								"respond_in_thread": schema.BoolAttribute{Computed: true},
-								"post_as_thread":    schema.BoolAttribute{Computed: true},
+								"generalized": schema.BoolAttribute{
+									Computed:    true,
+									Description: "If true, the agent can list and post to any team/channel dynamically.",
+								},
+								"respond_in_thread": schema.BoolAttribute{
+									Computed:    true,
+									Description: "If true, respond in the thread of the triggering Microsoft Teams message.",
+								},
+								"post_as_thread": schema.BoolAttribute{
+									Computed:    true,
+									Description: "If true, post a parent message with the automation name and reply in the thread.",
+								},
 							},
 						},
 						"read_microsoft_teams": schema.SingleNestedAttribute{
