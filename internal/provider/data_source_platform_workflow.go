@@ -102,6 +102,10 @@ func (d *platformWorkflowDataSource) Schema(_ context.Context, _ datasource.Sche
 									Computed:    true,
 									Description: "Comment text filter for the commented PR action.",
 								},
+								"comment_contains_is_regex": schema.BoolAttribute{
+									Computed:    true,
+									Description: "Whether comment_contains is a regex pattern.",
+								},
 							},
 						},
 						"git_push": schema.SingleNestedAttribute{
@@ -115,6 +119,29 @@ func (d *platformWorkflowDataSource) Schema(_ context.Context, _ datasource.Sche
 								"branch": schema.StringAttribute{
 									Computed:    true,
 									Description: "Branch to watch.",
+								},
+							},
+						},
+						"git_ci_completed": schema.SingleNestedAttribute{
+							Computed:    true,
+							Description: "Trigger when all CI checks complete on a PR or a specific branch.",
+							Attributes: map[string]schema.Attribute{
+								"repos": schema.ListAttribute{
+									Computed:    true,
+									ElementType: types.StringType,
+									Description: "GitHub repos to watch.",
+								},
+								"condition": schema.StringAttribute{
+									Computed:    true,
+									Description: `CI outcome that fires the trigger: "failure", "success", or "any".`,
+								},
+								"ignore_base_failures": schema.BoolAttribute{
+									Computed:    true,
+									Description: "Whether CI failures that also exist on the base branch are ignored.",
+								},
+								"branch": schema.StringAttribute{
+									Computed:    true,
+									Description: "Branch watched for CI completion instead of PRs, when set.",
 								},
 							},
 						},
@@ -305,6 +332,10 @@ func (d *platformWorkflowDataSource) Schema(_ context.Context, _ datasource.Sche
 								"server": schema.StringAttribute{
 									Computed:    true,
 									Description: "MCP server name.",
+								},
+								"server_id": schema.Int64Attribute{
+									Computed:    true,
+									Description: "Stable MCP server ID.",
 								},
 							},
 						},

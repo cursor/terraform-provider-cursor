@@ -136,6 +136,7 @@ type platformWorkflowModel struct {
 type triggerModel struct {
 	GitPullRequest               *gitPullRequestModel                      `tfsdk:"git_pull_request"`
 	GitPush                      *gitPushModel                             `tfsdk:"git_push"`
+	GitCICompleted               *gitCICompletedModel                      `tfsdk:"git_ci_completed"`
 	Cron                         *cronModel                                `tfsdk:"cron"`
 	Slack                        *slackTriggerModel                        `tfsdk:"slack"`
 	Linear                       *linearTriggerModel                       `tfsdk:"linear"`
@@ -146,16 +147,24 @@ type triggerModel struct {
 }
 
 type gitPullRequestModel struct {
-	Orgs            types.List   `tfsdk:"orgs"`
-	Repos           types.List   `tfsdk:"repos"`
-	IgnoreDraftPrs  types.Bool   `tfsdk:"ignore_draft_prs"`
-	PrAction        types.String `tfsdk:"pr_action"`
-	CommentContains types.String `tfsdk:"comment_contains"`
+	Orgs                   types.List   `tfsdk:"orgs"`
+	Repos                  types.List   `tfsdk:"repos"`
+	IgnoreDraftPrs         types.Bool   `tfsdk:"ignore_draft_prs"`
+	PrAction               types.String `tfsdk:"pr_action"`
+	CommentContains        types.String `tfsdk:"comment_contains"`
+	CommentContainsIsRegex types.Bool   `tfsdk:"comment_contains_is_regex"`
 }
 
 type gitPushModel struct {
 	Repo   types.String `tfsdk:"repo"`
 	Branch types.String `tfsdk:"branch"`
+}
+
+type gitCICompletedModel struct {
+	Repos              types.List   `tfsdk:"repos"`
+	Condition          types.String `tfsdk:"condition"`
+	IgnoreBaseFailures types.Bool   `tfsdk:"ignore_base_failures"`
+	Branch             types.String `tfsdk:"branch"`
 }
 
 type cronModel struct {
@@ -236,7 +245,8 @@ type requestReviewersActionModel struct {
 }
 
 type mcpActionModel struct {
-	Server types.String `tfsdk:"server"`
+	Server   types.String `tfsdk:"server"`
+	ServerID types.Int64  `tfsdk:"server_id"`
 }
 
 type slackActionModel struct {
@@ -282,7 +292,7 @@ func (r *platformWorkflowResource) Metadata(_ context.Context, req resource.Meta
 
 func (r *platformWorkflowResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Manages a Cursor Automation: a prompt plus triggers (pull requests, pushes, cron, Slack, Linear, webhooks, Microsoft Teams) and actions (PR comments, PRs, reviewers, MCP servers, Slack, Microsoft Teams).",
+		Description: "Manages a Cursor Automation: a prompt plus triggers (pull requests, pushes, CI completions, cron, Slack, Linear, webhooks, Microsoft Teams) and actions (PR comments, PRs, reviewers, MCP servers, Slack, Microsoft Teams).",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:    true,
@@ -375,6 +385,10 @@ func (r *platformWorkflowResource) Schema(_ context.Context, _ resource.SchemaRe
 									Optional:    true,
 									Description: "Only trigger if the comment body contains this text (case-insensitive). Only used when pr_action is \"commented\".",
 								},
+								"comment_contains_is_regex": schema.BoolAttribute{
+									Optional:    true,
+									Description: "If true, comment_contains is treated as a regex pattern (case-insensitive).",
+								},
 							},
 						},
 						"git_push": schema.SingleNestedAttribute{
@@ -388,6 +402,29 @@ func (r *platformWorkflowResource) Schema(_ context.Context, _ resource.SchemaRe
 								"branch": schema.StringAttribute{
 									Optional:    true,
 									Description: "Branch to watch.",
+								},
+							},
+						},
+						"git_ci_completed": schema.SingleNestedAttribute{
+							Optional:    true,
+							Description: "Trigger when all CI checks complete on a PR (PR mode) or a specific branch (branch mode).",
+							Attributes: map[string]schema.Attribute{
+								"repos": schema.ListAttribute{
+									Required:    true,
+									ElementType: types.StringType,
+									Description: "GitHub repos to watch (e.g. org/repo). At least one is required.",
+								},
+								"condition": schema.StringAttribute{
+									Optional:    true,
+									Description: `Which CI outcome fires the trigger: "failure", "success", or "any". Server default applies if unset.`,
+								},
+								"ignore_base_failures": schema.BoolAttribute{
+									Optional:    true,
+									Description: "If true, ignore CI failures that also exist on the base branch. Only applies in PR mode.",
+								},
+								"branch": schema.StringAttribute{
+									Optional:    true,
+									Description: `If set, trigger on CI completion for this branch (e.g. "main") instead of on PRs. user_allowlist and ignore_base_failures are ignored in branch mode.`,
 								},
 							},
 						},
@@ -580,6 +617,10 @@ func (r *platformWorkflowResource) Schema(_ context.Context, _ resource.SchemaRe
 								"server": schema.StringAttribute{
 									Required:    true,
 									Description: "MCP server name.",
+								},
+								"server_id": schema.Int64Attribute{
+									Optional:    true,
+									Description: "Stable MCP server ID. When set, the server is resolved by ID; server remains for display and backwards compatibility.",
 								},
 							},
 						},
@@ -1441,10 +1482,15 @@ func actionModelToProto(a *actionModel) (*v1.Action, error) {
 		return &v1.Action{Action: &v1.Action_RequestReviewers{RequestReviewers: &v1.RequestReviewersAction{}}}, nil
 	}
 	if a.Mcp != nil {
+		server := &v1.McpServerConfig{Name: a.Mcp.Server.ValueString()}
+		if !a.Mcp.ServerID.IsNull() && !a.Mcp.ServerID.IsUnknown() {
+			id := a.Mcp.ServerID.ValueInt64()
+			server.Id = &id
+		}
 		return &v1.Action{
 			Action: &v1.Action_Mcp{
 				Mcp: &v1.McpAction{
-					Server: &v1.McpServerConfig{Name: a.Mcp.Server.ValueString()},
+					Server: server,
 				},
 			},
 		}, nil
@@ -1516,6 +1562,9 @@ func triggerModelToProto(ctx context.Context, t *triggerModel) (*v1.Trigger, err
 	if t.GitPush != nil {
 		count++
 	}
+	if t.GitCICompleted != nil {
+		count++
+	}
 	if t.Cron != nil {
 		count++
 	}
@@ -1535,10 +1584,10 @@ func triggerModelToProto(ctx context.Context, t *triggerModel) (*v1.Trigger, err
 		count++
 	}
 	if count == 0 {
-		return nil, fmt.Errorf("must specify exactly one of git_pull_request, git_push, cron, slack, linear, webhook, microsoft_teams, or microsoft_teams_channel_created")
+		return nil, fmt.Errorf("must specify exactly one of git_pull_request, git_push, git_ci_completed, cron, slack, linear, webhook, microsoft_teams, or microsoft_teams_channel_created")
 	}
 	if count > 1 {
-		return nil, fmt.Errorf("must specify exactly one of git_pull_request, git_push, cron, slack, linear, webhook, microsoft_teams, or microsoft_teams_channel_created")
+		return nil, fmt.Errorf("must specify exactly one of git_pull_request, git_push, git_ci_completed, cron, slack, linear, webhook, microsoft_teams, or microsoft_teams_channel_created")
 	}
 
 	// Git pull request
@@ -1572,6 +1621,9 @@ func triggerModelToProto(ctx context.Context, t *triggerModel) (*v1.Trigger, err
 		if !pr.CommentContains.IsNull() && !pr.CommentContains.IsUnknown() {
 			event.CommentContains = pr.CommentContains.ValueString()
 		}
+		if !pr.CommentContainsIsRegex.IsNull() && !pr.CommentContainsIsRegex.IsUnknown() {
+			event.CommentContainsIsRegex = pr.CommentContainsIsRegex.ValueBool()
+		}
 
 		gitTrigger := &v1.GitTrigger{
 			Event: &v1.GitTrigger_PullRequest{PullRequest: event},
@@ -1595,6 +1647,43 @@ func triggerModelToProto(ctx context.Context, t *triggerModel) (*v1.Trigger, err
 		}
 		gitTrigger := &v1.GitTrigger{
 			Event: &v1.GitTrigger_Push{Push: event},
+		}
+		if !t.UserAllowlist.IsNull() && !t.UserAllowlist.IsUnknown() {
+			var users []string
+			diags := t.UserAllowlist.ElementsAs(ctx, &users, false)
+			if diags.HasError() {
+				return nil, fmt.Errorf("failed to read user_allowlist")
+			}
+			gitTrigger.UserAllowlist = users
+		}
+		trigger.Trigger = &v1.Trigger_Git{Git: gitTrigger}
+	}
+
+	// Git CI completed
+	if ci := t.GitCICompleted; ci != nil {
+		repos, err := readStringList(ctx, ci.Repos, "git_ci_completed.repos")
+		if err != nil {
+			return nil, err
+		}
+		if len(repos) == 0 {
+			return nil, fmt.Errorf("git_ci_completed must specify at least one repo")
+		}
+		event := &v1.GitCICompletedEvent{Repos: repos}
+		if !ci.Condition.IsNull() && !ci.Condition.IsUnknown() {
+			condition, err := parseCICompletionCondition(ci.Condition.ValueString())
+			if err != nil {
+				return nil, err
+			}
+			event.Condition = condition
+		}
+		if !ci.IgnoreBaseFailures.IsNull() && !ci.IgnoreBaseFailures.IsUnknown() {
+			event.IgnoreBaseFailures = ci.IgnoreBaseFailures.ValueBool()
+		}
+		if !ci.Branch.IsNull() && !ci.Branch.IsUnknown() {
+			event.Branch = ci.Branch.ValueString()
+		}
+		gitTrigger := &v1.GitTrigger{
+			Event: &v1.GitTrigger_CiCompleted{CiCompleted: event},
 		}
 		if !t.UserAllowlist.IsNull() && !t.UserAllowlist.IsUnknown() {
 			var users []string
@@ -1836,6 +1925,32 @@ func parsePrAction(s string) (v1.GitPullRequestAction, error) {
 	}
 }
 
+func parseCICompletionCondition(s string) (v1.GitCICompletionCondition, error) {
+	switch strings.ToLower(strings.TrimSpace(s)) {
+	case "failure":
+		return v1.GitCICompletionCondition_GIT_CI_COMPLETION_CONDITION_FAILURE, nil
+	case "success":
+		return v1.GitCICompletionCondition_GIT_CI_COMPLETION_CONDITION_SUCCESS, nil
+	case "any":
+		return v1.GitCICompletionCondition_GIT_CI_COMPLETION_CONDITION_ANY, nil
+	default:
+		return 0, fmt.Errorf("invalid git_ci_completed.condition %q, must be failure/success/any", s)
+	}
+}
+
+func ciCompletionConditionToString(c v1.GitCICompletionCondition) string {
+	switch c {
+	case v1.GitCICompletionCondition_GIT_CI_COMPLETION_CONDITION_FAILURE:
+		return "failure"
+	case v1.GitCICompletionCondition_GIT_CI_COMPLETION_CONDITION_SUCCESS:
+		return "success"
+	case v1.GitCICompletionCondition_GIT_CI_COMPLETION_CONDITION_ANY:
+		return "any"
+	default:
+		return ""
+	}
+}
+
 // ---------------------------------------------------------------------------
 // Proto → Model conversion
 // ---------------------------------------------------------------------------
@@ -1956,9 +2071,14 @@ func protoActionToModel(a *v1.Action) actionModel {
 	case *v1.Action_RequestReviewers:
 		am.RequestReviewers = &requestReviewersActionModel{}
 	case *v1.Action_Mcp:
-		if action.Mcp.GetServer() != nil {
+		if server := action.Mcp.GetServer(); server != nil {
 			am.Mcp = &mcpActionModel{
-				Server: types.StringValue(action.Mcp.GetServer().GetName()),
+				Server: types.StringValue(server.GetName()),
+			}
+			if server.Id != nil {
+				am.Mcp.ServerID = types.Int64Value(server.GetId())
+			} else {
+				am.Mcp.ServerID = types.Int64Null()
 			}
 		}
 	case *v1.Action_Slack:
@@ -2047,6 +2167,11 @@ func protoTriggerToModel(ctx context.Context, t *v1.Trigger) (triggerModel, erro
 			} else {
 				prModel.CommentContains = types.StringNull()
 			}
+			if pr.GetCommentContainsIsRegex() {
+				prModel.CommentContainsIsRegex = types.BoolValue(true)
+			} else {
+				prModel.CommentContainsIsRegex = types.BoolNull()
+			}
 			tm.GitPullRequest = prModel
 
 		case *v1.GitTrigger_Push:
@@ -2059,6 +2184,32 @@ func protoTriggerToModel(ctx context.Context, t *v1.Trigger) (triggerModel, erro
 			} else {
 				tm.GitPush.Branch = types.StringNull()
 			}
+
+		case *v1.GitTrigger_CiCompleted:
+			ci := event.CiCompleted
+			ciModel := &gitCICompletedModel{
+				Repos: types.ListNull(types.StringType),
+			}
+			if len(ci.GetRepos()) > 0 {
+				repos, _ := types.ListValueFrom(ctx, types.StringType, ci.GetRepos())
+				ciModel.Repos = repos
+			}
+			if ci.GetCondition() != v1.GitCICompletionCondition_GIT_CI_COMPLETION_CONDITION_UNSPECIFIED {
+				ciModel.Condition = types.StringValue(ciCompletionConditionToString(ci.GetCondition()))
+			} else {
+				ciModel.Condition = types.StringNull()
+			}
+			if ci.GetIgnoreBaseFailures() {
+				ciModel.IgnoreBaseFailures = types.BoolValue(true)
+			} else {
+				ciModel.IgnoreBaseFailures = types.BoolNull()
+			}
+			if ci.GetBranch() != "" {
+				ciModel.Branch = types.StringValue(ci.GetBranch())
+			} else {
+				ciModel.Branch = types.StringNull()
+			}
+			tm.GitCICompleted = ciModel
 
 		default:
 			// Unsupported git trigger sub-type; leave all nil
