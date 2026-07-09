@@ -7,3 +7,4 @@ tmp-layout/
 # Never commit key material
 *.asc
 *.gpg
+token.txt
