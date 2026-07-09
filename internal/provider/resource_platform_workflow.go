@@ -1361,13 +1361,33 @@ func gitConfigRepos(gitRepo string, triggers []*v1.Trigger) []string {
 }
 
 // gitConfigRepoKey returns a case-insensitive de-duplication key for a repo
-// target, treating different spellings of the same owner/repo (e.g. with and
-// without a host prefix) as equivalent.
+// target, treating different spellings of the same owner/repo on the same host
+// (e.g. with and without a GitHub host prefix) as equivalent.
 func gitConfigRepoKey(repo string) string {
 	if name := parseGitRepoNameFromTarget(repo); name != "" {
-		return strings.ToLower(name)
+		return gitConfigRepoKeyHost(repo) + ":" + strings.ToLower(name)
 	}
 	return strings.ToLower(repo)
+}
+
+func gitConfigRepoKeyHost(repo string) string {
+	trimmedRepo := strings.TrimSpace(repo)
+	if strings.Contains(trimmedRepo, "://") {
+		parsedURL, err := url.Parse(trimmedRepo)
+		if err == nil && parsedURL.Hostname() != "" {
+			return strings.ToLower(parsedURL.Hostname())
+		}
+	}
+
+	firstSlashIndex := strings.Index(trimmedRepo, "/")
+	if firstSlashIndex != -1 {
+		firstSegment := strings.TrimSpace(trimmedRepo[:firstSlashIndex])
+		if isKnownGitHostingDomain(firstSegment) || gitRepoProviderFromHostname(firstSegment) != "other" {
+			return strings.ToLower(firstSegment)
+		}
+	}
+
+	return "github.com"
 }
 
 func actionModelToProto(a *actionModel) (*v1.Action, error) {

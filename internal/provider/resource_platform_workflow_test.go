@@ -1413,6 +1413,40 @@ func TestGitConfigReposPopulatedFromTriggers(t *testing.T) {
 			t.Fatalf("GitConfig.Repos = %v, want %v", got, want)
 		}
 	})
+
+	t.Run("same_owner_repo_on_different_hosts_preserved", func(t *testing.T) {
+		m := &platformWorkflowModel{
+			Prompt: types.StringValue("review code"),
+			Triggers: []triggerModel{
+				{
+					GitPullRequest: &gitPullRequestModel{
+						Orgs:  types.ListNull(types.StringType),
+						Repos: mustStringList(t, ctx, []string{"github.com/example-org/repo-one"}),
+					},
+					UserAllowlist: types.ListNull(types.StringType),
+				},
+				{
+					GitPush: &gitPushModel{
+						Repo:   types.StringValue("gitlab.com/example-org/repo-one"),
+						Branch: types.StringNull(),
+					},
+					UserAllowlist: types.ListNull(types.StringType),
+				},
+			},
+		}
+
+		wf, err := modelToWorkflow(ctx, m)
+		if err != nil {
+			t.Fatalf("modelToWorkflow() error: %v", err)
+		}
+		if wf.GitConfig == nil {
+			t.Fatal("expected GitConfig to be populated")
+		}
+		want := []string{"github.com/example-org/repo-one", "gitlab.com/example-org/repo-one"}
+		if got := wf.GitConfig.GetRepos(); !reflect.DeepEqual(got, want) {
+			t.Fatalf("GitConfig.Repos = %v, want %v", got, want)
+		}
+	})
 }
 
 // TestGitConfigReposRoundTripStable verifies that sending trigger-derived
