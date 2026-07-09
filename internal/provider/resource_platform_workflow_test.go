@@ -1191,3 +1191,287 @@ func TestAutomationScopeToModelTeamEditableUser(t *testing.T) {
 		t.Fatalf("scope = %q, want %q", got.ValueString(), "team_editable_user")
 	}
 }
+
+// TestModelIsOptionalComputed verifies that the model attribute is
+// Optional+Computed with UseStateForUnknown, so a server-assigned default
+// model is legitimate state instead of an "inconsistent result after apply"
+// error followed by permanent plan drift.
+func TestModelIsOptionalComputed(t *testing.T) {
+	r := &platformWorkflowResource{}
+	schemaResp := &resource.SchemaResponse{}
+	r.Schema(context.Background(), resource.SchemaRequest{}, schemaResp)
+
+	attr, ok := schemaResp.Schema.Attributes["model"]
+	if !ok {
+		t.Fatal("schema is missing model attribute")
+	}
+
+	strAttr, ok := attr.(schema.StringAttribute)
+	if !ok {
+		t.Fatalf("model is not a StringAttribute, got %T", attr)
+	}
+
+	if !strAttr.Optional {
+		t.Error("model should be Optional")
+	}
+	if !strAttr.Computed {
+		t.Error("model should be Computed (the server assigns a default when unset)")
+	}
+	if len(strAttr.PlanModifiers) == 0 {
+		t.Error("model should have a UseStateForUnknown plan modifier")
+	}
+}
+
+// TestModelUnsetAcceptsServerDefault verifies that when the practitioner
+// leaves model unset, the provider sends no model to the server, and the
+// server-assigned default in the response is written to state.
+func TestModelUnsetAcceptsServerDefault(t *testing.T) {
+	ctx := context.Background()
+
+	m := &platformWorkflowModel{
+		Prompt: types.StringValue("do something"),
+		Model:  types.StringNull(),
+		Triggers: []triggerModel{
+			{
+				Cron:          &cronModel{Schedule: types.StringValue("0 9 * * *")},
+				UserAllowlist: types.ListNull(types.StringType),
+			},
+		},
+	}
+
+	wf, err := modelToWorkflow(ctx, m)
+	if err != nil {
+		t.Fatalf("modelToWorkflow() error: %v", err)
+	}
+	if wf.Model != nil {
+		t.Fatalf("expected no model in proto when unset, got %q", wf.GetModel())
+	}
+
+	// During create the plan value is unknown (Computed with no prior state);
+	// it must not be sent either.
+	m.Model = types.StringUnknown()
+	wf, err = modelToWorkflow(ctx, m)
+	if err != nil {
+		t.Fatalf("modelToWorkflow() error: %v", err)
+	}
+	if wf.Model != nil {
+		t.Fatalf("expected no model in proto when unknown, got %q", wf.GetModel())
+	}
+
+	// The server backfills a default model; the response value becomes state.
+	serverModel := "server-default-model"
+	response := &v1.AutomationWithOwner{
+		Workflow: &v1.Automation{
+			AutomationId: "test-id",
+			Workflow: &v1.Workflow{
+				Prompts: []*v1.Prompt{{Prompt: "do something"}},
+				Model:   &serverModel,
+			},
+		},
+	}
+	state, err := protoToModel(ctx, response)
+	if err != nil {
+		t.Fatalf("protoToModel() error: %v", err)
+	}
+	if state.Model.IsNull() || state.Model.IsUnknown() {
+		t.Fatal("expected server-assigned model in state")
+	}
+	if got := state.Model.ValueString(); got != serverModel {
+		t.Fatalf("model = %q, want %q", got, serverModel)
+	}
+}
+
+// TestGitConfigReposPopulatedFromTriggers verifies that repos referenced by
+// git triggers are mirrored into GitConfig.Repos, so automations whose only
+// repo references live in their triggers still persist git configuration.
+func TestGitConfigReposPopulatedFromTriggers(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("trigger_repos_without_git_repo", func(t *testing.T) {
+		m := &platformWorkflowModel{
+			Prompt: types.StringValue("review code"),
+			Triggers: []triggerModel{
+				{
+					GitPullRequest: &gitPullRequestModel{
+						Orgs:  types.ListNull(types.StringType),
+						Repos: mustStringList(t, ctx, []string{"example-org/repo-one", "example-org/repo-two"}),
+					},
+					UserAllowlist: types.ListNull(types.StringType),
+				},
+				{
+					GitPush: &gitPushModel{
+						Repo:   types.StringValue("example-org/repo-three"),
+						Branch: types.StringNull(),
+					},
+					UserAllowlist: types.ListNull(types.StringType),
+				},
+			},
+		}
+
+		wf, err := modelToWorkflow(ctx, m)
+		if err != nil {
+			t.Fatalf("modelToWorkflow() error: %v", err)
+		}
+		if wf.GitConfig == nil {
+			t.Fatal("expected GitConfig to be populated from trigger repos")
+		}
+		want := []string{"example-org/repo-one", "example-org/repo-two", "example-org/repo-three"}
+		if got := wf.GitConfig.GetRepos(); !reflect.DeepEqual(got, want) {
+			t.Fatalf("GitConfig.Repos = %v, want %v", got, want)
+		}
+		if got := wf.GitConfig.GetRepo(); got != "" {
+			t.Fatalf("GitConfig.Repo = %q, want empty (git_repo unset)", got)
+		}
+	})
+
+	t.Run("git_repo_included_first_and_deduplicated", func(t *testing.T) {
+		m := &platformWorkflowModel{
+			Prompt:  types.StringValue("review code"),
+			GitRepo: types.StringValue("github.com/example-org/repo-one"),
+			Triggers: []triggerModel{
+				{
+					GitPullRequest: &gitPullRequestModel{
+						Orgs: types.ListNull(types.StringType),
+						// repo-one is spelled differently but refers to the
+						// same repository as git_repo.
+						Repos: mustStringList(t, ctx, []string{"example-org/repo-one", "example-org/repo-two"}),
+					},
+					UserAllowlist: types.ListNull(types.StringType),
+				},
+			},
+		}
+
+		wf, err := modelToWorkflow(ctx, m)
+		if err != nil {
+			t.Fatalf("modelToWorkflow() error: %v", err)
+		}
+		if wf.GitConfig == nil {
+			t.Fatal("expected GitConfig to be populated")
+		}
+		if got, want := wf.GitConfig.GetRepo(), "github.com/example-org/repo-one"; got != want {
+			t.Fatalf("GitConfig.Repo = %q, want %q", got, want)
+		}
+		want := []string{"github.com/example-org/repo-one", "example-org/repo-two"}
+		if got := wf.GitConfig.GetRepos(); !reflect.DeepEqual(got, want) {
+			t.Fatalf("GitConfig.Repos = %v, want %v", got, want)
+		}
+	})
+
+	t.Run("org_only_trigger_sets_no_git_config", func(t *testing.T) {
+		m := &platformWorkflowModel{
+			Prompt: types.StringValue("review code"),
+			Triggers: []triggerModel{
+				{
+					GitPullRequest: &gitPullRequestModel{
+						Orgs:  mustStringList(t, ctx, []string{"example-org"}),
+						Repos: types.ListNull(types.StringType),
+					},
+					UserAllowlist: types.ListNull(types.StringType),
+				},
+			},
+		}
+
+		wf, err := modelToWorkflow(ctx, m)
+		if err != nil {
+			t.Fatalf("modelToWorkflow() error: %v", err)
+		}
+		if wf.GitConfig != nil {
+			t.Fatalf("expected no GitConfig for org-only trigger, got %+v", wf.GitConfig)
+		}
+	})
+
+	t.Run("duplicate_repos_across_triggers_deduplicated", func(t *testing.T) {
+		m := &platformWorkflowModel{
+			Prompt: types.StringValue("review code"),
+			Triggers: []triggerModel{
+				{
+					GitPullRequest: &gitPullRequestModel{
+						Orgs:  types.ListNull(types.StringType),
+						Repos: mustStringList(t, ctx, []string{"example-org/repo-one"}),
+					},
+					UserAllowlist: types.ListNull(types.StringType),
+				},
+				{
+					GitPush: &gitPushModel{
+						Repo:   types.StringValue("Example-Org/Repo-One"),
+						Branch: types.StringNull(),
+					},
+					UserAllowlist: types.ListNull(types.StringType),
+				},
+			},
+		}
+
+		wf, err := modelToWorkflow(ctx, m)
+		if err != nil {
+			t.Fatalf("modelToWorkflow() error: %v", err)
+		}
+		if wf.GitConfig == nil {
+			t.Fatal("expected GitConfig to be populated")
+		}
+		want := []string{"example-org/repo-one"}
+		if got := wf.GitConfig.GetRepos(); !reflect.DeepEqual(got, want) {
+			t.Fatalf("GitConfig.Repos = %v, want %v", got, want)
+		}
+	})
+}
+
+// TestGitConfigReposRoundTripStable verifies that sending trigger-derived
+// GitConfig.Repos does not introduce drift: reading back a server response
+// that echoes those repos leaves git_repo/git_branch null, and converting the
+// resulting state again produces the same GitConfig.
+func TestGitConfigReposRoundTripStable(t *testing.T) {
+	ctx := context.Background()
+
+	m := &platformWorkflowModel{
+		Prompt: types.StringValue("review code"),
+		Triggers: []triggerModel{
+			{
+				GitPullRequest: &gitPullRequestModel{
+					Orgs:  types.ListNull(types.StringType),
+					Repos: mustStringList(t, ctx, []string{"example-org/repo-one"}),
+				},
+				UserAllowlist: types.ListNull(types.StringType),
+			},
+		},
+	}
+
+	wf, err := modelToWorkflow(ctx, m)
+	if err != nil {
+		t.Fatalf("modelToWorkflow() error: %v", err)
+	}
+	if wf.GitConfig == nil || len(wf.GitConfig.GetRepos()) == 0 {
+		t.Fatal("expected GitConfig.Repos to be populated")
+	}
+
+	// Simulate the server echoing the stored workflow back.
+	response := &v1.AutomationWithOwner{
+		Workflow: &v1.Automation{
+			AutomationId: "test-id",
+			Workflow:     wf,
+		},
+	}
+	state, err := protoToModel(ctx, response)
+	if err != nil {
+		t.Fatalf("protoToModel() error: %v", err)
+	}
+	if !state.GitRepo.IsNull() {
+		t.Fatalf("expected git_repo to stay null, got %q", state.GitRepo.ValueString())
+	}
+	if !state.GitBranch.IsNull() {
+		t.Fatalf("expected git_branch to stay null, got %q", state.GitBranch.ValueString())
+	}
+
+	wf2, err := modelToWorkflow(ctx, &state)
+	if err != nil {
+		t.Fatalf("modelToWorkflow() error on round-tripped state: %v", err)
+	}
+	if wf2.GitConfig == nil {
+		t.Fatal("expected GitConfig after round trip")
+	}
+	if got, want := wf2.GitConfig.GetRepos(), wf.GitConfig.GetRepos(); !reflect.DeepEqual(got, want) {
+		t.Fatalf("GitConfig.Repos after round trip = %v, want %v", got, want)
+	}
+	if got, want := wf2.GitConfig.GetRepo(), wf.GitConfig.GetRepo(); got != want {
+		t.Fatalf("GitConfig.Repo after round trip = %q, want %q", got, want)
+	}
+}

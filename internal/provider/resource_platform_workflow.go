@@ -321,7 +321,11 @@ func (r *platformWorkflowResource) Schema(_ context.Context, _ resource.SchemaRe
 			},
 			"model": schema.StringAttribute{
 				Optional:    true,
-				Description: "Model to use (e.g. claude-4.6-opus-high-thinking, gpt-4o).",
+				Computed:    true,
+				Description: "Model to use (e.g. claude-4.6-opus-high-thinking, gpt-4o). If unset, the server assigns a default model.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"git_repo": schema.StringAttribute{
 				Optional:    true,
@@ -1263,18 +1267,6 @@ func modelToWorkflow(ctx context.Context, m *platformWorkflowModel) (*v1.Workflo
 		w.Model = &model
 	}
 
-	// GitConfig (for non-git triggers)
-	if (!m.GitRepo.IsNull() && !m.GitRepo.IsUnknown()) || (!m.GitBranch.IsNull() && !m.GitBranch.IsUnknown()) {
-		gc := &v1.GitConfig{}
-		if !m.GitRepo.IsNull() && !m.GitRepo.IsUnknown() {
-			gc.Repo = m.GitRepo.ValueString()
-		}
-		if !m.GitBranch.IsNull() && !m.GitBranch.IsUnknown() {
-			gc.Branch = m.GitBranch.ValueString()
-		}
-		w.GitConfig = gc
-	}
-
 	// AgentOptions
 	if !m.SkipInstall.IsNull() && !m.SkipInstall.IsUnknown() {
 		skip := m.SkipInstall.ValueBool()
@@ -1296,6 +1288,27 @@ func modelToWorkflow(ctx context.Context, m *platformWorkflowModel) (*v1.Workflo
 		w.Triggers = append(w.Triggers, trigger)
 	}
 
+	// GitConfig: the explicit git_repo/git_branch attributes plus the repos
+	// referenced by git triggers. Without the trigger-derived repos, an
+	// automation whose only repo references live in its triggers would be
+	// persisted with no git configuration and could never launch.
+	gitRepo := ""
+	if !m.GitRepo.IsNull() && !m.GitRepo.IsUnknown() {
+		gitRepo = m.GitRepo.ValueString()
+	}
+	gitBranch := ""
+	if !m.GitBranch.IsNull() && !m.GitBranch.IsUnknown() {
+		gitBranch = m.GitBranch.ValueString()
+	}
+	repos := gitConfigRepos(gitRepo, w.Triggers)
+	if gitRepo != "" || gitBranch != "" || len(repos) > 0 {
+		w.GitConfig = &v1.GitConfig{
+			Repo:   gitRepo,
+			Branch: gitBranch,
+			Repos:  repos,
+		}
+	}
+
 	// Actions
 	for i, a := range m.Actions {
 		action, err := actionModelToProto(&a)
@@ -1306,6 +1319,55 @@ func modelToWorkflow(ctx context.Context, m *platformWorkflowModel) (*v1.Workflo
 	}
 
 	return w, nil
+}
+
+// gitConfigRepos merges the top-level git_repo (first, when set) with the
+// repos referenced by the workflow's git triggers, preserving order and
+// de-duplicating equivalent targets. Org-scoped pull request triggers name a
+// whole org rather than concrete repos, so they contribute nothing here.
+func gitConfigRepos(gitRepo string, triggers []*v1.Trigger) []string {
+	var repos []string
+	seen := make(map[string]struct{})
+	add := func(repo string) {
+		repo = strings.TrimSpace(repo)
+		if repo == "" {
+			return
+		}
+		key := gitConfigRepoKey(repo)
+		if _, exists := seen[key]; exists {
+			return
+		}
+		seen[key] = struct{}{}
+		repos = append(repos, repo)
+	}
+
+	add(gitRepo)
+	for _, t := range triggers {
+		git := t.GetGit()
+		if git == nil {
+			continue
+		}
+		if pr := git.GetPullRequest(); pr != nil {
+			for _, repo := range pr.GetRepos() {
+				add(repo)
+			}
+			add(pr.GetRepo())
+		}
+		if push := git.GetPush(); push != nil {
+			add(push.GetRepo())
+		}
+	}
+	return repos
+}
+
+// gitConfigRepoKey returns a case-insensitive de-duplication key for a repo
+// target, treating different spellings of the same owner/repo (e.g. with and
+// without a host prefix) as equivalent.
+func gitConfigRepoKey(repo string) string {
+	if name := parseGitRepoNameFromTarget(repo); name != "" {
+		return strings.ToLower(name)
+	}
+	return strings.ToLower(repo)
 }
 
 func actionModelToProto(a *actionModel) (*v1.Action, error) {

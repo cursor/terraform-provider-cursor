@@ -64,7 +64,7 @@ resource "cursor_platform_workflow" "example_review" {
 - `git_branch` (String) Git branch for non-git triggers. Defaults to main.
 - `git_repo` (String) Git repository for non-git triggers (cron, slack, linear). E.g. github.com/org/repo.
 - `memory_enabled` (Boolean) Enable the AutomationMemory tool, giving the agent persistent memory across runs.
-- `model` (String) Model to use (e.g. claude-4.6-opus-high-thinking, gpt-4o).
+- `model` (String) Model to use (e.g. claude-4.6-opus-high-thinking, gpt-4o). If unset, the server assigns a default model.
 - `scope` (String) Automation ownership scope: "user", "team", "team_visible", "team_editable_user", or "team_editable". "user" is private (owner and admins only), "team" is shared (team admins can edit, runs as team service account), "team_visible" is viewable by team (team can view, only owner can edit, runs as owner), "team_editable_user" is editable by the team but still runs as the creator user, and "team_editable" is editable by the team and runs as the team service account. Defaults to "user" when unset.
 - `skip_install` (Boolean) Skip user install commands and cloud testing.
 
