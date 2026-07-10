@@ -496,6 +496,37 @@ func TestGitCICompletedTriggerRoundTrip(t *testing.T) {
 		}
 	})
 
+	t.Run("model_to_proto_false_round_trip", func(t *testing.T) {
+		m := &platformWorkflowModel{
+			Prompt: types.StringValue("triage CI failures"),
+			Triggers: []triggerModel{
+				{
+					GitCICompleted: &gitCICompletedModel{
+						Repos:              mustStringList(t, ctx, []string{"org/repo"}),
+						IgnoreBaseFailures: types.BoolValue(false),
+					},
+					UserAllowlist: types.ListNull(types.StringType),
+				},
+			},
+		}
+
+		wf, err := modelToWorkflow(ctx, m)
+		if err != nil {
+			t.Fatalf("modelToWorkflow() error: %v", err)
+		}
+		model, err := protoToModel(ctx, &v1.AutomationWithOwner{Workflow: &v1.Automation{Workflow: wf}})
+		if err != nil {
+			t.Fatalf("protoToModel() error: %v", err)
+		}
+		ci := model.Triggers[0].GitCICompleted
+		if ci.IgnoreBaseFailures.IsNull() {
+			t.Fatal("expected ignore_base_failures=false in model, got null")
+		}
+		if ci.IgnoreBaseFailures.ValueBool() {
+			t.Error("expected ignore_base_failures=false in model")
+		}
+	})
+
 	t.Run("model_to_proto_requires_repos", func(t *testing.T) {
 		m := &platformWorkflowModel{
 			Prompt: types.StringValue("triage CI failures"),
@@ -512,6 +543,28 @@ func TestGitCICompletedTriggerRoundTrip(t *testing.T) {
 		_, err := modelToWorkflow(ctx, m)
 		if err == nil {
 			t.Fatal("expected error for missing repos")
+		}
+		if !strings.Contains(err.Error(), "git_ci_completed must specify at least one repo") {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
+
+	t.Run("model_to_proto_rejects_blank_repos", func(t *testing.T) {
+		m := &platformWorkflowModel{
+			Prompt: types.StringValue("triage CI failures"),
+			Triggers: []triggerModel{
+				{
+					GitCICompleted: &gitCICompletedModel{
+						Repos: mustStringList(t, ctx, []string{"", "   "}),
+					},
+					UserAllowlist: types.ListNull(types.StringType),
+				},
+			},
+		}
+
+		_, err := modelToWorkflow(ctx, m)
+		if err == nil {
+			t.Fatal("expected error for blank repos")
 		}
 		if !strings.Contains(err.Error(), "git_ci_completed must specify at least one repo") {
 			t.Fatalf("unexpected error: %v", err)
@@ -593,7 +646,7 @@ func TestGitCICompletedTriggerRoundTrip(t *testing.T) {
 		}
 	})
 
-	t.Run("proto_to_model_defaults_are_null", func(t *testing.T) {
+	t.Run("proto_to_model_defaults", func(t *testing.T) {
 		input := &v1.AutomationWithOwner{
 			Workflow: &v1.Automation{
 				Workflow: &v1.Workflow{
@@ -625,8 +678,11 @@ func TestGitCICompletedTriggerRoundTrip(t *testing.T) {
 		if !ci.Condition.IsNull() {
 			t.Fatalf("expected condition to be null, got %q", ci.Condition.ValueString())
 		}
-		if !ci.IgnoreBaseFailures.IsNull() {
-			t.Fatal("expected ignore_base_failures to be null")
+		if ci.IgnoreBaseFailures.IsNull() {
+			t.Fatal("expected ignore_base_failures=false in model, got null")
+		}
+		if ci.IgnoreBaseFailures.ValueBool() {
+			t.Error("expected ignore_base_failures=false in model")
 		}
 		if !ci.Branch.IsNull() {
 			t.Fatalf("expected branch to be null, got %q", ci.Branch.ValueString())
@@ -721,7 +777,7 @@ func TestGitPullRequestCommentContainsIsRegexRoundTrip(t *testing.T) {
 		}
 	})
 
-	t.Run("model_to_proto_false_is_omitted", func(t *testing.T) {
+	t.Run("model_to_proto_false_round_trip", func(t *testing.T) {
 		m := &platformWorkflowModel{
 			Prompt: types.StringValue("respond to comments"),
 			Triggers: []triggerModel{
@@ -744,6 +800,17 @@ func TestGitPullRequestCommentContainsIsRegexRoundTrip(t *testing.T) {
 		pr := wf.Triggers[0].GetGit().GetPullRequest()
 		if pr.GetCommentContainsIsRegex() {
 			t.Error("expected comment_contains_is_regex=false on proto")
+		}
+		model, err := protoToModel(ctx, &v1.AutomationWithOwner{Workflow: &v1.Automation{Workflow: wf}})
+		if err != nil {
+			t.Fatalf("protoToModel() error: %v", err)
+		}
+		modelPr := model.Triggers[0].GitPullRequest
+		if modelPr.CommentContainsIsRegex.IsNull() {
+			t.Fatal("expected comment_contains_is_regex=false in model, got null")
+		}
+		if modelPr.CommentContainsIsRegex.ValueBool() {
+			t.Error("expected comment_contains_is_regex=false in model")
 		}
 	})
 
@@ -783,7 +850,7 @@ func TestGitPullRequestCommentContainsIsRegexRoundTrip(t *testing.T) {
 		}
 	})
 
-	t.Run("proto_to_model_unset_is_null", func(t *testing.T) {
+	t.Run("proto_to_model_default_false", func(t *testing.T) {
 		input := &v1.AutomationWithOwner{
 			Workflow: &v1.Automation{
 				Workflow: &v1.Workflow{
@@ -808,8 +875,11 @@ func TestGitPullRequestCommentContainsIsRegexRoundTrip(t *testing.T) {
 		if err != nil {
 			t.Fatalf("protoToModel() error: %v", err)
 		}
-		if !model.Triggers[0].GitPullRequest.CommentContainsIsRegex.IsNull() {
-			t.Fatal("expected comment_contains_is_regex to be null when unset")
+		if model.Triggers[0].GitPullRequest.CommentContainsIsRegex.IsNull() {
+			t.Fatal("expected comment_contains_is_regex=false in model, got null")
+		}
+		if model.Triggers[0].GitPullRequest.CommentContainsIsRegex.ValueBool() {
+			t.Fatal("expected comment_contains_is_regex=false in model")
 		}
 	})
 }

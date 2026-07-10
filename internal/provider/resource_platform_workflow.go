@@ -387,6 +387,7 @@ func (r *platformWorkflowResource) Schema(_ context.Context, _ resource.SchemaRe
 								},
 								"comment_contains_is_regex": schema.BoolAttribute{
 									Optional:    true,
+									Computed:    true,
 									Description: "If true, comment_contains is treated as a regex pattern (case-insensitive).",
 								},
 							},
@@ -420,6 +421,7 @@ func (r *platformWorkflowResource) Schema(_ context.Context, _ resource.SchemaRe
 								},
 								"ignore_base_failures": schema.BoolAttribute{
 									Optional:    true,
+									Computed:    true,
 									Description: "If true, ignore CI failures that also exist on the base branch. Only applies in PR mode.",
 								},
 								"branch": schema.StringAttribute{
@@ -1699,6 +1701,14 @@ func triggerModelToProto(ctx context.Context, t *triggerModel) (*v1.Trigger, err
 		if err != nil {
 			return nil, err
 		}
+		normalizedRepos := make([]string, 0, len(repos))
+		for _, repo := range repos {
+			normalizedRepo := strings.TrimSpace(repo)
+			if normalizedRepo != "" {
+				normalizedRepos = append(normalizedRepos, normalizedRepo)
+			}
+		}
+		repos = normalizedRepos
 		if len(repos) == 0 {
 			return nil, fmt.Errorf("git_ci_completed must specify at least one repo")
 		}
@@ -2175,9 +2185,10 @@ func protoTriggerToModel(ctx context.Context, t *v1.Trigger) (triggerModel, erro
 		case *v1.GitTrigger_PullRequest:
 			pr := event.PullRequest
 			prModel := &gitPullRequestModel{
-				Orgs:           types.ListNull(types.StringType),
-				Repos:          types.ListNull(types.StringType),
-				IgnoreDraftPrs: types.BoolValue(pr.GetIgnoreDraftPrs()),
+				Orgs:                   types.ListNull(types.StringType),
+				Repos:                  types.ListNull(types.StringType),
+				IgnoreDraftPrs:         types.BoolValue(pr.GetIgnoreDraftPrs()),
+				CommentContainsIsRegex: types.BoolValue(pr.GetCommentContainsIsRegex()),
 			}
 			if len(pr.GetOrgs()) > 0 {
 				orgs, _ := types.ListValueFrom(ctx, types.StringType, pr.GetOrgs())
@@ -2201,11 +2212,6 @@ func protoTriggerToModel(ctx context.Context, t *v1.Trigger) (triggerModel, erro
 			} else {
 				prModel.CommentContains = types.StringNull()
 			}
-			if pr.GetCommentContainsIsRegex() {
-				prModel.CommentContainsIsRegex = types.BoolValue(true)
-			} else {
-				prModel.CommentContainsIsRegex = types.BoolNull()
-			}
 			tm.GitPullRequest = prModel
 
 		case *v1.GitTrigger_Push:
@@ -2222,7 +2228,8 @@ func protoTriggerToModel(ctx context.Context, t *v1.Trigger) (triggerModel, erro
 		case *v1.GitTrigger_CiCompleted:
 			ci := event.CiCompleted
 			ciModel := &gitCICompletedModel{
-				Repos: types.ListNull(types.StringType),
+				Repos:              types.ListNull(types.StringType),
+				IgnoreBaseFailures: types.BoolValue(ci.GetIgnoreBaseFailures()),
 			}
 			if len(ci.GetRepos()) > 0 {
 				repos, _ := types.ListValueFrom(ctx, types.StringType, ci.GetRepos())
@@ -2232,11 +2239,6 @@ func protoTriggerToModel(ctx context.Context, t *v1.Trigger) (triggerModel, erro
 				ciModel.Condition = types.StringValue(ciCompletionConditionToString(ci.GetCondition()))
 			} else {
 				ciModel.Condition = types.StringNull()
-			}
-			if ci.GetIgnoreBaseFailures() {
-				ciModel.IgnoreBaseFailures = types.BoolValue(true)
-			} else {
-				ciModel.IgnoreBaseFailures = types.BoolNull()
 			}
 			if ci.GetBranch() != "" {
 				ciModel.Branch = types.StringValue(ci.GetBranch())
