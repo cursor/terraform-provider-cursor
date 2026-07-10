@@ -620,6 +620,7 @@ func (r *platformWorkflowResource) Schema(_ context.Context, _ resource.SchemaRe
 								},
 								"server_id": schema.Int64Attribute{
 									Optional:    true,
+									Computed:    true,
 									Description: "Stable MCP server ID. When set, the server is resolved by ID; server remains for display and backwards compatibility.",
 								},
 							},
@@ -768,6 +769,7 @@ func (r *platformWorkflowResource) Create(ctx context.Context, req resource.Crea
 		return
 	}
 	preserveEquivalentGitPullRequestOrgs(ctx, &state, plan)
+	preserveEquivalentGitCICompletionConditions(&state, plan)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -785,6 +787,7 @@ func (r *platformWorkflowResource) Create(ctx context.Context, req resource.Crea
 			return
 		}
 		preserveEquivalentGitPullRequestOrgs(ctx, &updated, plan)
+		preserveEquivalentGitCICompletionConditions(&updated, plan)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &updated)...)
 	}
 }
@@ -825,6 +828,7 @@ func (r *platformWorkflowResource) Read(ctx context.Context, req resource.ReadRe
 		return
 	}
 	preserveEquivalentGitPullRequestOrgs(ctx, &updatedState, state)
+	preserveEquivalentGitCICompletionConditions(&updatedState, state)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedState)...)
 }
@@ -893,6 +897,7 @@ func (r *platformWorkflowResource) Update(ctx context.Context, req resource.Upda
 		return
 	}
 	preserveEquivalentGitPullRequestOrgs(ctx, &updatedState, plan)
+	preserveEquivalentGitCICompletionConditions(&updatedState, plan)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedState)...)
 }
@@ -1086,6 +1091,35 @@ func gitPullRequestOrgsEqualFold(ctx context.Context, current, reference types.L
 		}
 	}
 	return true
+}
+
+// Preserve practitioner-supplied condition casing when it maps to the same
+// API enum value, avoiding post-apply state mismatches.
+func preserveEquivalentGitCICompletionConditions(state *platformWorkflowModel, reference platformWorkflowModel) {
+	if state == nil {
+		return
+	}
+
+	for i := 0; i < len(state.Triggers) && i < len(reference.Triggers); i++ {
+		stateCI := state.Triggers[i].GitCICompleted
+		referenceCI := reference.Triggers[i].GitCICompleted
+		if stateCI == nil || referenceCI == nil {
+			continue
+		}
+		if gitCICompletionConditionsEqualFold(stateCI.Condition, referenceCI.Condition) {
+			stateCI.Condition = referenceCI.Condition
+		}
+	}
+}
+
+func gitCICompletionConditionsEqualFold(current, reference types.String) bool {
+	if current.IsUnknown() || reference.IsUnknown() {
+		return false
+	}
+	if current.IsNull() || reference.IsNull() {
+		return current.IsNull() && reference.IsNull()
+	}
+	return strings.EqualFold(strings.TrimSpace(current.ValueString()), strings.TrimSpace(reference.ValueString()))
 }
 
 func validateAndNormalizeGitPullRequestTargets(rawOrgs, rawRepos []string) ([]string, []string, error) {

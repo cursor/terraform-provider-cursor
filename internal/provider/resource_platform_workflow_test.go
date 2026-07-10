@@ -634,6 +634,33 @@ func TestGitCICompletedTriggerRoundTrip(t *testing.T) {
 	})
 }
 
+func TestPreserveEquivalentGitCICompletionConditions(t *testing.T) {
+	state := &platformWorkflowModel{
+		Triggers: []triggerModel{
+			{
+				GitCICompleted: &gitCICompletedModel{
+					Condition: types.StringValue("failure"),
+				},
+			},
+		},
+	}
+	reference := platformWorkflowModel{
+		Triggers: []triggerModel{
+			{
+				GitCICompleted: &gitCICompletedModel{
+					Condition: types.StringValue("Failure"),
+				},
+			},
+		},
+	}
+
+	preserveEquivalentGitCICompletionConditions(state, reference)
+
+	if got, want := state.Triggers[0].GitCICompleted.Condition.ValueString(), "Failure"; got != want {
+		t.Fatalf("condition = %q, want %q", got, want)
+	}
+}
+
 func TestTriggerModelToProtoRejectsMultipleTriggerTypes(t *testing.T) {
 	ctx := context.Background()
 	m := &platformWorkflowModel{
@@ -911,6 +938,44 @@ func TestMcpActionServerIDRoundTrip(t *testing.T) {
 			t.Fatal("expected server_id to be null when unset")
 		}
 	})
+}
+
+func TestMcpActionServerIDIsOptionalComputed(t *testing.T) {
+	r := &platformWorkflowResource{}
+	schemaResp := &resource.SchemaResponse{}
+	r.Schema(context.Background(), resource.SchemaRequest{}, schemaResp)
+
+	attr, ok := schemaResp.Schema.Attributes["action"]
+	if !ok {
+		t.Fatal("schema is missing action attribute")
+	}
+	actionAttr, ok := attr.(schema.ListNestedAttribute)
+	if !ok {
+		t.Fatalf("action is not a ListNestedAttribute, got %T", attr)
+	}
+	mcpAttrRaw, ok := actionAttr.NestedObject.Attributes["mcp"]
+	if !ok {
+		t.Fatal("schema is missing action.mcp attribute")
+	}
+	mcpAttr, ok := mcpAttrRaw.(schema.SingleNestedAttribute)
+	if !ok {
+		t.Fatalf("action.mcp is not a SingleNestedAttribute, got %T", mcpAttrRaw)
+	}
+	serverIDAttrRaw, ok := mcpAttr.Attributes["server_id"]
+	if !ok {
+		t.Fatal("schema is missing action.mcp.server_id attribute")
+	}
+	serverIDAttr, ok := serverIDAttrRaw.(schema.Int64Attribute)
+	if !ok {
+		t.Fatalf("action.mcp.server_id is not an Int64Attribute, got %T", serverIDAttrRaw)
+	}
+
+	if !serverIDAttr.Optional {
+		t.Fatal("action.mcp.server_id should be Optional")
+	}
+	if !serverIDAttr.Computed {
+		t.Fatal("action.mcp.server_id should be Computed")
+	}
 }
 
 func TestPreserveEquivalentGitPullRequestOrgs(t *testing.T) {
