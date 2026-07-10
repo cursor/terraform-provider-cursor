@@ -3,12 +3,12 @@
 page_title: "cursor_platform_workflow Resource - cursor"
 subcategory: ""
 description: |-
-  Manages a Cursor Automation: a prompt plus triggers (pull requests, pushes, cron, Slack, Linear, webhooks, Microsoft Teams) and actions (PR comments, PRs, reviewers, MCP servers, Slack, Microsoft Teams).
+  Manages a Cursor Automation: a prompt plus triggers (pull requests, pushes, CI completions, cron, Slack, Linear, webhooks, Microsoft Teams) and actions (PR comments, PRs, reviewers, MCP servers, Slack, Microsoft Teams).
 ---
 
 # cursor_platform_workflow (Resource)
 
-Manages a Cursor Automation: a prompt plus triggers (pull requests, pushes, cron, Slack, Linear, webhooks, Microsoft Teams) and actions (PR comments, PRs, reviewers, MCP servers, Slack, Microsoft Teams).
+Manages a Cursor Automation: a prompt plus triggers (pull requests, pushes, CI completions, cron, Slack, Linear, webhooks, Microsoft Teams) and actions (PR comments, PRs, reviewers, MCP servers, Slack, Microsoft Teams).
 
 ## Example Usage
 
@@ -80,6 +80,7 @@ resource "cursor_platform_workflow" "example_review" {
 Optional:
 
 - `cron` (Attributes) Trigger on a cron schedule. (see [below for nested schema](#nestedatt--trigger--cron))
+- `git_ci_completed` (Attributes) Trigger when all CI checks complete on a PR (PR mode) or a specific branch (branch mode). (see [below for nested schema](#nestedatt--trigger--git_ci_completed))
 - `git_pull_request` (Attributes) Trigger on GitHub pull request events. (see [below for nested schema](#nestedatt--trigger--git_pull_request))
 - `git_push` (Attributes) Trigger on git push events. (see [below for nested schema](#nestedatt--trigger--git_push))
 - `linear` (Attributes) Trigger on Linear events. (see [below for nested schema](#nestedatt--trigger--linear))
@@ -97,12 +98,27 @@ Required:
 - `schedule` (String) Cron expression (e.g. 0 9 * * *).
 
 
+<a id="nestedatt--trigger--git_ci_completed"></a>
+### Nested Schema for `trigger.git_ci_completed`
+
+Required:
+
+- `repos` (List of String) GitHub repos to watch (e.g. org/repo). At least one is required.
+
+Optional:
+
+- `branch` (String) If set, trigger on CI completion for this branch (e.g. "main") instead of on PRs. user_allowlist and ignore_base_failures are ignored in branch mode.
+- `condition` (String) Which CI outcome fires the trigger: "failure", "success", or "any". Server default applies if unset.
+- `ignore_base_failures` (Boolean) If true, ignore CI failures that also exist on the base branch. Only applies in PR mode.
+
+
 <a id="nestedatt--trigger--git_pull_request"></a>
 ### Nested Schema for `trigger.git_pull_request`
 
 Optional:
 
 - `comment_contains` (String) Only trigger if the comment body contains this text (case-insensitive). Only used when pr_action is "commented".
+- `comment_contains_is_regex` (Boolean) If true, comment_contains is treated as a regex pattern (case-insensitive).
 - `ignore_draft_prs` (Boolean) Do not trigger on draft PRs.
 - `orgs` (List of String) GitHub orgs to watch (e.g. example-org).
 - `pr_action` (String) PR action to trigger on: "opened", "pushed", "merged", "commented". Triggers on opened+pushed if unset.
@@ -228,6 +244,10 @@ Optional:
 Required:
 
 - `server` (String) MCP server name.
+
+Optional:
+
+- `server_id` (Number) Stable MCP server ID. When set, the server is resolved by ID; server remains for display and backwards compatibility.
 
 
 <a id="nestedatt--action--microsoft_teams"></a>

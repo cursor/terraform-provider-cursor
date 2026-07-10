@@ -423,6 +423,631 @@ func TestGitPullRequestTargetsRoundTrip(t *testing.T) {
 	})
 }
 
+func TestGitCICompletedTriggerRoundTrip(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("model_to_proto", func(t *testing.T) {
+		m := &platformWorkflowModel{
+			Prompt: types.StringValue("triage CI failures"),
+			Triggers: []triggerModel{
+				{
+					GitCICompleted: &gitCICompletedModel{
+						Repos:              mustStringList(t, ctx, []string{"org/repo"}),
+						Condition:          types.StringValue("failure"),
+						IgnoreBaseFailures: types.BoolValue(true),
+						Branch:             types.StringNull(),
+					},
+					UserAllowlist: types.ListNull(types.StringType),
+				},
+			},
+		}
+
+		wf, err := modelToWorkflow(ctx, m)
+		if err != nil {
+			t.Fatalf("modelToWorkflow() error: %v", err)
+		}
+		ci := wf.Triggers[0].GetGit().GetCiCompleted()
+		if ci == nil {
+			t.Fatal("expected ci_completed trigger in proto")
+		}
+		if got, want := ci.GetRepos(), []string{"org/repo"}; !reflect.DeepEqual(got, want) {
+			t.Fatalf("repos = %v, want %v", got, want)
+		}
+		if got, want := ci.GetCondition(), v1.GitCICompletionCondition_GIT_CI_COMPLETION_CONDITION_FAILURE; got != want {
+			t.Fatalf("condition = %v, want %v", got, want)
+		}
+		if !ci.GetIgnoreBaseFailures() {
+			t.Error("expected ignore_base_failures=true")
+		}
+		if ci.GetBranch() != "" {
+			t.Fatalf("expected empty branch, got %q", ci.GetBranch())
+		}
+	})
+
+	t.Run("model_to_proto_branch_mode", func(t *testing.T) {
+		m := &platformWorkflowModel{
+			Prompt: types.StringValue("triage CI failures on main"),
+			Triggers: []triggerModel{
+				{
+					GitCICompleted: &gitCICompletedModel{
+						Repos:              mustStringList(t, ctx, []string{"org/repo"}),
+						Condition:          types.StringNull(),
+						IgnoreBaseFailures: types.BoolNull(),
+						Branch:             types.StringValue("main"),
+					},
+					UserAllowlist: types.ListNull(types.StringType),
+				},
+			},
+		}
+
+		wf, err := modelToWorkflow(ctx, m)
+		if err != nil {
+			t.Fatalf("modelToWorkflow() error: %v", err)
+		}
+		ci := wf.Triggers[0].GetGit().GetCiCompleted()
+		if ci == nil {
+			t.Fatal("expected ci_completed trigger in proto")
+		}
+		if got, want := ci.GetBranch(), "main"; got != want {
+			t.Fatalf("branch = %q, want %q", got, want)
+		}
+		if got, want := ci.GetCondition(), v1.GitCICompletionCondition_GIT_CI_COMPLETION_CONDITION_UNSPECIFIED; got != want {
+			t.Fatalf("condition = %v, want %v", got, want)
+		}
+	})
+
+	t.Run("model_to_proto_false_round_trip", func(t *testing.T) {
+		m := &platformWorkflowModel{
+			Prompt: types.StringValue("triage CI failures"),
+			Triggers: []triggerModel{
+				{
+					GitCICompleted: &gitCICompletedModel{
+						Repos:              mustStringList(t, ctx, []string{"org/repo"}),
+						IgnoreBaseFailures: types.BoolValue(false),
+					},
+					UserAllowlist: types.ListNull(types.StringType),
+				},
+			},
+		}
+
+		wf, err := modelToWorkflow(ctx, m)
+		if err != nil {
+			t.Fatalf("modelToWorkflow() error: %v", err)
+		}
+		model, err := protoToModel(ctx, &v1.AutomationWithOwner{Workflow: &v1.Automation{Workflow: wf}})
+		if err != nil {
+			t.Fatalf("protoToModel() error: %v", err)
+		}
+		ci := model.Triggers[0].GitCICompleted
+		if ci.IgnoreBaseFailures.IsNull() {
+			t.Fatal("expected ignore_base_failures=false in model, got null")
+		}
+		if ci.IgnoreBaseFailures.ValueBool() {
+			t.Error("expected ignore_base_failures=false in model")
+		}
+	})
+
+	t.Run("model_to_proto_requires_repos", func(t *testing.T) {
+		m := &platformWorkflowModel{
+			Prompt: types.StringValue("triage CI failures"),
+			Triggers: []triggerModel{
+				{
+					GitCICompleted: &gitCICompletedModel{
+						Repos: types.ListNull(types.StringType),
+					},
+					UserAllowlist: types.ListNull(types.StringType),
+				},
+			},
+		}
+
+		_, err := modelToWorkflow(ctx, m)
+		if err == nil {
+			t.Fatal("expected error for missing repos")
+		}
+		if !strings.Contains(err.Error(), "git_ci_completed must specify at least one repo") {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
+
+	t.Run("model_to_proto_rejects_blank_repos", func(t *testing.T) {
+		m := &platformWorkflowModel{
+			Prompt: types.StringValue("triage CI failures"),
+			Triggers: []triggerModel{
+				{
+					GitCICompleted: &gitCICompletedModel{
+						Repos: mustStringList(t, ctx, []string{"", "   "}),
+					},
+					UserAllowlist: types.ListNull(types.StringType),
+				},
+			},
+		}
+
+		_, err := modelToWorkflow(ctx, m)
+		if err == nil {
+			t.Fatal("expected error for blank repos")
+		}
+		if !strings.Contains(err.Error(), "git_ci_completed must specify at least one repo") {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
+
+	t.Run("model_to_proto_invalid_condition", func(t *testing.T) {
+		m := &platformWorkflowModel{
+			Prompt: types.StringValue("triage CI failures"),
+			Triggers: []triggerModel{
+				{
+					GitCICompleted: &gitCICompletedModel{
+						Repos:     mustStringList(t, ctx, []string{"org/repo"}),
+						Condition: types.StringValue("sometimes"),
+					},
+					UserAllowlist: types.ListNull(types.StringType),
+				},
+			},
+		}
+
+		_, err := modelToWorkflow(ctx, m)
+		if err == nil {
+			t.Fatal("expected error for invalid condition")
+		}
+		if !strings.Contains(err.Error(), "invalid git_ci_completed.condition") {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
+
+	t.Run("proto_to_model", func(t *testing.T) {
+		input := &v1.AutomationWithOwner{
+			Workflow: &v1.Automation{
+				Workflow: &v1.Workflow{
+					Prompts: []*v1.Prompt{{Prompt: "triage CI failures"}},
+					Triggers: []*v1.Trigger{
+						{
+							Trigger: &v1.Trigger_Git{
+								Git: &v1.GitTrigger{
+									Event: &v1.GitTrigger_CiCompleted{
+										CiCompleted: &v1.GitCICompletedEvent{
+											Repos:              []string{"org/repo"},
+											Condition:          v1.GitCICompletionCondition_GIT_CI_COMPLETION_CONDITION_SUCCESS,
+											IgnoreBaseFailures: true,
+											Branch:             "main",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		model, err := protoToModel(ctx, input)
+		if err != nil {
+			t.Fatalf("protoToModel() error: %v", err)
+		}
+		ci := model.Triggers[0].GitCICompleted
+		if ci == nil {
+			t.Fatal("expected git_ci_completed trigger in model")
+		}
+		var repos []string
+		diags := ci.Repos.ElementsAs(ctx, &repos, false)
+		if diags.HasError() {
+			t.Fatalf("failed to read repos from model: %v", diags)
+		}
+		if got, want := repos, []string{"org/repo"}; !reflect.DeepEqual(got, want) {
+			t.Fatalf("repos = %v, want %v", got, want)
+		}
+		if got, want := ci.Condition.ValueString(), "success"; got != want {
+			t.Fatalf("condition = %q, want %q", got, want)
+		}
+		if !ci.IgnoreBaseFailures.ValueBool() {
+			t.Error("expected ignore_base_failures=true")
+		}
+		if got, want := ci.Branch.ValueString(), "main"; got != want {
+			t.Fatalf("branch = %q, want %q", got, want)
+		}
+	})
+
+	t.Run("proto_to_model_defaults", func(t *testing.T) {
+		input := &v1.AutomationWithOwner{
+			Workflow: &v1.Automation{
+				Workflow: &v1.Workflow{
+					Triggers: []*v1.Trigger{
+						{
+							Trigger: &v1.Trigger_Git{
+								Git: &v1.GitTrigger{
+									Event: &v1.GitTrigger_CiCompleted{
+										CiCompleted: &v1.GitCICompletedEvent{
+											Repos: []string{"org/repo"},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		model, err := protoToModel(ctx, input)
+		if err != nil {
+			t.Fatalf("protoToModel() error: %v", err)
+		}
+		ci := model.Triggers[0].GitCICompleted
+		if ci == nil {
+			t.Fatal("expected git_ci_completed trigger in model")
+		}
+		if !ci.Condition.IsNull() {
+			t.Fatalf("expected condition to be null, got %q", ci.Condition.ValueString())
+		}
+		if ci.IgnoreBaseFailures.IsNull() {
+			t.Fatal("expected ignore_base_failures=false in model, got null")
+		}
+		if ci.IgnoreBaseFailures.ValueBool() {
+			t.Error("expected ignore_base_failures=false in model")
+		}
+		if !ci.Branch.IsNull() {
+			t.Fatalf("expected branch to be null, got %q", ci.Branch.ValueString())
+		}
+	})
+}
+
+func TestPreserveEquivalentGitCICompletionConditions(t *testing.T) {
+	state := &platformWorkflowModel{
+		Triggers: []triggerModel{
+			{
+				GitCICompleted: &gitCICompletedModel{
+					Condition: types.StringValue("failure"),
+				},
+			},
+		},
+	}
+	reference := platformWorkflowModel{
+		Triggers: []triggerModel{
+			{
+				GitCICompleted: &gitCICompletedModel{
+					Condition: types.StringValue("Failure"),
+				},
+			},
+		},
+	}
+
+	preserveEquivalentGitCICompletionConditions(state, reference)
+
+	if got, want := state.Triggers[0].GitCICompleted.Condition.ValueString(), "Failure"; got != want {
+		t.Fatalf("condition = %q, want %q", got, want)
+	}
+}
+
+func TestTriggerModelToProtoRejectsMultipleTriggerTypes(t *testing.T) {
+	ctx := context.Background()
+	m := &platformWorkflowModel{
+		Prompt: types.StringValue("review code"),
+		Triggers: []triggerModel{
+			{
+				GitCICompleted: &gitCICompletedModel{
+					Repos: mustStringList(t, ctx, []string{"org/repo"}),
+				},
+				GitPush: &gitPushModel{
+					Repo: types.StringValue("org/repo"),
+				},
+				UserAllowlist: types.ListNull(types.StringType),
+			},
+		},
+	}
+
+	_, err := modelToWorkflow(ctx, m)
+	if err == nil {
+		t.Fatal("expected error when multiple trigger types are set")
+	}
+	if !strings.Contains(err.Error(), "must specify exactly one of git_pull_request, git_push, git_ci_completed") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestGitPullRequestCommentContainsIsRegexRoundTrip(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("model_to_proto_true", func(t *testing.T) {
+		m := &platformWorkflowModel{
+			Prompt: types.StringValue("respond to comments"),
+			Triggers: []triggerModel{
+				{
+					GitPullRequest: &gitPullRequestModel{
+						Orgs:                   types.ListNull(types.StringType),
+						Repos:                  mustStringList(t, ctx, []string{"org/repo"}),
+						IgnoreDraftPrs:         types.BoolNull(),
+						PrAction:               types.StringValue("commented"),
+						CommentContains:        types.StringValue(`^/(review|fix)\b`),
+						CommentContainsIsRegex: types.BoolValue(true),
+					},
+					UserAllowlist: types.ListNull(types.StringType),
+				},
+			},
+		}
+
+		wf, err := modelToWorkflow(ctx, m)
+		if err != nil {
+			t.Fatalf("modelToWorkflow() error: %v", err)
+		}
+		pr := wf.Triggers[0].GetGit().GetPullRequest()
+		if pr == nil {
+			t.Fatal("expected pull request trigger in proto")
+		}
+		if !pr.GetCommentContainsIsRegex() {
+			t.Error("expected comment_contains_is_regex=true on proto")
+		}
+	})
+
+	t.Run("model_to_proto_false_round_trip", func(t *testing.T) {
+		m := &platformWorkflowModel{
+			Prompt: types.StringValue("respond to comments"),
+			Triggers: []triggerModel{
+				{
+					GitPullRequest: &gitPullRequestModel{
+						Orgs:                   types.ListNull(types.StringType),
+						Repos:                  mustStringList(t, ctx, []string{"org/repo"}),
+						CommentContains:        types.StringValue("please review"),
+						CommentContainsIsRegex: types.BoolValue(false),
+					},
+					UserAllowlist: types.ListNull(types.StringType),
+				},
+			},
+		}
+
+		wf, err := modelToWorkflow(ctx, m)
+		if err != nil {
+			t.Fatalf("modelToWorkflow() error: %v", err)
+		}
+		pr := wf.Triggers[0].GetGit().GetPullRequest()
+		if pr.GetCommentContainsIsRegex() {
+			t.Error("expected comment_contains_is_regex=false on proto")
+		}
+		model, err := protoToModel(ctx, &v1.AutomationWithOwner{Workflow: &v1.Automation{Workflow: wf}})
+		if err != nil {
+			t.Fatalf("protoToModel() error: %v", err)
+		}
+		modelPr := model.Triggers[0].GitPullRequest
+		if modelPr.CommentContainsIsRegex.IsNull() {
+			t.Fatal("expected comment_contains_is_regex=false in model, got null")
+		}
+		if modelPr.CommentContainsIsRegex.ValueBool() {
+			t.Error("expected comment_contains_is_regex=false in model")
+		}
+	})
+
+	t.Run("proto_to_model_round_trip", func(t *testing.T) {
+		event := &v1.GitPullRequestEvent{
+			Repos:                  []string{"org/repo"},
+			CommentContains:        `^/(review|fix)\b`,
+			CommentContainsIsRegex: true,
+		}
+
+		input := &v1.AutomationWithOwner{
+			Workflow: &v1.Automation{
+				Workflow: &v1.Workflow{
+					Triggers: []*v1.Trigger{
+						{
+							Trigger: &v1.Trigger_Git{
+								Git: &v1.GitTrigger{
+									Event: &v1.GitTrigger_PullRequest{PullRequest: event},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		model, err := protoToModel(ctx, input)
+		if err != nil {
+			t.Fatalf("protoToModel() error: %v", err)
+		}
+		pr := model.Triggers[0].GitPullRequest
+		if pr == nil {
+			t.Fatal("expected git_pull_request trigger in model")
+		}
+		if !pr.CommentContainsIsRegex.ValueBool() {
+			t.Error("expected comment_contains_is_regex=true in model")
+		}
+	})
+
+	t.Run("proto_to_model_default_false", func(t *testing.T) {
+		input := &v1.AutomationWithOwner{
+			Workflow: &v1.Automation{
+				Workflow: &v1.Workflow{
+					Triggers: []*v1.Trigger{
+						{
+							Trigger: &v1.Trigger_Git{
+								Git: &v1.GitTrigger{
+									Event: &v1.GitTrigger_PullRequest{
+										PullRequest: &v1.GitPullRequestEvent{
+											Repos: []string{"org/repo"},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		model, err := protoToModel(ctx, input)
+		if err != nil {
+			t.Fatalf("protoToModel() error: %v", err)
+		}
+		if model.Triggers[0].GitPullRequest.CommentContainsIsRegex.IsNull() {
+			t.Fatal("expected comment_contains_is_regex=false in model, got null")
+		}
+		if model.Triggers[0].GitPullRequest.CommentContainsIsRegex.ValueBool() {
+			t.Fatal("expected comment_contains_is_regex=false in model")
+		}
+	})
+}
+
+func TestMcpActionServerIDRoundTrip(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("model_to_proto", func(t *testing.T) {
+		m := &platformWorkflowModel{
+			Prompt: types.StringValue("use mcp"),
+			Triggers: []triggerModel{
+				{
+					Cron:          &cronModel{Schedule: types.StringValue("0 9 * * *")},
+					UserAllowlist: types.ListNull(types.StringType),
+				},
+			},
+			Actions: []actionModel{
+				{
+					Mcp: &mcpActionModel{
+						Server:   types.StringValue("my-server"),
+						ServerID: types.Int64Value(42),
+					},
+				},
+			},
+		}
+
+		wf, err := modelToWorkflow(ctx, m)
+		if err != nil {
+			t.Fatalf("modelToWorkflow() error: %v", err)
+		}
+		server := wf.Actions[0].GetMcp().GetServer()
+		if server == nil {
+			t.Fatal("expected mcp server config in proto")
+		}
+		if got, want := server.GetName(), "my-server"; got != want {
+			t.Fatalf("server name = %q, want %q", got, want)
+		}
+		if server.Id == nil {
+			t.Fatal("expected server id to be set on proto")
+		}
+		if got := server.GetId(); got != 42 {
+			t.Fatalf("server id = %d, want 42", got)
+		}
+	})
+
+	t.Run("model_to_proto_null_id_is_omitted", func(t *testing.T) {
+		m := &platformWorkflowModel{
+			Prompt: types.StringValue("use mcp"),
+			Triggers: []triggerModel{
+				{
+					Cron:          &cronModel{Schedule: types.StringValue("0 9 * * *")},
+					UserAllowlist: types.ListNull(types.StringType),
+				},
+			},
+			Actions: []actionModel{
+				{
+					Mcp: &mcpActionModel{
+						Server:   types.StringValue("my-server"),
+						ServerID: types.Int64Null(),
+					},
+				},
+			},
+		}
+
+		wf, err := modelToWorkflow(ctx, m)
+		if err != nil {
+			t.Fatalf("modelToWorkflow() error: %v", err)
+		}
+		if wf.Actions[0].GetMcp().GetServer().Id != nil {
+			t.Fatal("expected server id to be unset on proto")
+		}
+	})
+
+	t.Run("proto_to_model_round_trip", func(t *testing.T) {
+		id := int64(42)
+		server := &v1.McpServerConfig{Name: "my-server", Id: &id}
+
+		input := &v1.AutomationWithOwner{
+			Workflow: &v1.Automation{
+				Workflow: &v1.Workflow{
+					Actions: []*v1.Action{
+						{Action: &v1.Action_Mcp{
+							Mcp: &v1.McpAction{Server: server},
+						}},
+					},
+				},
+			},
+		}
+
+		model, err := protoToModel(ctx, input)
+		if err != nil {
+			t.Fatalf("protoToModel() error: %v", err)
+		}
+		mcp := model.Actions[0].Mcp
+		if mcp == nil {
+			t.Fatal("expected mcp action in model")
+		}
+		if got, want := mcp.Server.ValueString(), "my-server"; got != want {
+			t.Fatalf("server = %q, want %q", got, want)
+		}
+		if got, want := mcp.ServerID.ValueInt64(), int64(42); got != want {
+			t.Fatalf("server_id = %d, want %d", got, want)
+		}
+	})
+
+	t.Run("proto_to_model_unset_id_is_null", func(t *testing.T) {
+		input := &v1.AutomationWithOwner{
+			Workflow: &v1.Automation{
+				Workflow: &v1.Workflow{
+					Actions: []*v1.Action{
+						{Action: &v1.Action_Mcp{
+							Mcp: &v1.McpAction{
+								Server: &v1.McpServerConfig{Name: "my-server"},
+							},
+						}},
+					},
+				},
+			},
+		}
+
+		model, err := protoToModel(ctx, input)
+		if err != nil {
+			t.Fatalf("protoToModel() error: %v", err)
+		}
+		if !model.Actions[0].Mcp.ServerID.IsNull() {
+			t.Fatal("expected server_id to be null when unset")
+		}
+	})
+}
+
+func TestMcpActionServerIDIsOptionalComputed(t *testing.T) {
+	r := &platformWorkflowResource{}
+	schemaResp := &resource.SchemaResponse{}
+	r.Schema(context.Background(), resource.SchemaRequest{}, schemaResp)
+
+	attr, ok := schemaResp.Schema.Attributes["action"]
+	if !ok {
+		t.Fatal("schema is missing action attribute")
+	}
+	actionAttr, ok := attr.(schema.ListNestedAttribute)
+	if !ok {
+		t.Fatalf("action is not a ListNestedAttribute, got %T", attr)
+	}
+	mcpAttrRaw, ok := actionAttr.NestedObject.Attributes["mcp"]
+	if !ok {
+		t.Fatal("schema is missing action.mcp attribute")
+	}
+	mcpAttr, ok := mcpAttrRaw.(schema.SingleNestedAttribute)
+	if !ok {
+		t.Fatalf("action.mcp is not a SingleNestedAttribute, got %T", mcpAttrRaw)
+	}
+	serverIDAttrRaw, ok := mcpAttr.Attributes["server_id"]
+	if !ok {
+		t.Fatal("schema is missing action.mcp.server_id attribute")
+	}
+	serverIDAttr, ok := serverIDAttrRaw.(schema.Int64Attribute)
+	if !ok {
+		t.Fatalf("action.mcp.server_id is not an Int64Attribute, got %T", serverIDAttrRaw)
+	}
+
+	if !serverIDAttr.Optional {
+		t.Fatal("action.mcp.server_id should be Optional")
+	}
+	if !serverIDAttr.Computed {
+		t.Fatal("action.mcp.server_id should be Computed")
+	}
+}
+
 func TestPreserveEquivalentGitPullRequestOrgs(t *testing.T) {
 	ctx := context.Background()
 

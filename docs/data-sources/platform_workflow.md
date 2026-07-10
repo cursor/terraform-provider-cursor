@@ -66,6 +66,7 @@ Read-Only:
 Read-Only:
 
 - `server` (String) MCP server name.
+- `server_id` (Number) Stable MCP server ID.
 
 
 <a id="nestedatt--action--microsoft_teams"></a>
@@ -121,6 +122,7 @@ Read-Only:
 Read-Only:
 
 - `cron` (Attributes) Trigger on a cron schedule. (see [below for nested schema](#nestedatt--trigger--cron))
+- `git_ci_completed` (Attributes) Trigger when all CI checks complete on a PR or a specific branch. (see [below for nested schema](#nestedatt--trigger--git_ci_completed))
 - `git_pull_request` (Attributes) Trigger on GitHub pull request events. (see [below for nested schema](#nestedatt--trigger--git_pull_request))
 - `git_push` (Attributes) Trigger on git push events. (see [below for nested schema](#nestedatt--trigger--git_push))
 - `linear` (Attributes) Trigger on Linear events. (see [below for nested schema](#nestedatt--trigger--linear))
@@ -138,12 +140,24 @@ Read-Only:
 - `schedule` (String) Cron expression.
 
 
+<a id="nestedatt--trigger--git_ci_completed"></a>
+### Nested Schema for `trigger.git_ci_completed`
+
+Read-Only:
+
+- `branch` (String) Branch watched for CI completion instead of PRs, when set.
+- `condition` (String) CI outcome that fires the trigger: "failure", "success", or "any".
+- `ignore_base_failures` (Boolean) Whether CI failures that also exist on the base branch are ignored.
+- `repos` (List of String) GitHub repos to watch.
+
+
 <a id="nestedatt--trigger--git_pull_request"></a>
 ### Nested Schema for `trigger.git_pull_request`
 
 Read-Only:
 
 - `comment_contains` (String) Comment text filter for the commented PR action.
+- `comment_contains_is_regex` (Boolean) Whether comment_contains is a regex pattern.
 - `ignore_draft_prs` (Boolean) Do not trigger on draft PRs.
 - `orgs` (List of String) GitHub orgs to watch.
 - `pr_action` (String) PR action that triggers the automation.
