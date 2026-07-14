@@ -116,21 +116,22 @@ func parseCustomErrorDetailsTitleDetail(b []byte) (string, string) {
 // ---------------------------------------------------------------------------
 
 type platformWorkflowModel struct {
-	ID            types.String   `tfsdk:"id"`
-	Name          types.String   `tfsdk:"name"`
-	Scope         types.String   `tfsdk:"scope"`
-	Enabled       types.Bool     `tfsdk:"enabled"`
-	Prompt        types.String   `tfsdk:"prompt"`
-	EffortLevel   types.String   `tfsdk:"effort_level"`
-	Model         types.String   `tfsdk:"model"`
-	GitRepo       types.String   `tfsdk:"git_repo"`
-	GitBranch     types.String   `tfsdk:"git_branch"`
-	SkipInstall   types.Bool     `tfsdk:"skip_install"`
-	MemoryEnabled types.Bool     `tfsdk:"memory_enabled"`
-	Triggers      []triggerModel `tfsdk:"trigger"`
-	Actions       []actionModel  `tfsdk:"action"`
-	CreatedAt     types.Int64    `tfsdk:"created_at"`
-	UpdatedAt     types.Int64    `tfsdk:"updated_at"`
+	ID                  types.String   `tfsdk:"id"`
+	Name                types.String   `tfsdk:"name"`
+	Scope               types.String   `tfsdk:"scope"`
+	Enabled             types.Bool     `tfsdk:"enabled"`
+	Prompt              types.String   `tfsdk:"prompt"`
+	EffortLevel         types.String   `tfsdk:"effort_level"`
+	Model               types.String   `tfsdk:"model"`
+	GitRepo             types.String   `tfsdk:"git_repo"`
+	GitBranch           types.String   `tfsdk:"git_branch"`
+	SkipInstall         types.Bool     `tfsdk:"skip_install"`
+	EnvironmentPublicID types.String   `tfsdk:"environment_public_id"`
+	MemoryEnabled       types.Bool     `tfsdk:"memory_enabled"`
+	Triggers            []triggerModel `tfsdk:"trigger"`
+	Actions             []actionModel  `tfsdk:"action"`
+	CreatedAt           types.Int64    `tfsdk:"created_at"`
+	UpdatedAt           types.Int64    `tfsdk:"updated_at"`
 }
 
 type triggerModel struct {
@@ -348,6 +349,10 @@ func (r *platformWorkflowResource) Schema(_ context.Context, _ resource.SchemaRe
 			"skip_install": schema.BoolAttribute{
 				Optional:    true,
 				Description: "Skip user install commands and cloud testing.",
+			},
+			"environment_public_id": schema.StringAttribute{
+				Optional:    true,
+				Description: "Public ID of the Cloud Agent environment this automation should run in.",
 			},
 			"memory_enabled": schema.BoolAttribute{
 				Optional:    true,
@@ -776,6 +781,7 @@ func (r *platformWorkflowResource) Create(ctx context.Context, req resource.Crea
 	}
 	preserveEquivalentGitPullRequestOrgs(ctx, &state, plan)
 	preserveEquivalentGitCICompletionConditions(&state, plan)
+	preserveEquivalentEnvironmentPublicID(&state, plan)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -794,6 +800,7 @@ func (r *platformWorkflowResource) Create(ctx context.Context, req resource.Crea
 		}
 		preserveEquivalentGitPullRequestOrgs(ctx, &updated, plan)
 		preserveEquivalentGitCICompletionConditions(&updated, plan)
+		preserveEquivalentEnvironmentPublicID(&updated, plan)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &updated)...)
 	}
 }
@@ -835,6 +842,7 @@ func (r *platformWorkflowResource) Read(ctx context.Context, req resource.ReadRe
 	}
 	preserveEquivalentGitPullRequestOrgs(ctx, &updatedState, state)
 	preserveEquivalentGitCICompletionConditions(&updatedState, state)
+	preserveEquivalentEnvironmentPublicID(&updatedState, state)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedState)...)
 }
@@ -904,6 +912,7 @@ func (r *platformWorkflowResource) Update(ctx context.Context, req resource.Upda
 	}
 	preserveEquivalentGitPullRequestOrgs(ctx, &updatedState, plan)
 	preserveEquivalentGitCICompletionConditions(&updatedState, plan)
+	preserveEquivalentEnvironmentPublicID(&updatedState, plan)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedState)...)
 }
@@ -1070,6 +1079,30 @@ func preserveEquivalentGitPullRequestOrgs(ctx context.Context, state *platformWo
 			statePr.Orgs = referencePr.Orgs
 		}
 	}
+}
+
+// Preserve practitioner-supplied environment_public_id formatting when the API
+// returns an equivalent trimmed value, avoiding perpetual state/config diffs.
+func preserveEquivalentEnvironmentPublicID(state *platformWorkflowModel, reference platformWorkflowModel) {
+	if state == nil {
+		return
+	}
+	if state.EnvironmentPublicID.IsNull() || state.EnvironmentPublicID.IsUnknown() {
+		return
+	}
+	if reference.EnvironmentPublicID.IsNull() || reference.EnvironmentPublicID.IsUnknown() {
+		return
+	}
+
+	referenceValue := reference.EnvironmentPublicID.ValueString()
+	if referenceValue == "" {
+		return
+	}
+	if strings.TrimSpace(referenceValue) != state.EnvironmentPublicID.ValueString() {
+		return
+	}
+
+	state.EnvironmentPublicID = reference.EnvironmentPublicID
 }
 
 func gitPullRequestOrgsEqualFold(ctx context.Context, current, reference types.List) bool {
@@ -1349,9 +1382,22 @@ func modelToWorkflow(ctx context.Context, m *platformWorkflowModel) (*v1.Workflo
 	}
 
 	// AgentOptions
+	var agentOptions *v1.AgentOptions
 	if !m.SkipInstall.IsNull() && !m.SkipInstall.IsUnknown() {
 		skip := m.SkipInstall.ValueBool()
-		w.AgentOptions = &v1.AgentOptions{SkipInstall: &skip}
+		agentOptions = &v1.AgentOptions{SkipInstall: &skip}
+	}
+	if !m.EnvironmentPublicID.IsNull() && !m.EnvironmentPublicID.IsUnknown() {
+		environmentPublicID := strings.TrimSpace(m.EnvironmentPublicID.ValueString())
+		if environmentPublicID != "" {
+			if agentOptions == nil {
+				agentOptions = &v1.AgentOptions{}
+			}
+			agentOptions.EnvironmentPublicId = &environmentPublicID
+		}
+	}
+	if agentOptions != nil {
+		w.AgentOptions = agentOptions
 	}
 
 	// MemoryEnabled
@@ -2063,10 +2109,20 @@ func protoToModel(ctx context.Context, withOwner *v1.AutomationWithOwner) (platf
 	}
 
 	// AgentOptions
-	if ao := wf.GetAgentOptions(); ao != nil && ao.SkipInstall != nil {
-		m.SkipInstall = types.BoolValue(ao.GetSkipInstall())
+	if ao := wf.GetAgentOptions(); ao != nil {
+		if ao.SkipInstall != nil {
+			m.SkipInstall = types.BoolValue(ao.GetSkipInstall())
+		} else {
+			m.SkipInstall = types.BoolNull()
+		}
+		if ao.EnvironmentPublicId != nil && ao.GetEnvironmentPublicId() != "" {
+			m.EnvironmentPublicID = types.StringValue(ao.GetEnvironmentPublicId())
+		} else {
+			m.EnvironmentPublicID = types.StringNull()
+		}
 	} else {
 		m.SkipInstall = types.BoolNull()
+		m.EnvironmentPublicID = types.StringNull()
 	}
 
 	// MemoryEnabled

@@ -67,6 +67,10 @@ func (d *platformWorkflowDataSource) Schema(_ context.Context, _ datasource.Sche
 				Computed:    true,
 				Description: "Whether to skip install commands.",
 			},
+			"environment_public_id": schema.StringAttribute{
+				Computed:    true,
+				Description: "Public ID of the Cloud Agent environment this automation runs in.",
+			},
 			"memory_enabled": schema.BoolAttribute{
 				Computed:    true,
 				Description: "Whether the AutomationMemory tool is enabled for persistent memory across runs.",
