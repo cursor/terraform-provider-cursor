@@ -1847,6 +1847,50 @@ func TestModelIsOptionalComputed(t *testing.T) {
 	}
 }
 
+// TestSlackCompletionReactionModeIsOptionalComputed guards against the
+// round-trip bug where the API reports the default mode ("on") for configs
+// that leave completion_reaction_mode unset: without Computed, applies fail
+// with "Provider produced inconsistent result after apply" and the field
+// drifts on every subsequent plan.
+func TestSlackCompletionReactionModeIsOptionalComputed(t *testing.T) {
+	r := &platformWorkflowResource{}
+	schemaResp := &resource.SchemaResponse{}
+	r.Schema(context.Background(), resource.SchemaRequest{}, schemaResp)
+
+	trigger, ok := schemaResp.Schema.Attributes["trigger"].(schema.ListNestedAttribute)
+	if !ok {
+		t.Fatal("schema is missing trigger list attribute")
+	}
+	slack, ok := trigger.NestedObject.Attributes["slack"].(schema.SingleNestedAttribute)
+	if !ok {
+		t.Fatal("trigger schema is missing slack attribute")
+	}
+	mode, ok := slack.Attributes["completion_reaction_mode"].(schema.StringAttribute)
+	if !ok {
+		t.Fatal("slack trigger schema is missing completion_reaction_mode")
+	}
+
+	if !mode.Optional {
+		t.Error("completion_reaction_mode should be Optional")
+	}
+	if !mode.Computed {
+		t.Error("completion_reaction_mode should be Computed (the server reports the default \"on\" when unset)")
+	}
+}
+
+// TestSlackCompletionReactionUnknownModeSkipped verifies that an unknown
+// (computed, not yet decided) mode does not get sent to the API and does not
+// fail validation.
+func TestSlackCompletionReactionUnknownModeSkipped(t *testing.T) {
+	st := &v1.SlackTrigger{}
+	if err := applySlackCompletionReaction(st, types.StringUnknown(), types.StringNull()); err != nil {
+		t.Fatalf("unknown mode should be skipped, got error: %v", err)
+	}
+	if st.SlackCompletionReactionMode != nil {
+		t.Error("unknown mode should not set SlackCompletionReactionMode on the proto")
+	}
+}
+
 // TestModelUnsetAcceptsServerDefault verifies that when the practitioner
 // leaves model unset, the provider sends no model to the server, and the
 // server-assigned default in the response is written to state.

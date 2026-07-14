@@ -461,7 +461,11 @@ func (r *platformWorkflowResource) Schema(_ context.Context, _ resource.SchemaRe
 									Description: "If true, only Slack users who linked Cursor can trigger. Omit/false = anyone (default).",
 								},
 								"completion_reaction_mode": schema.StringAttribute{
-									Optional:    true,
+									Optional: true,
+									// Computed: the API reports the default ("on") even when
+									// unset; without Computed, applies fail with an
+									// inconsistent-result error and unset configs drift.
+									Computed:    true,
 									Description: `Controls the emoji reaction added to the triggering Slack message when the automation completes successfully: "on" (default Cursor reaction), "off" (no reaction), or "custom" (use completion_reaction_custom_emoji). Leave unset to use the Cursor default.`,
 								},
 								"completion_reaction_custom_emoji": schema.StringAttribute{
