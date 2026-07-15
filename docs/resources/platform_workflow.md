@@ -61,6 +61,7 @@ resource "cursor_platform_workflow" "example_review" {
 - `action` (Attributes List) Actions the automation can perform. Each action block specifies one action type. (see [below for nested schema](#nestedatt--action))
 - `effort_level` (String) Effort level for the prompt: "standard" or "hard". Defaults to standard if unset.
 - `enabled` (Boolean) Whether the automation is enabled.
+- `environment_public_id` (String) Public ID of the Cloud Agent environment this automation should run in.
 - `git_branch` (String) Git branch for non-git triggers. Defaults to main.
 - `git_repo` (String) Git repository for non-git triggers (cron, slack, linear). E.g. github.com/org/repo.
 - `memory_enabled` (Boolean) Enable the AutomationMemory tool, giving the agent persistent memory across runs.

@@ -2178,3 +2178,127 @@ func TestGitConfigReposRoundTripStable(t *testing.T) {
 		t.Fatalf("GitConfig.Repo after round trip = %q, want %q", got, want)
 	}
 }
+
+// TestEnvironmentPublicIDRoundTrip verifies that agent_options.environment_public_id
+// round-trips through modelToWorkflow -> proto -> protoToModel, and that an unset
+// value stays null rather than becoming an empty string.
+func TestEnvironmentPublicIDRoundTrip(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("set_value_round_trips", func(t *testing.T) {
+		m := &platformWorkflowModel{
+			Prompt:              types.StringValue("do the thing"),
+			EnvironmentPublicID: types.StringValue("env-abc123"),
+			Triggers: []triggerModel{
+				{Webhook: &webhookTriggerModel{}},
+			},
+		}
+
+		workflow, err := modelToWorkflow(ctx, m)
+		if err != nil {
+			t.Fatalf("modelToWorkflow() error = %v", err)
+		}
+		if got := workflow.GetAgentOptions().GetEnvironmentPublicId(); got != "env-abc123" {
+			t.Fatalf("AgentOptions.EnvironmentPublicId = %q, want %q", got, "env-abc123")
+		}
+
+		out, err := protoToModel(ctx, &v1.AutomationWithOwner{
+			Workflow: &v1.Automation{Workflow: workflow},
+		})
+		if err != nil {
+			t.Fatalf("protoToModel() error = %v", err)
+		}
+		if out.EnvironmentPublicID.IsNull() || out.EnvironmentPublicID.ValueString() != "env-abc123" {
+			t.Fatalf("EnvironmentPublicID = %v, want %q", out.EnvironmentPublicID, "env-abc123")
+		}
+	})
+
+	t.Run("unset_value_stays_null", func(t *testing.T) {
+		m := &platformWorkflowModel{
+			Prompt: types.StringValue("do the thing"),
+			Triggers: []triggerModel{
+				{Webhook: &webhookTriggerModel{}},
+			},
+		}
+
+		workflow, err := modelToWorkflow(ctx, m)
+		if err != nil {
+			t.Fatalf("modelToWorkflow() error = %v", err)
+		}
+		if workflow.GetAgentOptions() != nil {
+			t.Fatalf("AgentOptions = %v, want nil when no agent options are set", workflow.GetAgentOptions())
+		}
+
+		out, err := protoToModel(ctx, &v1.AutomationWithOwner{
+			Workflow: &v1.Automation{Workflow: workflow},
+		})
+		if err != nil {
+			t.Fatalf("protoToModel() error = %v", err)
+		}
+		if !out.EnvironmentPublicID.IsNull() {
+			t.Fatalf("EnvironmentPublicID = %v, want null", out.EnvironmentPublicID)
+		}
+	})
+}
+
+func TestPreserveEquivalentEnvironmentPublicID(t *testing.T) {
+	t.Run("preserves_reference_formatting_for_equivalent_value", func(t *testing.T) {
+		state := &platformWorkflowModel{
+			EnvironmentPublicID: types.StringValue("env-abc123"),
+		}
+		reference := platformWorkflowModel{
+			EnvironmentPublicID: types.StringValue("  env-abc123  "),
+		}
+
+		preserveEquivalentEnvironmentPublicID(state, reference)
+
+		if got := state.EnvironmentPublicID.ValueString(); got != "  env-abc123  " {
+			t.Fatalf("EnvironmentPublicID = %q, want %q", got, "  env-abc123  ")
+		}
+	})
+
+	t.Run("empty_configured_value_does_not_drift_to_null", func(t *testing.T) {
+		state := &platformWorkflowModel{
+			EnvironmentPublicID: types.StringNull(),
+		}
+		reference := platformWorkflowModel{
+			EnvironmentPublicID: types.StringValue("   "),
+		}
+
+		preserveEquivalentEnvironmentPublicID(state, reference)
+
+		if state.EnvironmentPublicID.IsNull() || state.EnvironmentPublicID.ValueString() != "   " {
+			t.Fatalf("EnvironmentPublicID = %v, want %q", state.EnvironmentPublicID, "   ")
+		}
+	})
+
+	t.Run("null_state_with_real_reference_value_stays_null", func(t *testing.T) {
+		state := &platformWorkflowModel{
+			EnvironmentPublicID: types.StringNull(),
+		}
+		reference := platformWorkflowModel{
+			EnvironmentPublicID: types.StringValue("env-abc123"),
+		}
+
+		preserveEquivalentEnvironmentPublicID(state, reference)
+
+		if !state.EnvironmentPublicID.IsNull() {
+			t.Fatalf("EnvironmentPublicID = %v, want null", state.EnvironmentPublicID)
+		}
+	})
+
+	t.Run("leaves_state_unchanged_for_non_equivalent_value", func(t *testing.T) {
+		state := &platformWorkflowModel{
+			EnvironmentPublicID: types.StringValue("env-abc123"),
+		}
+		reference := platformWorkflowModel{
+			EnvironmentPublicID: types.StringValue("env-different"),
+		}
+
+		preserveEquivalentEnvironmentPublicID(state, reference)
+
+		if got := state.EnvironmentPublicID.ValueString(); got != "env-abc123" {
+			t.Fatalf("EnvironmentPublicID = %q, want %q", got, "env-abc123")
+		}
+	})
+}

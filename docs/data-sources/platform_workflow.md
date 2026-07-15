@@ -31,6 +31,7 @@ data "cursor_platform_workflow" "existing" {
 - `created_at` (Number) Unix timestamp (seconds) when the automation was created.
 - `effort_level` (String) Effort level: standard or hard.
 - `enabled` (Boolean) Whether the automation is enabled.
+- `environment_public_id` (String) Public ID of the Cloud Agent environment this automation runs in.
 - `git_branch` (String) Git branch for non-git triggers.
 - `git_repo` (String) Git repository for non-git triggers.
 - `memory_enabled` (Boolean) Whether the AutomationMemory tool is enabled for persistent memory across runs.
