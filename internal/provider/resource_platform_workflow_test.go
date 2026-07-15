@@ -2257,7 +2257,6 @@ func TestPreserveEquivalentEnvironmentPublicID(t *testing.T) {
 		}
 	})
 
-
 	t.Run("empty_configured_value_does_not_drift_to_null", func(t *testing.T) {
 		state := &platformWorkflowModel{
 			EnvironmentPublicID: types.StringNull(),
