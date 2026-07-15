@@ -2257,6 +2257,37 @@ func TestPreserveEquivalentEnvironmentPublicID(t *testing.T) {
 		}
 	})
 
+
+	t.Run("empty_configured_value_does_not_drift_to_null", func(t *testing.T) {
+		state := &platformWorkflowModel{
+			EnvironmentPublicID: types.StringNull(),
+		}
+		reference := platformWorkflowModel{
+			EnvironmentPublicID: types.StringValue("   "),
+		}
+
+		preserveEquivalentEnvironmentPublicID(state, reference)
+
+		if state.EnvironmentPublicID.IsNull() || state.EnvironmentPublicID.ValueString() != "   " {
+			t.Fatalf("EnvironmentPublicID = %v, want %q", state.EnvironmentPublicID, "   ")
+		}
+	})
+
+	t.Run("null_state_with_real_reference_value_stays_null", func(t *testing.T) {
+		state := &platformWorkflowModel{
+			EnvironmentPublicID: types.StringNull(),
+		}
+		reference := platformWorkflowModel{
+			EnvironmentPublicID: types.StringValue("env-abc123"),
+		}
+
+		preserveEquivalentEnvironmentPublicID(state, reference)
+
+		if !state.EnvironmentPublicID.IsNull() {
+			t.Fatalf("EnvironmentPublicID = %v, want null", state.EnvironmentPublicID)
+		}
+	})
+
 	t.Run("leaves_state_unchanged_for_non_equivalent_value", func(t *testing.T) {
 		state := &platformWorkflowModel{
 			EnvironmentPublicID: types.StringValue("env-abc123"),

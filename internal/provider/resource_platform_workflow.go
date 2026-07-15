@@ -1087,14 +1087,24 @@ func preserveEquivalentEnvironmentPublicID(state *platformWorkflowModel, referen
 	if state == nil {
 		return
 	}
-	if state.EnvironmentPublicID.IsNull() || state.EnvironmentPublicID.IsUnknown() {
-		return
-	}
 	if reference.EnvironmentPublicID.IsNull() || reference.EnvironmentPublicID.IsUnknown() {
 		return
 	}
-
 	referenceValue := reference.EnvironmentPublicID.ValueString()
+
+	// An empty/whitespace-only configured value is omitted from the API
+	// request and comes back as null; keep the configured value so the state
+	// matches the plan instead of drifting forever.
+	if state.EnvironmentPublicID.IsNull() {
+		if strings.TrimSpace(referenceValue) == "" {
+			state.EnvironmentPublicID = reference.EnvironmentPublicID
+		}
+		return
+	}
+	if state.EnvironmentPublicID.IsUnknown() {
+		return
+	}
+
 	if referenceValue == "" {
 		return
 	}
