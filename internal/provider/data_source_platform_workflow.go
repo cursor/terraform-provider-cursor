@@ -71,6 +71,17 @@ func (d *platformWorkflowDataSource) Schema(_ context.Context, _ datasource.Sche
 				Computed:    true,
 				Description: "Public ID of the Cloud Agent environment this automation runs in.",
 			},
+			"private_worker": schema.SingleNestedAttribute{
+				Computed:    true,
+				Description: "Private-worker routing configuration for this automation.",
+				Attributes: map[string]schema.Attribute{
+					"labels": schema.MapAttribute{
+						Computed:    true,
+						ElementType: types.StringType,
+						Description: "Private-worker selector labels.",
+					},
+				},
+			},
 			"memory_enabled": schema.BoolAttribute{
 				Computed:    true,
 				Description: "Whether the AutomationMemory tool is enabled for persistent memory across runs.",

@@ -21,6 +21,13 @@ resource "cursor_platform_workflow" "example_review" {
   prompt = file("prompt.md")
   model  = "gpt-5.5"
 
+  private_worker = {
+    labels = {
+      repo = "example-org/example-repo"
+      pool = "example-reviewers"
+    }
+  }
+
   trigger = [
     {
       git_pull_request = {
@@ -66,6 +73,7 @@ resource "cursor_platform_workflow" "example_review" {
 - `git_repo` (String) Git repository for non-git triggers (cron, slack, linear). E.g. github.com/org/repo.
 - `memory_enabled` (Boolean) Enable the AutomationMemory tool, giving the agent persistent memory across runs.
 - `model` (String) Model to use (e.g. claude-4.6-opus-high-thinking, gpt-4o). If unset, the server assigns a default model.
+- `private_worker` (Attributes) Route this automation to private workers. An empty object targets any private worker; labels narrow the eligible workers. (see [below for nested schema](#nestedatt--private_worker))
 - `scope` (String) Automation ownership scope: "user", "team", "team_visible", "team_editable_user", or "team_editable". "user" is private (owner and admins only), "team" is shared (team admins can edit, runs as team service account), "team_visible" is viewable by team (team can view, only owner can edit, runs as owner), "team_editable_user" is editable by the team but still runs as the creator user, and "team_editable" is editable by the team and runs as the team service account. Defaults to "user" when unset.
 - `skip_install` (Boolean) Skip user install commands and cloud testing.
 
@@ -295,6 +303,15 @@ Optional:
 - `generalized` (Boolean) If true, agent can list and send to any Slack channel or DM dynamically.
 - `post_as_thread` (Boolean) If true, post a parent message with the automation name and reply in the thread.
 - `respond_in_thread` (Boolean) If true, respond in the thread of the triggering Slack message (Slack triggers only).
+
+
+
+<a id="nestedatt--private_worker"></a>
+### Nested Schema for `private_worker`
+
+Optional:
+
+- `labels` (Map of String) Private-worker selector labels. Label keys and values are matched exactly.
 
 ## Import
 
