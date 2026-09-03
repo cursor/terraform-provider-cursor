@@ -2973,6 +2973,63 @@ func TestEmptyActionsRoundTrip(t *testing.T) {
 	})
 }
 
+func TestMicrosoftTeamsActionRejectsRespondAndPostAsThread(t *testing.T) {
+	_, err := actionModelToProto(&actionModel{
+		MicrosoftTeams: &microsoftTeamsActionModel{
+			TenantID:        types.StringValue("tenant"),
+			TeamID:          types.StringValue("team"),
+			ChannelIDs:      types.ListNull(types.StringType),
+			RespondInThread: types.BoolValue(true),
+			PostAsThread:    types.BoolValue(true),
+		},
+	})
+	if err == nil || !strings.Contains(err.Error(), "respond_in_thread and post_as_thread") {
+		t.Fatalf("expected respond_in_thread/post_as_thread error, got %v", err)
+	}
+}
+
+func TestMicrosoftTeamsChannelCreatedRequiresTeamIDs(t *testing.T) {
+	ctx := context.Background()
+
+	m := &platformWorkflowModel{
+		Prompt: types.StringValue("welcome channels"),
+		Triggers: []triggerModel{{
+			MicrosoftTeamsChannelCreated: &microsoftTeamsChannelCreatedTriggerModel{
+				TenantID: types.StringValue("tenant"),
+				TeamIDs:  types.ListNull(types.StringType),
+			},
+			UserAllowlist: types.ListNull(types.StringType),
+		}},
+	}
+	if _, err := modelToWorkflow(ctx, m); err == nil || !strings.Contains(err.Error(), "at least one team_id") {
+		t.Fatalf("expected team_id required error, got %v", err)
+	}
+
+	r := &platformWorkflowResource{}
+	schemaResp := &resource.SchemaResponse{}
+	r.Schema(ctx, resource.SchemaRequest{}, schemaResp)
+	trigger := schemaResp.Schema.Attributes["trigger"].(schema.ListNestedAttribute)
+	mtc := trigger.NestedObject.Attributes["microsoft_teams_channel_created"].(schema.SingleNestedAttribute)
+	if !mtc.Attributes["team_ids"].(schema.ListAttribute).Required {
+		t.Fatal("microsoft_teams_channel_created.team_ids should be Required")
+	}
+}
+
+func TestSlackActionRespondInThreadIsDeprecated(t *testing.T) {
+	r := &platformWorkflowResource{}
+	schemaResp := &resource.SchemaResponse{}
+	r.Schema(context.Background(), resource.SchemaRequest{}, schemaResp)
+	action := schemaResp.Schema.Attributes["action"].(schema.ListNestedAttribute)
+	slack := action.NestedObject.Attributes["slack"].(schema.SingleNestedAttribute)
+	attr := slack.Attributes["respond_in_thread"].(schema.BoolAttribute)
+	if attr.DeprecationMessage == "" {
+		t.Fatal("slack.respond_in_thread should carry a DeprecationMessage")
+	}
+	if !attr.Optional || !attr.Computed {
+		t.Fatal("slack.respond_in_thread should stay Optional+Computed so existing configs keep working")
+	}
+}
+
 func TestDisabledDefaultToolsRoundTrip(t *testing.T) {
 	ctx := context.Background()
 
@@ -3118,6 +3175,38 @@ func TestTeamIDIsCarriedOverNotReadBack(t *testing.T) {
 	}
 	if got := dataSourceTeamID(types.Int64Null(), &v1.AutomationWithOwner{}); !got.IsNull() {
 		t.Fatalf("dataSourceTeamID(no team) = %v, want null", got)
+	}
+}
+
+func TestAutomationFromGetResponseRestrictedSummary(t *testing.T) {
+	_, err := automationFromGetResponse(&v1.GetAutomationResponse{
+		Result: &v1.GetAutomationResponse_RestrictedSummary{
+			RestrictedSummary: &v1.RestrictedAutomationSummary{
+				AutomationId: "abc",
+				Name:         "Private automation",
+				OwnerName:    "Jane",
+			},
+		},
+	})
+	if err == nil {
+		t.Fatal("expected error for restricted summary")
+	}
+	for _, want := range []string{"abc", "Private automation", "Jane", "restricted summary"} {
+		if !strings.Contains(err.Error(), want) {
+			t.Errorf("error %q should mention %q", err.Error(), want)
+		}
+	}
+
+	withOwner, err := automationFromGetResponse(&v1.GetAutomationResponse{
+		Result: &v1.GetAutomationResponse_Workflow{
+			Workflow: &v1.AutomationWithOwner{Workflow: &v1.Automation{AutomationId: "abc"}},
+		},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if withOwner.GetWorkflow().GetAutomationId() != "abc" {
+		t.Fatal("expected workflow variant to be returned unchanged")
 	}
 }
 

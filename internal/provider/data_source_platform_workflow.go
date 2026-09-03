@@ -41,7 +41,7 @@ func (d *platformWorkflowDataSource) Schema(_ context.Context, _ datasource.Sche
 			},
 			"scope": schema.StringAttribute{
 				Computed:    true,
-				Description: `Automation ownership scope: "user" or "team".`,
+				Description: `Automation ownership scope: "user", "team", "team_visible", "team_editable_user", or "team_editable".`,
 			},
 			"team_id": schema.Int64Attribute{
 				Optional:    true,
@@ -450,7 +450,7 @@ func (d *platformWorkflowDataSource) Schema(_ context.Context, _ datasource.Sche
 								"team_ids": schema.ListAttribute{
 									Computed:    true,
 									ElementType: types.StringType,
-									Description: "AAD group IDs to scope to. Empty fires for any team in the tenant.",
+									Description: "AAD group IDs of the teams watched.",
 								},
 								"channel_name_contains": schema.StringAttribute{
 									Computed:    true,
@@ -522,8 +522,9 @@ func (d *platformWorkflowDataSource) Schema(_ context.Context, _ datasource.Sche
 									Description: "If true, agent can list and send to any Slack channel or DM dynamically.",
 								},
 								"respond_in_thread": schema.BoolAttribute{
-									Computed:    true,
-									Description: "If true, respond in the thread of the triggering Slack message (Slack triggers only).",
+									Computed:           true,
+									Description:        "Deprecated: ignored by the server, which always replies in the triggering Slack thread.",
+									DeprecationMessage: "The server ignores respond_in_thread and always replies in the triggering Slack thread.",
 								},
 								"post_as_thread": schema.BoolAttribute{
 									Computed:    true,
@@ -647,7 +648,11 @@ func (d *platformWorkflowDataSource) Read(ctx context.Context, req datasource.Re
 		return
 	}
 
-	withOwner := workflowResp.Msg.GetWorkflow()
+	withOwner, err := automationFromGetResponse(workflowResp.Msg)
+	if err != nil {
+		resp.Diagnostics.AddError("Failed to read automation", err.Error())
+		return
+	}
 	state, err := protoToModel(ctx, withOwner)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to read automation", err.Error())

@@ -833,9 +833,9 @@ func (r *platformWorkflowResource) Schema(_ context.Context, _ resource.SchemaRe
 									Description: "AAD tenant GUID hosting the team.",
 								},
 								"team_ids": schema.ListAttribute{
-									Optional:    true,
+									Required:    true,
 									ElementType: types.StringType,
-									Description: "Optional AAD group IDs to scope to. Empty fires for any team in the tenant.",
+									Description: "AAD group IDs of the teams to watch. At least one is required.",
 								},
 								"channel_name_contains": schema.StringAttribute{
 									Optional:    true,
@@ -911,9 +911,10 @@ func (r *platformWorkflowResource) Schema(_ context.Context, _ resource.SchemaRe
 									Description: "If true, agent can list and send to any Slack channel or DM dynamically.",
 								},
 								"respond_in_thread": schema.BoolAttribute{
-									Optional:    true,
-									Computed:    true,
-									Description: "If true, respond in the thread of the triggering Slack message (Slack triggers only).",
+									Optional:           true,
+									Computed:           true,
+									Description:        "Deprecated: the server ignores this flag and always replies in the triggering Slack thread. Kept for compatibility with existing configurations.",
+									DeprecationMessage: "The server ignores respond_in_thread and always replies in the triggering Slack thread; remove it from your configuration.",
 								},
 								"post_as_thread": schema.BoolAttribute{
 									Optional:    true,
@@ -1102,6 +1103,19 @@ func optionalTeamID(value types.Int64) *int32 {
 	return &teamID
 }
 
+// automationFromGetResponse unwraps GetAutomationResponse, turning the
+// restricted-summary variant (the token can see that the automation exists but
+// not its definition) into a clear error instead of an "empty response" one.
+func automationFromGetResponse(msg *v1.GetAutomationResponse) (*v1.AutomationWithOwner, error) {
+	if summary := msg.GetRestrictedSummary(); summary != nil {
+		return nil, fmt.Errorf(
+			"automation %s (%q, owned by %q) is only visible as a restricted summary: the configured token cannot read its definition. Use a token belonging to the owner or a team admin, or set team_id to the owning team",
+			summary.GetAutomationId(), summary.GetName(), summary.GetOwnerName(),
+		)
+	}
+	return msg.GetWorkflow(), nil
+}
+
 func (r *platformWorkflowResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var state platformWorkflowModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
@@ -1135,7 +1149,12 @@ func (r *platformWorkflowResource) Read(ctx context.Context, req resource.ReadRe
 		return
 	}
 
-	updatedState, err := protoToModel(ctx, workflowResp.Msg.GetWorkflow())
+	withOwner, err := automationFromGetResponse(workflowResp.Msg)
+	if err != nil {
+		resp.Diagnostics.AddError("Failed to read automation", err.Error())
+		return
+	}
+	updatedState, err := protoToModel(ctx, withOwner)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to read automation", err.Error())
 		return
@@ -1999,6 +2018,9 @@ func actionModelToProto(a *actionModel) (*v1.Action, error) {
 		if !a.MicrosoftTeams.PostAsThread.IsNull() && !a.MicrosoftTeams.PostAsThread.IsUnknown() {
 			teams.PostAsThread = a.MicrosoftTeams.PostAsThread.ValueBool()
 		}
+		if teams.RespondInThread && teams.PostAsThread {
+			return nil, fmt.Errorf("microsoft_teams cannot set both respond_in_thread and post_as_thread")
+		}
 		return &v1.Action{Action: &v1.Action_MicrosoftTeams{MicrosoftTeams: teams}}, nil
 	}
 	if a.ReadMicrosoftTeams != nil {
@@ -2455,6 +2477,9 @@ func triggerModelToProto(ctx context.Context, t *triggerModel) (*v1.Trigger, err
 		teamIDs, err := readStringList(ctx, mtc.TeamIDs, "microsoft_teams_channel_created.team_ids")
 		if err != nil {
 			return nil, err
+		}
+		if len(teamIDs) == 0 {
+			return nil, fmt.Errorf("microsoft_teams_channel_created must specify at least one team_id")
 		}
 		mctt.TeamIds = teamIDs
 		if !mtc.ChannelNameContains.IsNull() && !mtc.ChannelNameContains.IsUnknown() {
