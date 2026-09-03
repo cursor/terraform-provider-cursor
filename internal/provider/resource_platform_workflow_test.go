@@ -2502,3 +2502,685 @@ func TestPrivateWorkerAPILabelOrderDoesNotDrift(t *testing.T) {
 		t.Fatalf("private worker labels were not canonicalized: %#v", labels)
 	}
 }
+
+func TestSlackChannelCreatedTriggerRoundTrip(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("model_to_proto", func(t *testing.T) {
+		m := &platformWorkflowModel{
+			Prompt: types.StringValue("welcome new channels"),
+			Triggers: []triggerModel{
+				{
+					SlackChannelCreated: &slackChannelCreatedTriggerModel{
+						ChannelNameContains: types.StringValue("incident"),
+					},
+					UserAllowlist: types.ListNull(types.StringType),
+				},
+			},
+		}
+
+		wf, err := modelToWorkflow(ctx, m)
+		if err != nil {
+			t.Fatalf("modelToWorkflow() error: %v", err)
+		}
+		scc := wf.Triggers[0].GetSlackChannelCreated()
+		if scc == nil {
+			t.Fatal("expected slack_channel_created trigger in proto")
+		}
+		if scc.GetChannelNameContains() != "incident" {
+			t.Fatalf("ChannelNameContains = %q, want %q", scc.GetChannelNameContains(), "incident")
+		}
+	})
+
+	t.Run("proto_to_model_empty_filter_is_null", func(t *testing.T) {
+		input := &v1.AutomationWithOwner{
+			Workflow: &v1.Automation{
+				Workflow: &v1.Workflow{
+					Triggers: []*v1.Trigger{
+						{Trigger: &v1.Trigger_SlackChannelCreated{SlackChannelCreated: &v1.SlackChannelCreatedTrigger{}}},
+					},
+				},
+			},
+		}
+
+		model, err := protoToModel(ctx, input)
+		if err != nil {
+			t.Fatalf("protoToModel() error: %v", err)
+		}
+		scc := model.Triggers[0].SlackChannelCreated
+		if scc == nil {
+			t.Fatal("expected slack_channel_created trigger in terraform model")
+		}
+		if !scc.ChannelNameContains.IsNull() {
+			t.Fatalf("expected null channel_name_contains, got %v", scc.ChannelNameContains)
+		}
+	})
+}
+
+func TestSlackReactionAddedTriggerRoundTrip(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("model_to_proto", func(t *testing.T) {
+		m := &platformWorkflowModel{
+			Prompt: types.StringValue("triage reactions"),
+			Triggers: []triggerModel{
+				{
+					SlackReactionAdded: &slackReactionAddedTriggerModel{
+						Channel:                        types.StringValue("C0123456789"),
+						EmojiName:                      types.StringValue("white_check_mark"),
+						BlockUnauthenticatedSlackUsers: types.BoolValue(true),
+						OnlyOwnerReactions:             types.BoolNull(),
+					},
+					UserAllowlist: types.ListNull(types.StringType),
+				},
+			},
+		}
+
+		wf, err := modelToWorkflow(ctx, m)
+		if err != nil {
+			t.Fatalf("modelToWorkflow() error: %v", err)
+		}
+		sra := wf.Triggers[0].GetSlackReactionAdded()
+		if sra == nil {
+			t.Fatal("expected slack_reaction_added trigger in proto")
+		}
+		if sra.GetChannel() != "C0123456789" {
+			t.Fatalf("Channel = %q", sra.GetChannel())
+		}
+		if sra.GetEmojiName() != "white_check_mark" {
+			t.Fatalf("EmojiName = %q", sra.GetEmojiName())
+		}
+		if !sra.GetBlockUnauthenticatedSlackUsers() {
+			t.Fatal("expected BlockUnauthenticatedSlackUsers=true")
+		}
+		if sra.GetOnlyOwnerReactions() {
+			t.Fatal("expected OnlyOwnerReactions=false when unset")
+		}
+	})
+
+	t.Run("model_to_proto_rejects_non_canonical_emoji", func(t *testing.T) {
+		for _, emoji := range []string{":thumbsup:", "ThumbsUp", "thumbsup::skin-tone-2", ""} {
+			m := &platformWorkflowModel{
+				Prompt: types.StringValue("triage reactions"),
+				Triggers: []triggerModel{
+					{
+						SlackReactionAdded: &slackReactionAddedTriggerModel{
+							Channel:   types.StringValue("C0123456789"),
+							EmojiName: types.StringValue(emoji),
+						},
+						UserAllowlist: types.ListNull(types.StringType),
+					},
+				},
+			}
+			if _, err := modelToWorkflow(ctx, m); err == nil {
+				t.Errorf("expected error for emoji_name %q", emoji)
+			}
+		}
+	})
+
+	t.Run("model_to_proto_requires_channel", func(t *testing.T) {
+		m := &platformWorkflowModel{
+			Prompt: types.StringValue("triage reactions"),
+			Triggers: []triggerModel{
+				{
+					SlackReactionAdded: &slackReactionAddedTriggerModel{
+						Channel:   types.StringValue(" "),
+						EmojiName: types.StringValue("eyes"),
+					},
+					UserAllowlist: types.ListNull(types.StringType),
+				},
+			},
+		}
+		_, err := modelToWorkflow(ctx, m)
+		if err == nil || !strings.Contains(err.Error(), "slack_reaction_added.channel is required") {
+			t.Fatalf("expected channel required error, got %v", err)
+		}
+	})
+
+	t.Run("proto_to_model_prefers_channels_and_nulls_false_bools", func(t *testing.T) {
+		input := &v1.AutomationWithOwner{
+			Workflow: &v1.Automation{
+				Workflow: &v1.Workflow{
+					Triggers: []*v1.Trigger{
+						{Trigger: &v1.Trigger_SlackReactionAdded{SlackReactionAdded: &v1.SlackReactionAddedTrigger{
+							Channel:            "C0123456789",
+							Channels:           []string{"C0123456789"},
+							EmojiName:          "eyes",
+							OnlyOwnerReactions: true,
+						}}},
+					},
+				},
+			},
+		}
+
+		model, err := protoToModel(ctx, input)
+		if err != nil {
+			t.Fatalf("protoToModel() error: %v", err)
+		}
+		sra := model.Triggers[0].SlackReactionAdded
+		if sra == nil {
+			t.Fatal("expected slack_reaction_added trigger in terraform model")
+		}
+		if sra.Channel.ValueString() != "C0123456789" {
+			t.Fatalf("Channel = %q", sra.Channel.ValueString())
+		}
+		if sra.EmojiName.ValueString() != "eyes" {
+			t.Fatalf("EmojiName = %q", sra.EmojiName.ValueString())
+		}
+		if !sra.BlockUnauthenticatedSlackUsers.IsNull() {
+			t.Fatal("expected null block_unauthenticated_slack_users when false")
+		}
+		if !sra.OnlyOwnerReactions.ValueBool() {
+			t.Fatal("expected only_owner_reactions=true")
+		}
+	})
+}
+
+func TestSlackMentionAndAnyReactionTriggerRoundTrip(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("model_to_proto", func(t *testing.T) {
+		m := &platformWorkflowModel{
+			Prompt: types.StringValue("respond to mentions"),
+			Triggers: []triggerModel{
+				{
+					SlackMention: &slackMentionTriggerModel{
+						Channel:                        types.StringValue("C1"),
+						BlockUnauthenticatedSlackUsers: types.BoolValue(true),
+					},
+					UserAllowlist: types.ListNull(types.StringType),
+				},
+				{
+					SlackAnyReactionAdded: &slackAnyReactionAddedTriggerModel{
+						Channel:            types.StringValue("C2"),
+						OnlyOwnerReactions: types.BoolValue(true),
+					},
+					UserAllowlist: types.ListNull(types.StringType),
+				},
+			},
+		}
+
+		wf, err := modelToWorkflow(ctx, m)
+		if err != nil {
+			t.Fatalf("modelToWorkflow() error: %v", err)
+		}
+		mention := wf.Triggers[0].GetSlackMention()
+		if mention == nil || mention.GetChannel() != "C1" || !mention.GetBlockUnauthenticatedSlackUsers() {
+			t.Fatalf("unexpected slack_mention proto: %v", mention)
+		}
+		anyReaction := wf.Triggers[1].GetSlackAnyReactionAdded()
+		if anyReaction == nil || anyReaction.GetChannel() != "C2" || !anyReaction.GetOnlyOwnerReactions() || anyReaction.GetBlockUnauthenticatedSlackUsers() {
+			t.Fatalf("unexpected slack_any_reaction_added proto: %v", anyReaction)
+		}
+	})
+
+	t.Run("proto_to_model", func(t *testing.T) {
+		input := &v1.AutomationWithOwner{
+			Workflow: &v1.Automation{
+				Workflow: &v1.Workflow{
+					Triggers: []*v1.Trigger{
+						{Trigger: &v1.Trigger_SlackMention{SlackMention: &v1.SlackMentionTrigger{Channels: []string{"C1", "C9"}}}},
+						{Trigger: &v1.Trigger_SlackAnyReactionAdded{SlackAnyReactionAdded: &v1.SlackAnyReactionAddedTrigger{
+							Channel:                        "C2",
+							BlockUnauthenticatedSlackUsers: true,
+						}}},
+					},
+				},
+			},
+		}
+
+		model, err := protoToModel(ctx, input)
+		if err != nil {
+			t.Fatalf("protoToModel() error: %v", err)
+		}
+		mention := model.Triggers[0].SlackMention
+		if mention == nil || mention.Channel.ValueString() != "C1" || !mention.BlockUnauthenticatedSlackUsers.IsNull() {
+			t.Fatalf("unexpected slack_mention model: %+v", mention)
+		}
+		anyReaction := model.Triggers[1].SlackAnyReactionAdded
+		if anyReaction == nil || anyReaction.Channel.ValueString() != "C2" || !anyReaction.BlockUnauthenticatedSlackUsers.ValueBool() || !anyReaction.OnlyOwnerReactions.IsNull() {
+			t.Fatalf("unexpected slack_any_reaction_added model: %+v", anyReaction)
+		}
+	})
+}
+
+func TestPagerDutyTriggerRoundTrip(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("model_to_proto", func(t *testing.T) {
+		m := &platformWorkflowModel{
+			Prompt: types.StringValue("handle incidents"),
+			Triggers: []triggerModel{
+				{
+					PagerDuty: &pagerDutyTriggerModel{
+						IncidentTriggered: &emptyEventModel{},
+						ServiceIDs:        mustStringList(t, ctx, []string{"PABC123"}),
+					},
+					UserAllowlist: types.ListNull(types.StringType),
+				},
+			},
+		}
+
+		wf, err := modelToWorkflow(ctx, m)
+		if err != nil {
+			t.Fatalf("modelToWorkflow() error: %v", err)
+		}
+		pd := wf.Triggers[0].GetPagerduty()
+		if pd == nil {
+			t.Fatal("expected pagerduty trigger in proto")
+		}
+		if pd.GetIncidentTriggered() == nil {
+			t.Fatal("expected incident_triggered event in proto")
+		}
+		if !reflect.DeepEqual(pd.GetServiceIds(), []string{"PABC123"}) {
+			t.Fatalf("ServiceIds = %v", pd.GetServiceIds())
+		}
+	})
+
+	t.Run("model_to_proto_requires_exactly_one_event", func(t *testing.T) {
+		for name, pd := range map[string]*pagerDutyTriggerModel{
+			"none": {ServiceIDs: types.ListNull(types.StringType)},
+			"two":  {IncidentAny: &emptyEventModel{}, IncidentResolved: &emptyEventModel{}, ServiceIDs: types.ListNull(types.StringType)},
+		} {
+			m := &platformWorkflowModel{
+				Prompt:   types.StringValue("handle incidents"),
+				Triggers: []triggerModel{{PagerDuty: pd, UserAllowlist: types.ListNull(types.StringType)}},
+			}
+			if _, err := modelToWorkflow(ctx, m); err == nil {
+				t.Errorf("%s: expected error", name)
+			}
+		}
+	})
+
+	t.Run("proto_to_model", func(t *testing.T) {
+		input := &v1.AutomationWithOwner{
+			Workflow: &v1.Automation{
+				Workflow: &v1.Workflow{
+					Triggers: []*v1.Trigger{
+						{Trigger: &v1.Trigger_Pagerduty{Pagerduty: &v1.PagerDutyTrigger{
+							Event: &v1.PagerDutyTrigger_IncidentAny{IncidentAny: &v1.PagerDutyIncidentAnyEvent{}},
+						}}},
+					},
+				},
+			},
+		}
+
+		model, err := protoToModel(ctx, input)
+		if err != nil {
+			t.Fatalf("protoToModel() error: %v", err)
+		}
+		pd := model.Triggers[0].PagerDuty
+		if pd == nil {
+			t.Fatal("expected pagerduty trigger in terraform model")
+		}
+		if pd.IncidentAny == nil || pd.IncidentTriggered != nil {
+			t.Fatalf("unexpected pagerduty events: %+v", pd)
+		}
+		if !pd.ServiceIDs.IsNull() {
+			t.Fatal("expected null service_ids when empty")
+		}
+	})
+}
+
+func TestSentryTriggerRoundTrip(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("model_to_proto", func(t *testing.T) {
+		m := &platformWorkflowModel{
+			Prompt: types.StringValue("triage sentry issues"),
+			Triggers: []triggerModel{
+				{
+					Sentry: &sentryTriggerModel{
+						IssueCreated: &emptyEventModel{},
+						ProjectIDs:   mustStringList(t, ctx, []string{"123", "456"}),
+					},
+					UserAllowlist: types.ListNull(types.StringType),
+				},
+			},
+		}
+
+		wf, err := modelToWorkflow(ctx, m)
+		if err != nil {
+			t.Fatalf("modelToWorkflow() error: %v", err)
+		}
+		sentry := wf.Triggers[0].GetSentry()
+		if sentry == nil {
+			t.Fatal("expected sentry trigger in proto")
+		}
+		if sentry.GetIssueCreated() == nil {
+			t.Fatal("expected issue_created event in proto")
+		}
+		if !reflect.DeepEqual(sentry.GetProjectIds(), []string{"123", "456"}) {
+			t.Fatalf("ProjectIds = %v", sentry.GetProjectIds())
+		}
+	})
+
+	t.Run("model_to_proto_requires_exactly_one_event", func(t *testing.T) {
+		m := &platformWorkflowModel{
+			Prompt: types.StringValue("triage sentry issues"),
+			Triggers: []triggerModel{{
+				Sentry:        &sentryTriggerModel{ProjectIDs: types.ListNull(types.StringType)},
+				UserAllowlist: types.ListNull(types.StringType),
+			}},
+		}
+		if _, err := modelToWorkflow(ctx, m); err == nil {
+			t.Fatal("expected error when no sentry event is set")
+		}
+	})
+
+	t.Run("proto_to_model", func(t *testing.T) {
+		input := &v1.AutomationWithOwner{
+			Workflow: &v1.Automation{
+				Workflow: &v1.Workflow{
+					Triggers: []*v1.Trigger{
+						{Trigger: &v1.Trigger_Sentry{Sentry: &v1.SentryTrigger{
+							Event:      &v1.SentryTrigger_IssueUnresolved{IssueUnresolved: &v1.SentryIssueUnresolvedEvent{}},
+							ProjectIds: []string{"123"},
+						}}},
+					},
+				},
+			},
+		}
+
+		model, err := protoToModel(ctx, input)
+		if err != nil {
+			t.Fatalf("protoToModel() error: %v", err)
+		}
+		sentry := model.Triggers[0].Sentry
+		if sentry == nil {
+			t.Fatal("expected sentry trigger in terraform model")
+		}
+		if sentry.IssueUnresolved == nil || sentry.IssueAny != nil {
+			t.Fatalf("unexpected sentry events: %+v", sentry)
+		}
+		var projectIDs []string
+		if diags := sentry.ProjectIDs.ElementsAs(ctx, &projectIDs, false); diags.HasError() {
+			t.Fatalf("failed to read project_ids: %v", diags)
+		}
+		if !reflect.DeepEqual(projectIDs, []string{"123"}) {
+			t.Fatalf("project_ids = %v", projectIDs)
+		}
+	})
+}
+
+func TestEmptyActionsRoundTrip(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("model_to_proto", func(t *testing.T) {
+		m := &platformWorkflowModel{
+			Prompt: types.StringValue("review code"),
+			Triggers: []triggerModel{
+				{Webhook: &webhookTriggerModel{}, UserAllowlist: types.ListNull(types.StringType)},
+			},
+			Actions: []actionModel{
+				{ManageCheckRun: &manageCheckRunActionModel{}},
+				{ApprovePr: &approvePrActionModel{}},
+				{ResolveReviewThreads: &resolveReviewThreadsActionModel{}},
+			},
+		}
+
+		wf, err := modelToWorkflow(ctx, m)
+		if err != nil {
+			t.Fatalf("modelToWorkflow() error: %v", err)
+		}
+		if len(wf.Actions) != 3 {
+			t.Fatalf("expected 3 actions, got %d", len(wf.Actions))
+		}
+		if wf.Actions[0].GetManageCheckRun() == nil {
+			t.Error("expected manage_check_run action")
+		}
+		if wf.Actions[1].GetApprovePr() == nil {
+			t.Error("expected approve_pr action")
+		}
+		if wf.Actions[2].GetResolveReviewThreads() == nil {
+			t.Error("expected resolve_review_threads action")
+		}
+	})
+
+	t.Run("model_to_proto_rejects_multiple_action_types", func(t *testing.T) {
+		_, err := actionModelToProto(&actionModel{
+			ManageCheckRun:       &manageCheckRunActionModel{},
+			ResolveReviewThreads: &resolveReviewThreadsActionModel{},
+		})
+		if err == nil || !strings.Contains(err.Error(), "exactly one of") {
+			t.Fatalf("expected exactly-one error, got %v", err)
+		}
+	})
+
+	t.Run("proto_to_model", func(t *testing.T) {
+		input := &v1.AutomationWithOwner{
+			Workflow: &v1.Automation{
+				Workflow: &v1.Workflow{
+					Actions: []*v1.Action{
+						{Action: &v1.Action_ManageCheckRun{ManageCheckRun: &v1.ManageCheckRunAction{}}},
+						{Action: &v1.Action_ApprovePr{ApprovePr: &v1.ApprovePrAction{}}},
+						{Action: &v1.Action_ResolveReviewThreads{ResolveReviewThreads: &v1.ResolveReviewThreadsAction{}}},
+					},
+				},
+			},
+		}
+
+		model, err := protoToModel(ctx, input)
+		if err != nil {
+			t.Fatalf("protoToModel() error: %v", err)
+		}
+		if len(model.Actions) != 3 {
+			t.Fatalf("expected 3 actions, got %d", len(model.Actions))
+		}
+		if model.Actions[0].ManageCheckRun == nil || model.Actions[1].ApprovePr == nil || model.Actions[2].ResolveReviewThreads == nil {
+			t.Fatalf("unexpected actions: %+v", model.Actions)
+		}
+	})
+}
+
+func TestDisabledDefaultToolsRoundTrip(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("model_to_proto", func(t *testing.T) {
+		m := &platformWorkflowModel{
+			Prompt:               types.StringValue("review code"),
+			DisabledDefaultTools: mustStringList(t, ctx, []string{"open_git_pr"}),
+			Triggers: []triggerModel{
+				{Webhook: &webhookTriggerModel{}, UserAllowlist: types.ListNull(types.StringType)},
+			},
+		}
+
+		wf, err := modelToWorkflow(ctx, m)
+		if err != nil {
+			t.Fatalf("modelToWorkflow() error: %v", err)
+		}
+		want := []v1.AutomationDefaultTool{v1.AutomationDefaultTool_AUTOMATION_DEFAULT_TOOL_OPEN_GIT_PR}
+		if !reflect.DeepEqual(wf.GetDisabledDefaultTools(), want) {
+			t.Fatalf("DisabledDefaultTools = %v, want %v", wf.GetDisabledDefaultTools(), want)
+		}
+	})
+
+	t.Run("model_to_proto_rejects_unknown_tool", func(t *testing.T) {
+		m := &platformWorkflowModel{
+			Prompt:               types.StringValue("review code"),
+			DisabledDefaultTools: mustStringList(t, ctx, []string{"nope"}),
+			Triggers: []triggerModel{
+				{Webhook: &webhookTriggerModel{}, UserAllowlist: types.ListNull(types.StringType)},
+			},
+		}
+		if _, err := modelToWorkflow(ctx, m); err == nil {
+			t.Fatal("expected error for unknown disabled_default_tools entry")
+		}
+	})
+
+	t.Run("proto_to_model", func(t *testing.T) {
+		model, err := protoToModel(ctx, &v1.AutomationWithOwner{
+			Workflow: &v1.Automation{
+				Workflow: &v1.Workflow{
+					DisabledDefaultTools: []v1.AutomationDefaultTool{v1.AutomationDefaultTool_AUTOMATION_DEFAULT_TOOL_OPEN_GIT_PR},
+				},
+			},
+		})
+		if err != nil {
+			t.Fatalf("protoToModel() error: %v", err)
+		}
+		var tools []string
+		if diags := model.DisabledDefaultTools.ElementsAs(ctx, &tools, false); diags.HasError() {
+			t.Fatalf("failed to read disabled_default_tools: %v", diags)
+		}
+		if !reflect.DeepEqual(tools, []string{"open_git_pr"}) {
+			t.Fatalf("disabled_default_tools = %v", tools)
+		}
+
+		empty, err := protoToModel(ctx, &v1.AutomationWithOwner{Workflow: &v1.Automation{Workflow: &v1.Workflow{}}})
+		if err != nil {
+			t.Fatalf("protoToModel() error: %v", err)
+		}
+		if !empty.DisabledDefaultTools.IsNull() {
+			t.Fatal("expected null disabled_default_tools when the server returns none")
+		}
+	})
+}
+
+func TestDescriptionRoundTrip(t *testing.T) {
+	ctx := context.Background()
+
+	described := "Reviews PRs"
+	model, err := protoToModel(ctx, &v1.AutomationWithOwner{
+		Workflow: &v1.Automation{Description: &described, Workflow: &v1.Workflow{}},
+	})
+	if err != nil {
+		t.Fatalf("protoToModel() error: %v", err)
+	}
+	if model.Description.ValueString() != described {
+		t.Fatalf("Description = %q", model.Description.ValueString())
+	}
+
+	empty := ""
+	model, err = protoToModel(ctx, &v1.AutomationWithOwner{
+		Workflow: &v1.Automation{Description: &empty, Workflow: &v1.Workflow{}},
+	})
+	if err != nil {
+		t.Fatalf("protoToModel() error: %v", err)
+	}
+	if !model.Description.IsNull() {
+		t.Fatal("expected null description when the server returns an empty string")
+	}
+
+	cases := []struct {
+		name  string
+		plan  types.String
+		state types.String
+		want  bool
+	}{
+		{"unchanged", types.StringValue("a"), types.StringValue("a"), false},
+		{"changed", types.StringValue("b"), types.StringValue("a"), true},
+		{"added", types.StringValue("a"), types.StringNull(), true},
+		{"removed", types.StringNull(), types.StringValue("a"), true},
+		{"both_unset", types.StringNull(), types.StringNull(), false},
+		{"unknown_plan", types.StringUnknown(), types.StringValue("a"), false},
+	}
+	for _, tc := range cases {
+		if got := shouldUpdateDescription(tc.plan, tc.state); got != tc.want {
+			t.Errorf("%s: shouldUpdateDescription = %v, want %v", tc.name, got, tc.want)
+		}
+	}
+}
+
+func TestTeamIDIsCarriedOverNotReadBack(t *testing.T) {
+	ctx := context.Background()
+
+	serverTeam := int32(42)
+	state, err := protoToModel(ctx, &v1.AutomationWithOwner{
+		TeamId:   &serverTeam,
+		Workflow: &v1.Automation{Workflow: &v1.Workflow{}},
+	})
+	if err != nil {
+		t.Fatalf("protoToModel() error: %v", err)
+	}
+	if !state.TeamID.IsNull() {
+		t.Fatal("protoToModel should not populate team_id from the server response")
+	}
+
+	plan := platformWorkflowModel{TeamID: types.Int64Value(7)}
+	preserveConfiguredValues(ctx, &state, plan)
+	if state.TeamID.ValueInt64() != 7 {
+		t.Fatalf("team_id = %v, want configured 7", state.TeamID)
+	}
+
+	if got := optionalTeamID(types.Int64Null()); got != nil {
+		t.Fatalf("optionalTeamID(null) = %v, want nil", *got)
+	}
+	if got := optionalTeamID(types.Int64Value(7)); got == nil || *got != 7 {
+		t.Fatalf("optionalTeamID(7) = %v", got)
+	}
+
+	if got := dataSourceTeamID(types.Int64Null(), &v1.AutomationWithOwner{TeamId: &serverTeam}); got.ValueInt64() != 42 {
+		t.Fatalf("dataSourceTeamID(unset) = %v, want server 42", got)
+	}
+	if got := dataSourceTeamID(types.Int64Value(7), &v1.AutomationWithOwner{TeamId: &serverTeam}); got.ValueInt64() != 7 {
+		t.Fatalf("dataSourceTeamID(configured) = %v, want 7", got)
+	}
+	if got := dataSourceTeamID(types.Int64Null(), &v1.AutomationWithOwner{}); !got.IsNull() {
+		t.Fatalf("dataSourceTeamID(no team) = %v, want null", got)
+	}
+}
+
+// TestDataSourceSchemaMirrorsResourceSchema guards the six-location sync rule:
+// every trigger and action block the resource exposes must exist in the data
+// source with the same nested attribute names.
+func TestDataSourceSchemaMirrorsResourceSchema(t *testing.T) {
+	ctx := context.Background()
+
+	r := &platformWorkflowResource{}
+	rResp := &resource.SchemaResponse{}
+	r.Schema(ctx, resource.SchemaRequest{}, rResp)
+
+	d := &platformWorkflowDataSource{}
+	dResp := &datasource.SchemaResponse{}
+	d.Schema(ctx, datasource.SchemaRequest{}, dResp)
+
+	rAttrs := rResp.Schema.Attributes
+	dAttrs := dResp.Schema.Attributes
+	for name := range rAttrs {
+		if _, ok := dAttrs[name]; !ok {
+			t.Errorf("data source is missing top-level attribute %q", name)
+		}
+	}
+	for name := range dAttrs {
+		if _, ok := rAttrs[name]; !ok {
+			t.Errorf("resource is missing top-level attribute %q", name)
+		}
+	}
+
+	for _, block := range []string{"trigger", "action"} {
+		rNested := rAttrs[block].(schema.ListNestedAttribute).NestedObject.Attributes
+		dNested := dAttrs[block].(datasourceschema.ListNestedAttribute).NestedObject.Attributes
+		for name, rAttr := range rNested {
+			dAttr, ok := dNested[name]
+			if !ok {
+				t.Errorf("data source %s is missing %q", block, name)
+				continue
+			}
+			rSingle, rIsSingle := rAttr.(schema.SingleNestedAttribute)
+			dSingle, dIsSingle := dAttr.(datasourceschema.SingleNestedAttribute)
+			if rIsSingle != dIsSingle {
+				t.Errorf("%s.%s: nested kind differs between resource and data source", block, name)
+				continue
+			}
+			if !rIsSingle {
+				continue
+			}
+			for field := range rSingle.Attributes {
+				if _, ok := dSingle.Attributes[field]; !ok {
+					t.Errorf("data source %s.%s is missing %q", block, name, field)
+				}
+			}
+			for field := range dSingle.Attributes {
+				if _, ok := rSingle.Attributes[field]; !ok {
+					t.Errorf("resource %s.%s is missing %q", block, name, field)
+				}
+			}
+		}
+		for name := range dNested {
+			if _, ok := rNested[name]; !ok {
+				t.Errorf("resource %s is missing %q", block, name)
+			}
+		}
+	}
+}

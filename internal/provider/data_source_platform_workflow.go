@@ -35,9 +35,18 @@ func (d *platformWorkflowDataSource) Schema(_ context.Context, _ datasource.Sche
 				Computed:    true,
 				Description: "Display name for the automation.",
 			},
+			"description": schema.StringAttribute{
+				Computed:    true,
+				Description: "Free-text description of the automation.",
+			},
 			"scope": schema.StringAttribute{
 				Computed:    true,
 				Description: `Automation ownership scope: "user" or "team".`,
+			},
+			"team_id": schema.Int64Attribute{
+				Optional:    true,
+				Computed:    true,
+				Description: "Numeric Cursor team ID. Set it to read a team-visible automation under a specific team; otherwise the team owning the automation is reported.",
 			},
 			"enabled": schema.BoolAttribute{
 				Computed:    true,
@@ -85,6 +94,11 @@ func (d *platformWorkflowDataSource) Schema(_ context.Context, _ datasource.Sche
 			"memory_enabled": schema.BoolAttribute{
 				Computed:    true,
 				Description: "Whether the AutomationMemory tool is enabled for persistent memory across runs.",
+			},
+			"disabled_default_tools": schema.ListAttribute{
+				Computed:    true,
+				ElementType: types.StringType,
+				Description: `Default automation tools withheld from the agent (e.g. "open_git_pr").`,
 			},
 			"trigger": schema.ListNestedAttribute{
 				Computed:    true,
@@ -200,6 +214,70 @@ func (d *platformWorkflowDataSource) Schema(_ context.Context, _ datasource.Sche
 								},
 							},
 						},
+						"slack_channel_created": schema.SingleNestedAttribute{
+							Computed:    true,
+							Description: "Trigger when a public Slack channel is created.",
+							Attributes: map[string]schema.Attribute{
+								"channel_name_contains": schema.StringAttribute{
+									Computed:    true,
+									Description: "Channel name filter (case-insensitive).",
+								},
+							},
+						},
+						"slack_reaction_added": schema.SingleNestedAttribute{
+							Computed:    true,
+							Description: "Trigger when a specific emoji reaction is added in a Slack channel.",
+							Attributes: map[string]schema.Attribute{
+								"channel": schema.StringAttribute{
+									Computed:    true,
+									Description: "Slack channel ID.",
+								},
+								"emoji_name": schema.StringAttribute{
+									Computed:    true,
+									Description: "Slack emoji short name without colons.",
+								},
+								"block_unauthenticated_slack_users": schema.BoolAttribute{
+									Computed:    true,
+									Description: "Whether only Slack users who linked Cursor can trigger.",
+								},
+								"only_owner_reactions": schema.BoolAttribute{
+									Computed:    true,
+									Description: "Whether only the automation owner's reactions trigger it.",
+								},
+							},
+						},
+						"slack_mention": schema.SingleNestedAttribute{
+							Computed:    true,
+							Description: "Trigger when the Cursor Slack app is mentioned in a channel.",
+							Attributes: map[string]schema.Attribute{
+								"channel": schema.StringAttribute{
+									Computed:    true,
+									Description: "Slack channel ID.",
+								},
+								"block_unauthenticated_slack_users": schema.BoolAttribute{
+									Computed:    true,
+									Description: "Whether only Slack users who linked Cursor can trigger.",
+								},
+							},
+						},
+						"slack_any_reaction_added": schema.SingleNestedAttribute{
+							Computed:    true,
+							Description: "Trigger when any emoji reaction is added in a Slack channel.",
+							Attributes: map[string]schema.Attribute{
+								"channel": schema.StringAttribute{
+									Computed:    true,
+									Description: "Slack channel ID.",
+								},
+								"block_unauthenticated_slack_users": schema.BoolAttribute{
+									Computed:    true,
+									Description: "Whether only Slack users who linked Cursor can trigger.",
+								},
+								"only_owner_reactions": schema.BoolAttribute{
+									Computed:    true,
+									Description: "Whether only the automation owner's reactions trigger it.",
+								},
+							},
+						},
 						"linear": schema.SingleNestedAttribute{
 							Computed:    true,
 							Description: "Trigger on Linear events.",
@@ -247,6 +325,83 @@ func (d *platformWorkflowDataSource) Schema(_ context.Context, _ datasource.Sche
 							Computed:    true,
 							Description: "Trigger on generic webhook POST requests.",
 							Attributes:  map[string]schema.Attribute{},
+						},
+						"pagerduty": schema.SingleNestedAttribute{
+							Computed:    true,
+							Description: "Trigger on PagerDuty incident events.",
+							Attributes: map[string]schema.Attribute{
+								"incident_triggered": schema.SingleNestedAttribute{
+									Computed:    true,
+									Description: "Set when the trigger fires on triggered incidents.",
+									Attributes:  map[string]schema.Attribute{},
+								},
+								"incident_acknowledged": schema.SingleNestedAttribute{
+									Computed:    true,
+									Description: "Set when the trigger fires on acknowledged incidents.",
+									Attributes:  map[string]schema.Attribute{},
+								},
+								"incident_resolved": schema.SingleNestedAttribute{
+									Computed:    true,
+									Description: "Set when the trigger fires on resolved incidents.",
+									Attributes:  map[string]schema.Attribute{},
+								},
+								"incident_escalated": schema.SingleNestedAttribute{
+									Computed:    true,
+									Description: "Set when the trigger fires on escalated incidents.",
+									Attributes:  map[string]schema.Attribute{},
+								},
+								"incident_any": schema.SingleNestedAttribute{
+									Computed:    true,
+									Description: "Set when the trigger fires on any incident event.",
+									Attributes:  map[string]schema.Attribute{},
+								},
+								"service_ids": schema.ListAttribute{
+									Computed:    true,
+									ElementType: types.StringType,
+									Description: "PagerDuty service IDs scoping the trigger.",
+								},
+							},
+						},
+						"sentry": schema.SingleNestedAttribute{
+							Computed:    true,
+							Description: "Trigger on Sentry issue webhooks.",
+							Attributes: map[string]schema.Attribute{
+								"issue_created": schema.SingleNestedAttribute{
+									Computed:    true,
+									Description: "Set when the trigger fires on created issues.",
+									Attributes:  map[string]schema.Attribute{},
+								},
+								"issue_resolved": schema.SingleNestedAttribute{
+									Computed:    true,
+									Description: "Set when the trigger fires on resolved issues.",
+									Attributes:  map[string]schema.Attribute{},
+								},
+								"issue_assigned": schema.SingleNestedAttribute{
+									Computed:    true,
+									Description: "Set when the trigger fires on assigned issues.",
+									Attributes:  map[string]schema.Attribute{},
+								},
+								"issue_archived": schema.SingleNestedAttribute{
+									Computed:    true,
+									Description: "Set when the trigger fires on archived issues.",
+									Attributes:  map[string]schema.Attribute{},
+								},
+								"issue_unresolved": schema.SingleNestedAttribute{
+									Computed:    true,
+									Description: "Set when the trigger fires on issues marked unresolved.",
+									Attributes:  map[string]schema.Attribute{},
+								},
+								"issue_any": schema.SingleNestedAttribute{
+									Computed:    true,
+									Description: "Set when the trigger fires on any issue event.",
+									Attributes:  map[string]schema.Attribute{},
+								},
+								"project_ids": schema.ListAttribute{
+									Computed:    true,
+									ElementType: types.StringType,
+									Description: "Sentry project IDs scoping the trigger.",
+								},
+							},
 						},
 						"microsoft_teams": schema.SingleNestedAttribute{
 							Computed:    true,
@@ -381,6 +536,21 @@ func (d *platformWorkflowDataSource) Schema(_ context.Context, _ datasource.Sche
 							Description: "Give the agent read-only access to public Slack channels (ListSlackChannels, ReadSlackMessages tools).",
 							Attributes:  map[string]schema.Attribute{},
 						},
+						"manage_check_run": schema.SingleNestedAttribute{
+							Computed:    true,
+							Description: "Create and resolve a GitHub check run on the PR for each automation run.",
+							Attributes:  map[string]schema.Attribute{},
+						},
+						"approve_pr": schema.SingleNestedAttribute{
+							Computed:    true,
+							Description: "Deprecated: allow the agent to approve the PR. Superseded by pr_comment.allow_approve.",
+							Attributes:  map[string]schema.Attribute{},
+						},
+						"resolve_review_threads": schema.SingleNestedAttribute{
+							Computed:    true,
+							Description: "Let the agent resolve its own prior PR review threads (ResolveReviewThreads tool).",
+							Attributes:  map[string]schema.Attribute{},
+						},
 						"microsoft_teams": schema.SingleNestedAttribute{
 							Computed:    true,
 							Description: "Post messages to a Microsoft Teams channel.",
@@ -467,18 +637,35 @@ func (d *platformWorkflowDataSource) Read(ctx context.Context, req datasource.Re
 
 	workflowResp, err := d.client.automations.GetAutomation(
 		ctx,
-		connect.NewRequest(&v1.GetAutomationRequest{AutomationId: workflowID}),
+		connect.NewRequest(&v1.GetAutomationRequest{
+			AutomationId: workflowID,
+			TeamId:       optionalTeamID(config.TeamID),
+		}),
 	)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to read automation", connectErrorMessage(err))
 		return
 	}
 
-	state, err := protoToModel(ctx, workflowResp.Msg.GetWorkflow())
+	withOwner := workflowResp.Msg.GetWorkflow()
+	state, err := protoToModel(ctx, withOwner)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to read automation", err.Error())
 		return
 	}
+	state.TeamID = dataSourceTeamID(config.TeamID, withOwner)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+}
+
+// dataSourceTeamID keeps a configured team_id as-is and otherwise reports the
+// team that owns the automation, if any.
+func dataSourceTeamID(configured types.Int64, withOwner *v1.AutomationWithOwner) types.Int64 {
+	if !configured.IsNull() && !configured.IsUnknown() {
+		return configured
+	}
+	if withOwner.TeamId != nil {
+		return types.Int64Value(int64(withOwner.GetTeamId()))
+	}
+	return types.Int64Null()
 }

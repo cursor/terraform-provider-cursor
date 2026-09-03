@@ -119,23 +119,26 @@ func parseCustomErrorDetailsTitleDetail(b []byte) (string, string) {
 // ---------------------------------------------------------------------------
 
 type platformWorkflowModel struct {
-	ID                  types.String        `tfsdk:"id"`
-	Name                types.String        `tfsdk:"name"`
-	Scope               types.String        `tfsdk:"scope"`
-	Enabled             types.Bool          `tfsdk:"enabled"`
-	Prompt              types.String        `tfsdk:"prompt"`
-	EffortLevel         types.String        `tfsdk:"effort_level"`
-	Model               types.String        `tfsdk:"model"`
-	GitRepo             types.String        `tfsdk:"git_repo"`
-	GitBranch           types.String        `tfsdk:"git_branch"`
-	SkipInstall         types.Bool          `tfsdk:"skip_install"`
-	EnvironmentPublicID types.String        `tfsdk:"environment_public_id"`
-	PrivateWorker       *privateWorkerModel `tfsdk:"private_worker"`
-	MemoryEnabled       types.Bool          `tfsdk:"memory_enabled"`
-	Triggers            []triggerModel      `tfsdk:"trigger"`
-	Actions             []actionModel       `tfsdk:"action"`
-	CreatedAt           types.Int64         `tfsdk:"created_at"`
-	UpdatedAt           types.Int64         `tfsdk:"updated_at"`
+	ID                   types.String        `tfsdk:"id"`
+	Name                 types.String        `tfsdk:"name"`
+	Description          types.String        `tfsdk:"description"`
+	Scope                types.String        `tfsdk:"scope"`
+	TeamID               types.Int64         `tfsdk:"team_id"`
+	Enabled              types.Bool          `tfsdk:"enabled"`
+	Prompt               types.String        `tfsdk:"prompt"`
+	EffortLevel          types.String        `tfsdk:"effort_level"`
+	Model                types.String        `tfsdk:"model"`
+	GitRepo              types.String        `tfsdk:"git_repo"`
+	GitBranch            types.String        `tfsdk:"git_branch"`
+	SkipInstall          types.Bool          `tfsdk:"skip_install"`
+	EnvironmentPublicID  types.String        `tfsdk:"environment_public_id"`
+	PrivateWorker        *privateWorkerModel `tfsdk:"private_worker"`
+	MemoryEnabled        types.Bool          `tfsdk:"memory_enabled"`
+	DisabledDefaultTools types.List          `tfsdk:"disabled_default_tools"`
+	Triggers             []triggerModel      `tfsdk:"trigger"`
+	Actions              []actionModel       `tfsdk:"action"`
+	CreatedAt            types.Int64         `tfsdk:"created_at"`
+	UpdatedAt            types.Int64         `tfsdk:"updated_at"`
 }
 
 type privateWorkerModel struct {
@@ -148,12 +151,24 @@ type triggerModel struct {
 	GitCICompleted               *gitCICompletedModel                      `tfsdk:"git_ci_completed"`
 	Cron                         *cronModel                                `tfsdk:"cron"`
 	Slack                        *slackTriggerModel                        `tfsdk:"slack"`
+	SlackChannelCreated          *slackChannelCreatedTriggerModel          `tfsdk:"slack_channel_created"`
+	SlackReactionAdded           *slackReactionAddedTriggerModel           `tfsdk:"slack_reaction_added"`
+	SlackMention                 *slackMentionTriggerModel                 `tfsdk:"slack_mention"`
+	SlackAnyReactionAdded        *slackAnyReactionAddedTriggerModel        `tfsdk:"slack_any_reaction_added"`
 	Linear                       *linearTriggerModel                       `tfsdk:"linear"`
 	Webhook                      *webhookTriggerModel                      `tfsdk:"webhook"`
+	PagerDuty                    *pagerDutyTriggerModel                    `tfsdk:"pagerduty"`
+	Sentry                       *sentryTriggerModel                       `tfsdk:"sentry"`
 	MicrosoftTeams               *microsoftTeamsTriggerModel               `tfsdk:"microsoft_teams"`
 	MicrosoftTeamsChannelCreated *microsoftTeamsChannelCreatedTriggerModel `tfsdk:"microsoft_teams_channel_created"`
 	UserAllowlist                types.List                                `tfsdk:"user_allowlist"`
 }
+
+// triggerTypeNames lists the trigger block names in schema order, used for
+// the "exactly one trigger type" error message.
+const triggerTypeNames = "git_pull_request, git_push, git_ci_completed, cron, slack, slack_channel_created, slack_reaction_added, slack_mention, slack_any_reaction_added, linear, webhook, pagerduty, sentry, microsoft_teams, or microsoft_teams_channel_created"
+
+const actionTypeNames = "pr_comment, git_pr, request_reviewers, mcp, slack, read_slack, microsoft_teams, read_microsoft_teams, manage_check_run, approve_pr, or resolve_review_threads"
 
 type gitPullRequestModel struct {
 	Orgs                   types.List   `tfsdk:"orgs"`
@@ -188,6 +203,50 @@ type slackTriggerModel struct {
 	CompletionReactionMode         types.String `tfsdk:"completion_reaction_mode"`
 	CompletionReactionCustomEmoji  types.String `tfsdk:"completion_reaction_custom_emoji"`
 }
+
+type slackChannelCreatedTriggerModel struct {
+	ChannelNameContains types.String `tfsdk:"channel_name_contains"`
+}
+
+type slackReactionAddedTriggerModel struct {
+	Channel                        types.String `tfsdk:"channel"`
+	EmojiName                      types.String `tfsdk:"emoji_name"`
+	BlockUnauthenticatedSlackUsers types.Bool   `tfsdk:"block_unauthenticated_slack_users"`
+	OnlyOwnerReactions             types.Bool   `tfsdk:"only_owner_reactions"`
+}
+
+type slackMentionTriggerModel struct {
+	Channel                        types.String `tfsdk:"channel"`
+	BlockUnauthenticatedSlackUsers types.Bool   `tfsdk:"block_unauthenticated_slack_users"`
+}
+
+type slackAnyReactionAddedTriggerModel struct {
+	Channel                        types.String `tfsdk:"channel"`
+	BlockUnauthenticatedSlackUsers types.Bool   `tfsdk:"block_unauthenticated_slack_users"`
+	OnlyOwnerReactions             types.Bool   `tfsdk:"only_owner_reactions"`
+}
+
+type pagerDutyTriggerModel struct {
+	IncidentTriggered    *emptyEventModel `tfsdk:"incident_triggered"`
+	IncidentAcknowledged *emptyEventModel `tfsdk:"incident_acknowledged"`
+	IncidentResolved     *emptyEventModel `tfsdk:"incident_resolved"`
+	IncidentEscalated    *emptyEventModel `tfsdk:"incident_escalated"`
+	IncidentAny          *emptyEventModel `tfsdk:"incident_any"`
+	ServiceIDs           types.List       `tfsdk:"service_ids"`
+}
+
+type sentryTriggerModel struct {
+	IssueCreated    *emptyEventModel `tfsdk:"issue_created"`
+	IssueResolved   *emptyEventModel `tfsdk:"issue_resolved"`
+	IssueAssigned   *emptyEventModel `tfsdk:"issue_assigned"`
+	IssueArchived   *emptyEventModel `tfsdk:"issue_archived"`
+	IssueUnresolved *emptyEventModel `tfsdk:"issue_unresolved"`
+	IssueAny        *emptyEventModel `tfsdk:"issue_any"`
+	ProjectIDs      types.List       `tfsdk:"project_ids"`
+}
+
+// emptyEventModel is a marker block: presence selects the event type.
+type emptyEventModel struct{}
 
 type linearTriggerModel struct {
 	IssueCreated  *linearIssueCreatedModel  `tfsdk:"issue_created"`
@@ -230,14 +289,29 @@ type microsoftTeamsChannelCreatedTriggerModel struct {
 }
 
 type actionModel struct {
-	PrComment          *prCommentActionModel          `tfsdk:"pr_comment"`
-	GitPr              *gitPrActionModel              `tfsdk:"git_pr"`
-	RequestReviewers   *requestReviewersActionModel   `tfsdk:"request_reviewers"`
-	Mcp                *mcpActionModel                `tfsdk:"mcp"`
-	Slack              *slackActionModel              `tfsdk:"slack"`
-	ReadSlack          *readSlackActionModel          `tfsdk:"read_slack"`
-	MicrosoftTeams     *microsoftTeamsActionModel     `tfsdk:"microsoft_teams"`
-	ReadMicrosoftTeams *readMicrosoftTeamsActionModel `tfsdk:"read_microsoft_teams"`
+	PrComment            *prCommentActionModel            `tfsdk:"pr_comment"`
+	GitPr                *gitPrActionModel                `tfsdk:"git_pr"`
+	RequestReviewers     *requestReviewersActionModel     `tfsdk:"request_reviewers"`
+	Mcp                  *mcpActionModel                  `tfsdk:"mcp"`
+	Slack                *slackActionModel                `tfsdk:"slack"`
+	ReadSlack            *readSlackActionModel            `tfsdk:"read_slack"`
+	MicrosoftTeams       *microsoftTeamsActionModel       `tfsdk:"microsoft_teams"`
+	ReadMicrosoftTeams   *readMicrosoftTeamsActionModel   `tfsdk:"read_microsoft_teams"`
+	ManageCheckRun       *manageCheckRunActionModel       `tfsdk:"manage_check_run"`
+	ApprovePr            *approvePrActionModel            `tfsdk:"approve_pr"`
+	ResolveReviewThreads *resolveReviewThreadsActionModel `tfsdk:"resolve_review_threads"`
+}
+
+type manageCheckRunActionModel struct {
+	// Empty: check runs are always system-managed.
+}
+
+type approvePrActionModel struct {
+	// Empty: deprecated in favour of pr_comment.allow_approve.
+}
+
+type resolveReviewThreadsActionModel struct {
+	// Empty: adds the ResolveReviewThreads tool.
 }
 
 type prCommentActionModel struct {
@@ -301,7 +375,7 @@ func (r *platformWorkflowResource) Metadata(_ context.Context, req resource.Meta
 
 func (r *platformWorkflowResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Manages a Cursor Automation: a prompt plus triggers (pull requests, pushes, CI completions, cron, Slack, Linear, webhooks, Microsoft Teams) and actions (PR comments, PRs, reviewers, MCP servers, Slack, Microsoft Teams).",
+		Description: "Manages a Cursor Automation: a prompt plus triggers (pull requests, pushes, CI completions, cron, Slack, Linear, webhooks, PagerDuty, Sentry, Microsoft Teams) and actions (PR comments, PRs, reviewers, check runs, MCP servers, Slack, Microsoft Teams).",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:    true,
@@ -313,6 +387,23 @@ func (r *platformWorkflowResource) Schema(_ context.Context, _ resource.SchemaRe
 			"name": schema.StringAttribute{
 				Required:    true,
 				Description: "Display name for the automation.",
+			},
+			"description": schema.StringAttribute{
+				Optional:    true,
+				Description: "Optional free-text description shown in the Cursor dashboard.",
+			},
+			"team_id": schema.Int64Attribute{
+				Optional:    true,
+				Description: "Numeric Cursor team ID to create and read the automation under. When unset, the team associated with the token is used. Requires a user token that is a member (or org admin) of the team; service-account tokens must leave this unset. Changing it between two set values forces a new automation because an automation cannot move between teams.",
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.RequiresReplaceIf(
+						func(_ context.Context, req planmodifier.Int64Request, resp *int64planmodifier.RequiresReplaceIfFuncResponse) {
+							resp.RequiresReplace = !req.StateValue.IsNull() && !req.PlanValue.IsNull() && !req.PlanValue.Equal(req.StateValue)
+						},
+						"Replaces the automation when team_id changes from one team to another.",
+						"Replaces the automation when `team_id` changes from one team to another.",
+					),
+				},
 			},
 			"scope": schema.StringAttribute{
 				Optional:    true,
@@ -381,6 +472,11 @@ func (r *platformWorkflowResource) Schema(_ context.Context, _ resource.SchemaRe
 			"memory_enabled": schema.BoolAttribute{
 				Optional:    true,
 				Description: "Enable the AutomationMemory tool, giving the agent persistent memory across runs.",
+			},
+			"disabled_default_tools": schema.ListAttribute{
+				Optional:    true,
+				ElementType: types.StringType,
+				Description: `Default automation tools to withhold from the agent. Supported values: "open_git_pr". Leave unset to keep the platform defaults.`,
 			},
 			"trigger": schema.ListNestedAttribute{
 				Required:    true,
@@ -503,6 +599,70 @@ func (r *platformWorkflowResource) Schema(_ context.Context, _ resource.SchemaRe
 								},
 							},
 						},
+						"slack_channel_created": schema.SingleNestedAttribute{
+							Optional:    true,
+							Description: "Trigger when a public Slack channel is created.",
+							Attributes: map[string]schema.Attribute{
+								"channel_name_contains": schema.StringAttribute{
+									Optional:    true,
+									Description: "Only trigger if the new channel name contains this text (case-insensitive).",
+								},
+							},
+						},
+						"slack_reaction_added": schema.SingleNestedAttribute{
+							Optional:    true,
+							Description: "Trigger when a specific emoji reaction is added to a message in a Slack channel.",
+							Attributes: map[string]schema.Attribute{
+								"channel": schema.StringAttribute{
+									Required:    true,
+									Description: "Slack channel ID.",
+								},
+								"emoji_name": schema.StringAttribute{
+									Required:    true,
+									Description: `Slack emoji short name without colons, lowercase (e.g. "thumbsup", "white_check_mark").`,
+								},
+								"block_unauthenticated_slack_users": schema.BoolAttribute{
+									Optional:    true,
+									Description: "If true, only Slack users who linked Cursor can trigger. Omit/false = anyone (default).",
+								},
+								"only_owner_reactions": schema.BoolAttribute{
+									Optional:    true,
+									Description: "If true, only the automation owner's own linked Slack user can trigger it. Stricter than block_unauthenticated_slack_users.",
+								},
+							},
+						},
+						"slack_mention": schema.SingleNestedAttribute{
+							Optional:    true,
+							Description: "Trigger when the Cursor Slack app is mentioned in a Slack channel.",
+							Attributes: map[string]schema.Attribute{
+								"channel": schema.StringAttribute{
+									Required:    true,
+									Description: "Slack channel ID.",
+								},
+								"block_unauthenticated_slack_users": schema.BoolAttribute{
+									Optional:    true,
+									Description: "If true, only Slack users who linked Cursor can trigger. Omit/false = anyone (default).",
+								},
+							},
+						},
+						"slack_any_reaction_added": schema.SingleNestedAttribute{
+							Optional:    true,
+							Description: "Trigger when any emoji reaction is added to a message in a Slack channel.",
+							Attributes: map[string]schema.Attribute{
+								"channel": schema.StringAttribute{
+									Required:    true,
+									Description: "Slack channel ID.",
+								},
+								"block_unauthenticated_slack_users": schema.BoolAttribute{
+									Optional:    true,
+									Description: "If true, only Slack users who linked Cursor can trigger. Omit/false = anyone (default).",
+								},
+								"only_owner_reactions": schema.BoolAttribute{
+									Optional:    true,
+									Description: "If true, only the automation owner's own linked Slack user can trigger it. Stricter than block_unauthenticated_slack_users.",
+								},
+							},
+						},
 						"linear": schema.SingleNestedAttribute{
 							Optional:    true,
 							Description: "Trigger on Linear events.",
@@ -550,6 +710,83 @@ func (r *platformWorkflowResource) Schema(_ context.Context, _ resource.SchemaRe
 							Optional:    true,
 							Description: "Trigger on generic webhook POST requests.",
 							Attributes:  map[string]schema.Attribute{},
+						},
+						"pagerduty": schema.SingleNestedAttribute{
+							Optional:    true,
+							Description: "Trigger on PagerDuty incident events. Exactly one of incident_triggered, incident_acknowledged, incident_resolved, incident_escalated, or incident_any must be set.",
+							Attributes: map[string]schema.Attribute{
+								"incident_triggered": schema.SingleNestedAttribute{
+									Optional:    true,
+									Description: "Trigger when an incident is triggered.",
+									Attributes:  map[string]schema.Attribute{},
+								},
+								"incident_acknowledged": schema.SingleNestedAttribute{
+									Optional:    true,
+									Description: "Trigger when an incident is acknowledged.",
+									Attributes:  map[string]schema.Attribute{},
+								},
+								"incident_resolved": schema.SingleNestedAttribute{
+									Optional:    true,
+									Description: "Trigger when an incident is resolved.",
+									Attributes:  map[string]schema.Attribute{},
+								},
+								"incident_escalated": schema.SingleNestedAttribute{
+									Optional:    true,
+									Description: "Trigger when an incident is escalated.",
+									Attributes:  map[string]schema.Attribute{},
+								},
+								"incident_any": schema.SingleNestedAttribute{
+									Optional:    true,
+									Description: "Trigger on any incident event (triggered, acknowledged, resolved, escalated).",
+									Attributes:  map[string]schema.Attribute{},
+								},
+								"service_ids": schema.ListAttribute{
+									Optional:    true,
+									ElementType: types.StringType,
+									Description: "Optional PagerDuty service IDs to scope the trigger to. Empty fires for all services.",
+								},
+							},
+						},
+						"sentry": schema.SingleNestedAttribute{
+							Optional:    true,
+							Description: "Trigger on Sentry issue webhooks. Exactly one of issue_created, issue_resolved, issue_assigned, issue_archived, issue_unresolved, or issue_any must be set. The Cursor Sentry integration must be connected for the owner before the automation can be saved.",
+							Attributes: map[string]schema.Attribute{
+								"issue_created": schema.SingleNestedAttribute{
+									Optional:    true,
+									Description: "Trigger when a Sentry issue is created.",
+									Attributes:  map[string]schema.Attribute{},
+								},
+								"issue_resolved": schema.SingleNestedAttribute{
+									Optional:    true,
+									Description: "Trigger when a Sentry issue is resolved.",
+									Attributes:  map[string]schema.Attribute{},
+								},
+								"issue_assigned": schema.SingleNestedAttribute{
+									Optional:    true,
+									Description: "Trigger when a Sentry issue is assigned.",
+									Attributes:  map[string]schema.Attribute{},
+								},
+								"issue_archived": schema.SingleNestedAttribute{
+									Optional:    true,
+									Description: "Trigger when a Sentry issue is archived.",
+									Attributes:  map[string]schema.Attribute{},
+								},
+								"issue_unresolved": schema.SingleNestedAttribute{
+									Optional:    true,
+									Description: "Trigger when a Sentry issue is marked unresolved.",
+									Attributes:  map[string]schema.Attribute{},
+								},
+								"issue_any": schema.SingleNestedAttribute{
+									Optional:    true,
+									Description: "Trigger on any Sentry issue event.",
+									Attributes:  map[string]schema.Attribute{},
+								},
+								"project_ids": schema.ListAttribute{
+									Optional:    true,
+									ElementType: types.StringType,
+									Description: "Optional Sentry numeric project IDs (as strings) to scope the trigger to. Empty matches all projects in the organization.",
+								},
+							},
 						},
 						"microsoft_teams": schema.SingleNestedAttribute{
 							Optional:    true,
@@ -690,6 +927,22 @@ func (r *platformWorkflowResource) Schema(_ context.Context, _ resource.SchemaRe
 							Description: "Give the agent read-only access to public Slack channels (ListSlackChannels, ReadSlackMessages tools).",
 							Attributes:  map[string]schema.Attribute{},
 						},
+						"manage_check_run": schema.SingleNestedAttribute{
+							Optional:    true,
+							Description: "Create and resolve a GitHub check run on the PR for each automation run. Only relevant for git_pull_request triggers; the check run lifecycle is always system-managed.",
+							Attributes:  map[string]schema.Attribute{},
+						},
+						"approve_pr": schema.SingleNestedAttribute{
+							Optional:           true,
+							Description:        "Deprecated: allow the agent to approve the PR. Use pr_comment.allow_approve instead.",
+							DeprecationMessage: "approve_pr is deprecated server-side; set pr_comment.allow_approve = true instead.",
+							Attributes:         map[string]schema.Attribute{},
+						},
+						"resolve_review_threads": schema.SingleNestedAttribute{
+							Optional:    true,
+							Description: "Let the agent mark its own prior PR review threads as addressed and resolve them on GitHub (ResolveReviewThreads tool).",
+							Attributes:  map[string]schema.Attribute{},
+						},
 						"microsoft_teams": schema.SingleNestedAttribute{
 							Optional:    true,
 							Description: "Post messages to a Microsoft Teams channel.",
@@ -785,14 +1038,20 @@ func (r *platformWorkflowResource) Create(ctx context.Context, req resource.Crea
 		return
 	}
 
-	createResp, err := r.client.automations.CreateAutomation(
-		ctx,
-		connect.NewRequest(&v1.CreateAutomationRequest{
-			Name:     plan.Name.ValueString(),
-			Scope:    scope,
-			Workflow: workflow,
-		}),
-	)
+	createReq := &v1.CreateAutomationRequest{
+		Name:     plan.Name.ValueString(),
+		Scope:    scope,
+		Workflow: workflow,
+	}
+	if !plan.Description.IsNull() && !plan.Description.IsUnknown() {
+		description := plan.Description.ValueString()
+		createReq.Description = &description
+	}
+	if teamID := optionalTeamID(plan.TeamID); teamID != nil {
+		createReq.TeamId = teamID
+	}
+
+	createResp, err := r.client.automations.CreateAutomation(ctx, connect.NewRequest(createReq))
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to create automation", connectErrorMessage(err))
 		return
@@ -803,9 +1062,7 @@ func (r *platformWorkflowResource) Create(ctx context.Context, req resource.Crea
 		resp.Diagnostics.AddError("Failed to read automation", err.Error())
 		return
 	}
-	preserveEquivalentGitPullRequestOrgs(ctx, &state, plan)
-	preserveEquivalentGitCICompletionConditions(&state, plan)
-	preserveEquivalentEnvironmentPublicID(&state, plan)
+	preserveConfiguredValues(ctx, &state, plan)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -822,11 +1079,27 @@ func (r *platformWorkflowResource) Create(ctx context.Context, req resource.Crea
 			)
 			return
 		}
-		preserveEquivalentGitPullRequestOrgs(ctx, &updated, plan)
-		preserveEquivalentGitCICompletionConditions(&updated, plan)
-		preserveEquivalentEnvironmentPublicID(&updated, plan)
+		preserveConfiguredValues(ctx, &updated, plan)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &updated)...)
 	}
+}
+
+// preserveConfiguredValues rewrites server-normalised values back to the
+// practitioner-supplied form when equivalent, and carries over attributes the
+// API does not echo back (team_id).
+func preserveConfiguredValues(ctx context.Context, state *platformWorkflowModel, reference platformWorkflowModel) {
+	preserveEquivalentGitPullRequestOrgs(ctx, state, reference)
+	preserveEquivalentGitCICompletionConditions(state, reference)
+	preserveEquivalentEnvironmentPublicID(state, reference)
+	state.TeamID = reference.TeamID
+}
+
+func optionalTeamID(value types.Int64) *int32 {
+	if value.IsNull() || value.IsUnknown() {
+		return nil
+	}
+	teamID := int32(value.ValueInt64())
+	return &teamID
 }
 
 func (r *platformWorkflowResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -848,7 +1121,10 @@ func (r *platformWorkflowResource) Read(ctx context.Context, req resource.ReadRe
 
 	workflowResp, err := r.client.automations.GetAutomation(
 		ctx,
-		connect.NewRequest(&v1.GetAutomationRequest{AutomationId: workflowID}),
+		connect.NewRequest(&v1.GetAutomationRequest{
+			AutomationId: workflowID,
+			TeamId:       optionalTeamID(state.TeamID),
+		}),
 	)
 	if err != nil {
 		if connect.CodeOf(err) == connect.CodeNotFound {
@@ -864,9 +1140,7 @@ func (r *platformWorkflowResource) Read(ctx context.Context, req resource.ReadRe
 		resp.Diagnostics.AddError("Failed to read automation", err.Error())
 		return
 	}
-	preserveEquivalentGitPullRequestOrgs(ctx, &updatedState, state)
-	preserveEquivalentGitCICompletionConditions(&updatedState, state)
-	preserveEquivalentEnvironmentPublicID(&updatedState, state)
+	preserveConfiguredValues(ctx, &updatedState, state)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedState)...)
 }
@@ -909,6 +1183,12 @@ func (r *platformWorkflowResource) Update(ctx context.Context, req resource.Upda
 		name := plan.Name.ValueString()
 		updateReq.Name = &name
 	}
+	if shouldUpdateDescription(plan.Description, state.Description) {
+		// A removed description is sent as "" so the server clears it; the
+		// empty value reads back as null, matching the plan.
+		description := plan.Description.ValueString()
+		updateReq.Description = &description
+	}
 
 	if shouldUpdateEnabled(plan.Enabled, state.Enabled) {
 		enabled := plan.Enabled.ValueBool()
@@ -934,9 +1214,7 @@ func (r *platformWorkflowResource) Update(ctx context.Context, req resource.Upda
 		resp.Diagnostics.AddError("Failed to read automation", err.Error())
 		return
 	}
-	preserveEquivalentGitPullRequestOrgs(ctx, &updatedState, plan)
-	preserveEquivalentGitCICompletionConditions(&updatedState, plan)
-	preserveEquivalentEnvironmentPublicID(&updatedState, plan)
+	preserveConfiguredValues(ctx, &updatedState, plan)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedState)...)
 }
@@ -1019,6 +1297,19 @@ func shouldUpdateEnabled(plan types.Bool, state types.Bool) bool {
 		return true
 	}
 	return plan.ValueBool() != state.ValueBool()
+}
+
+func shouldUpdateDescription(plan types.String, state types.String) bool {
+	if plan.IsUnknown() {
+		return false
+	}
+	if plan.IsNull() {
+		return !state.IsNull() && !state.IsUnknown() && state.ValueString() != ""
+	}
+	if state.IsNull() || state.IsUnknown() {
+		return plan.ValueString() != ""
+	}
+	return plan.ValueString() != state.ValueString()
 }
 
 func shouldUpdateScope(plan types.String, state types.String) bool {
@@ -1467,6 +1758,19 @@ func modelToWorkflow(ctx context.Context, m *platformWorkflowModel) (*v1.Workflo
 		w.MemoryEnabled = &enabled
 	}
 
+	// DisabledDefaultTools
+	disabledTools, err := readStringList(ctx, m.DisabledDefaultTools, "disabled_default_tools")
+	if err != nil {
+		return nil, err
+	}
+	for _, tool := range disabledTools {
+		parsed, err := parseAutomationDefaultTool(tool)
+		if err != nil {
+			return nil, err
+		}
+		w.DisabledDefaultTools = append(w.DisabledDefaultTools, parsed)
+	}
+
 	// Triggers
 	for i, t := range m.Triggers {
 		trigger, err := triggerModelToProto(ctx, &t)
@@ -1605,11 +1909,17 @@ func actionModelToProto(a *actionModel) (*v1.Action, error) {
 	if a.ReadMicrosoftTeams != nil {
 		count++
 	}
-	if count == 0 {
-		return nil, fmt.Errorf("must specify exactly one of pr_comment, git_pr, request_reviewers, mcp, slack, read_slack, microsoft_teams, or read_microsoft_teams")
+	if a.ManageCheckRun != nil {
+		count++
 	}
-	if count > 1 {
-		return nil, fmt.Errorf("must specify exactly one of pr_comment, git_pr, request_reviewers, mcp, slack, read_slack, microsoft_teams, or read_microsoft_teams")
+	if a.ApprovePr != nil {
+		count++
+	}
+	if a.ResolveReviewThreads != nil {
+		count++
+	}
+	if count != 1 {
+		return nil, fmt.Errorf("must specify exactly one of %s", actionTypeNames)
 	}
 
 	if a.PrComment != nil {
@@ -1694,6 +2004,15 @@ func actionModelToProto(a *actionModel) (*v1.Action, error) {
 	if a.ReadMicrosoftTeams != nil {
 		return &v1.Action{Action: &v1.Action_ReadMicrosoftTeams{ReadMicrosoftTeams: &v1.ReadMicrosoftTeamsAction{}}}, nil
 	}
+	if a.ManageCheckRun != nil {
+		return &v1.Action{Action: &v1.Action_ManageCheckRun{ManageCheckRun: &v1.ManageCheckRunAction{}}}, nil
+	}
+	if a.ApprovePr != nil {
+		return &v1.Action{Action: &v1.Action_ApprovePr{ApprovePr: &v1.ApprovePrAction{}}}, nil
+	}
+	if a.ResolveReviewThreads != nil {
+		return &v1.Action{Action: &v1.Action_ResolveReviewThreads{ResolveReviewThreads: &v1.ResolveReviewThreadsAction{}}}, nil
+	}
 
 	return nil, fmt.Errorf("no action type specified")
 }
@@ -1730,11 +2049,26 @@ func triggerModelToProto(ctx context.Context, t *triggerModel) (*v1.Trigger, err
 	if t.MicrosoftTeamsChannelCreated != nil {
 		count++
 	}
-	if count == 0 {
-		return nil, fmt.Errorf("must specify exactly one of git_pull_request, git_push, git_ci_completed, cron, slack, linear, webhook, microsoft_teams, or microsoft_teams_channel_created")
+	if t.SlackChannelCreated != nil {
+		count++
 	}
-	if count > 1 {
-		return nil, fmt.Errorf("must specify exactly one of git_pull_request, git_push, git_ci_completed, cron, slack, linear, webhook, microsoft_teams, or microsoft_teams_channel_created")
+	if t.SlackReactionAdded != nil {
+		count++
+	}
+	if t.SlackMention != nil {
+		count++
+	}
+	if t.SlackAnyReactionAdded != nil {
+		count++
+	}
+	if t.PagerDuty != nil {
+		count++
+	}
+	if t.Sentry != nil {
+		count++
+	}
+	if count != 1 {
+		return nil, fmt.Errorf("must specify exactly one of %s", triggerTypeNames)
 	}
 
 	// Git pull request
@@ -1876,6 +2210,137 @@ func triggerModelToProto(ctx context.Context, t *triggerModel) (*v1.Trigger, err
 		trigger.Trigger = &v1.Trigger_SlackTrigger{SlackTrigger: st}
 	}
 
+	// Slack channel created
+	if scc := t.SlackChannelCreated; scc != nil {
+		st := &v1.SlackChannelCreatedTrigger{}
+		if !scc.ChannelNameContains.IsNull() && !scc.ChannelNameContains.IsUnknown() {
+			st.ChannelNameContains = scc.ChannelNameContains.ValueString()
+		}
+		trigger.Trigger = &v1.Trigger_SlackChannelCreated{SlackChannelCreated: st}
+	}
+
+	// Slack reaction added
+	if sra := t.SlackReactionAdded; sra != nil {
+		channel, err := requiredSlackChannel(sra.Channel, "slack_reaction_added")
+		if err != nil {
+			return nil, err
+		}
+		emojiName, err := validateSlackEmojiShortName(sra.EmojiName)
+		if err != nil {
+			return nil, err
+		}
+		st := &v1.SlackReactionAddedTrigger{
+			Channel:                        channel,
+			EmojiName:                      emojiName,
+			BlockUnauthenticatedSlackUsers: boolIsTrue(sra.BlockUnauthenticatedSlackUsers),
+			OnlyOwnerReactions:             boolIsTrue(sra.OnlyOwnerReactions),
+		}
+		trigger.Trigger = &v1.Trigger_SlackReactionAdded{SlackReactionAdded: st}
+	}
+
+	// Slack mention
+	if sm := t.SlackMention; sm != nil {
+		channel, err := requiredSlackChannel(sm.Channel, "slack_mention")
+		if err != nil {
+			return nil, err
+		}
+		st := &v1.SlackMentionTrigger{
+			Channel:                        channel,
+			BlockUnauthenticatedSlackUsers: boolIsTrue(sm.BlockUnauthenticatedSlackUsers),
+		}
+		trigger.Trigger = &v1.Trigger_SlackMention{SlackMention: st}
+	}
+
+	// Slack any reaction added
+	if sar := t.SlackAnyReactionAdded; sar != nil {
+		channel, err := requiredSlackChannel(sar.Channel, "slack_any_reaction_added")
+		if err != nil {
+			return nil, err
+		}
+		st := &v1.SlackAnyReactionAddedTrigger{
+			Channel:                        channel,
+			BlockUnauthenticatedSlackUsers: boolIsTrue(sar.BlockUnauthenticatedSlackUsers),
+			OnlyOwnerReactions:             boolIsTrue(sar.OnlyOwnerReactions),
+		}
+		trigger.Trigger = &v1.Trigger_SlackAnyReactionAdded{SlackAnyReactionAdded: st}
+	}
+
+	// PagerDuty
+	if pd := t.PagerDuty; pd != nil {
+		pt := &v1.PagerDutyTrigger{}
+		serviceIDs, err := readStringList(ctx, pd.ServiceIDs, "pagerduty.service_ids")
+		if err != nil {
+			return nil, err
+		}
+		pt.ServiceIds = serviceIDs
+
+		eventCount := 0
+		if pd.IncidentTriggered != nil {
+			eventCount++
+			pt.Event = &v1.PagerDutyTrigger_IncidentTriggered{IncidentTriggered: &v1.PagerDutyIncidentTriggeredEvent{}}
+		}
+		if pd.IncidentAcknowledged != nil {
+			eventCount++
+			pt.Event = &v1.PagerDutyTrigger_IncidentAcknowledged{IncidentAcknowledged: &v1.PagerDutyIncidentAcknowledgedEvent{}}
+		}
+		if pd.IncidentResolved != nil {
+			eventCount++
+			pt.Event = &v1.PagerDutyTrigger_IncidentResolved{IncidentResolved: &v1.PagerDutyIncidentResolvedEvent{}}
+		}
+		if pd.IncidentEscalated != nil {
+			eventCount++
+			pt.Event = &v1.PagerDutyTrigger_IncidentEscalated{IncidentEscalated: &v1.PagerDutyIncidentEscalatedEvent{}}
+		}
+		if pd.IncidentAny != nil {
+			eventCount++
+			pt.Event = &v1.PagerDutyTrigger_IncidentAny{IncidentAny: &v1.PagerDutyIncidentAnyEvent{}}
+		}
+		if eventCount != 1 {
+			return nil, fmt.Errorf("pagerduty trigger must specify exactly one of incident_triggered, incident_acknowledged, incident_resolved, incident_escalated, or incident_any")
+		}
+		trigger.Trigger = &v1.Trigger_Pagerduty{Pagerduty: pt}
+	}
+
+	// Sentry
+	if sentry := t.Sentry; sentry != nil {
+		st := &v1.SentryTrigger{}
+		projectIDs, err := readStringList(ctx, sentry.ProjectIDs, "sentry.project_ids")
+		if err != nil {
+			return nil, err
+		}
+		st.ProjectIds = projectIDs
+
+		eventCount := 0
+		if sentry.IssueCreated != nil {
+			eventCount++
+			st.Event = &v1.SentryTrigger_IssueCreated{IssueCreated: &v1.SentryIssueCreatedEvent{}}
+		}
+		if sentry.IssueResolved != nil {
+			eventCount++
+			st.Event = &v1.SentryTrigger_IssueResolved{IssueResolved: &v1.SentryIssueResolvedEvent{}}
+		}
+		if sentry.IssueAssigned != nil {
+			eventCount++
+			st.Event = &v1.SentryTrigger_IssueAssigned{IssueAssigned: &v1.SentryIssueAssignedEvent{}}
+		}
+		if sentry.IssueArchived != nil {
+			eventCount++
+			st.Event = &v1.SentryTrigger_IssueArchived{IssueArchived: &v1.SentryIssueArchivedEvent{}}
+		}
+		if sentry.IssueUnresolved != nil {
+			eventCount++
+			st.Event = &v1.SentryTrigger_IssueUnresolved{IssueUnresolved: &v1.SentryIssueUnresolvedEvent{}}
+		}
+		if sentry.IssueAny != nil {
+			eventCount++
+			st.Event = &v1.SentryTrigger_IssueAny{IssueAny: &v1.SentryIssueAnyEvent{}}
+		}
+		if eventCount != 1 {
+			return nil, fmt.Errorf("sentry trigger must specify exactly one of issue_created, issue_resolved, issue_assigned, issue_archived, issue_unresolved, or issue_any")
+		}
+		trigger.Trigger = &v1.Trigger_Sentry{Sentry: st}
+	}
+
 	// Linear
 	if linear := t.Linear; linear != nil {
 		lt := &v1.LinearTrigger{}
@@ -1987,14 +2452,11 @@ func triggerModelToProto(ctx context.Context, t *triggerModel) (*v1.Trigger, err
 		mctt := &v1.MicrosoftTeamsChannelCreatedTrigger{
 			TenantId: mtc.TenantID.ValueString(),
 		}
-		if !mtc.TeamIDs.IsNull() && !mtc.TeamIDs.IsUnknown() {
-			var teamIDs []string
-			diags := mtc.TeamIDs.ElementsAs(ctx, &teamIDs, false)
-			if diags.HasError() {
-				return nil, fmt.Errorf("failed to read microsoft_teams_channel_created.team_ids")
-			}
-			mctt.TeamIds = teamIDs
+		teamIDs, err := readStringList(ctx, mtc.TeamIDs, "microsoft_teams_channel_created.team_ids")
+		if err != nil {
+			return nil, err
 		}
+		mctt.TeamIds = teamIDs
 		if !mtc.ChannelNameContains.IsNull() && !mtc.ChannelNameContains.IsUnknown() {
 			mctt.ChannelNameContains = mtc.ChannelNameContains.ValueString()
 		}
@@ -2002,6 +2464,69 @@ func triggerModelToProto(ctx context.Context, t *triggerModel) (*v1.Trigger, err
 	}
 
 	return trigger, nil
+}
+
+func boolIsTrue(value types.Bool) bool {
+	return !value.IsNull() && !value.IsUnknown() && value.ValueBool()
+}
+
+// boolOrNull mirrors the existing slack trigger convention of reading proto3
+// booleans back as null when false so unset configs do not drift.
+func boolOrNull(value bool) types.Bool {
+	if value {
+		return types.BoolValue(true)
+	}
+	return types.BoolNull()
+}
+
+func stringOrNull(value string) types.String {
+	if value == "" {
+		return types.StringNull()
+	}
+	return types.StringValue(value)
+}
+
+func requiredSlackChannel(value types.String, block string) (string, error) {
+	if value.IsNull() || value.IsUnknown() || strings.TrimSpace(value.ValueString()) == "" {
+		return "", fmt.Errorf("%s.channel is required", block)
+	}
+	return strings.TrimSpace(value.ValueString()), nil
+}
+
+// validateSlackEmojiShortName requires the canonical form the server stores
+// (lowercase short name, no colons or skin-tone suffix) so the value reads
+// back unchanged instead of drifting after the server normalises it.
+func validateSlackEmojiShortName(value types.String) (string, error) {
+	if value.IsNull() || value.IsUnknown() || strings.TrimSpace(value.ValueString()) == "" {
+		return "", fmt.Errorf("slack_reaction_added.emoji_name is required")
+	}
+	name := value.ValueString()
+	for _, r := range name {
+		isLower := r >= 'a' && r <= 'z'
+		isDigit := r >= '0' && r <= '9'
+		if !isLower && !isDigit && r != '_' && r != '+' && r != '-' {
+			return "", fmt.Errorf("invalid slack_reaction_added.emoji_name %q: use the lowercase Slack short name without colons (e.g. \"thumbsup\")", name)
+		}
+	}
+	return name, nil
+}
+
+func parseAutomationDefaultTool(s string) (v1.AutomationDefaultTool, error) {
+	switch strings.ToLower(strings.TrimSpace(s)) {
+	case "open_git_pr":
+		return v1.AutomationDefaultTool_AUTOMATION_DEFAULT_TOOL_OPEN_GIT_PR, nil
+	default:
+		return 0, fmt.Errorf("invalid disabled_default_tools entry %q, must be \"open_git_pr\"", s)
+	}
+}
+
+func automationDefaultToolToString(tool v1.AutomationDefaultTool) string {
+	switch tool {
+	case v1.AutomationDefaultTool_AUTOMATION_DEFAULT_TOOL_OPEN_GIT_PR:
+		return "open_git_pr"
+	default:
+		return ""
+	}
 }
 
 // applySlackCompletionReaction translates the Terraform completion reaction
@@ -2121,12 +2646,28 @@ func protoToModel(ctx context.Context, withOwner *v1.AutomationWithOwner) (platf
 	}
 
 	m := platformWorkflowModel{
-		ID:        types.StringValue(pw.GetAutomationId()),
-		Name:      types.StringValue(pw.GetName()),
-		Scope:     automationScopeToModel(pw.GetScope()),
-		Enabled:   types.BoolValue(pw.GetEnabled()),
-		CreatedAt: types.Int64Value(pw.GetCreatedAt()),
-		UpdatedAt: types.Int64Value(pw.GetUpdatedAt()),
+		ID:          types.StringValue(pw.GetAutomationId()),
+		Name:        types.StringValue(pw.GetName()),
+		Description: stringOrNull(pw.GetDescription()),
+		Scope:       automationScopeToModel(pw.GetScope()),
+		// team_id is not echoed back: the resource keeps the configured value
+		// (see preserveConfiguredValues) and the data source fills it in.
+		TeamID:               types.Int64Null(),
+		Enabled:              types.BoolValue(pw.GetEnabled()),
+		DisabledDefaultTools: types.ListNull(types.StringType),
+		CreatedAt:            types.Int64Value(pw.GetCreatedAt()),
+		UpdatedAt:            types.Int64Value(pw.GetUpdatedAt()),
+	}
+
+	// DisabledDefaultTools
+	var disabledTools []string
+	for _, tool := range wf.GetDisabledDefaultTools() {
+		if name := automationDefaultToolToString(tool); name != "" {
+			disabledTools = append(disabledTools, name)
+		}
+	}
+	if len(disabledTools) > 0 {
+		m.DisabledDefaultTools, _ = types.ListValueFrom(ctx, types.StringType, disabledTools)
 	}
 
 	// Prompt (take the first one)
@@ -2233,7 +2774,10 @@ func protoToModel(ctx context.Context, withOwner *v1.AutomationWithOwner) (platf
 			am.Slack == nil &&
 			am.ReadSlack == nil &&
 			am.MicrosoftTeams == nil &&
-			am.ReadMicrosoftTeams == nil {
+			am.ReadMicrosoftTeams == nil &&
+			am.ManageCheckRun == nil &&
+			am.ApprovePr == nil &&
+			am.ResolveReviewThreads == nil {
 			continue
 		}
 		m.Actions = append(m.Actions, am)
@@ -2311,6 +2855,12 @@ func protoActionToModel(a *v1.Action) actionModel {
 		am.MicrosoftTeams = mt
 	case *v1.Action_ReadMicrosoftTeams:
 		am.ReadMicrosoftTeams = &readMicrosoftTeamsActionModel{}
+	case *v1.Action_ManageCheckRun:
+		am.ManageCheckRun = &manageCheckRunActionModel{}
+	case *v1.Action_ApprovePr:
+		am.ApprovePr = &approvePrActionModel{}
+	case *v1.Action_ResolveReviewThreads:
+		am.ResolveReviewThreads = &resolveReviewThreadsActionModel{}
 	}
 
 	return am
@@ -2439,6 +2989,83 @@ func protoTriggerToModel(ctx context.Context, t *v1.Trigger) (triggerModel, erro
 		tm.Slack = sm
 		tm.UserAllowlist = types.ListNull(types.StringType)
 
+	case *v1.Trigger_SlackChannelCreated:
+		tm.SlackChannelCreated = &slackChannelCreatedTriggerModel{
+			ChannelNameContains: stringOrNull(trigger.SlackChannelCreated.GetChannelNameContains()),
+		}
+		tm.UserAllowlist = types.ListNull(types.StringType)
+
+	case *v1.Trigger_SlackReactionAdded:
+		sra := trigger.SlackReactionAdded
+		tm.SlackReactionAdded = &slackReactionAddedTriggerModel{
+			Channel:                        types.StringValue(firstSlackChannel(sra.GetChannel(), sra.GetChannels())),
+			EmojiName:                      types.StringValue(sra.GetEmojiName()),
+			BlockUnauthenticatedSlackUsers: boolOrNull(sra.GetBlockUnauthenticatedSlackUsers()),
+			OnlyOwnerReactions:             boolOrNull(sra.GetOnlyOwnerReactions()),
+		}
+		tm.UserAllowlist = types.ListNull(types.StringType)
+
+	case *v1.Trigger_SlackMention:
+		sm := trigger.SlackMention
+		tm.SlackMention = &slackMentionTriggerModel{
+			Channel:                        types.StringValue(firstSlackChannel(sm.GetChannel(), sm.GetChannels())),
+			BlockUnauthenticatedSlackUsers: boolOrNull(sm.GetBlockUnauthenticatedSlackUsers()),
+		}
+		tm.UserAllowlist = types.ListNull(types.StringType)
+
+	case *v1.Trigger_SlackAnyReactionAdded:
+		sar := trigger.SlackAnyReactionAdded
+		tm.SlackAnyReactionAdded = &slackAnyReactionAddedTriggerModel{
+			Channel:                        types.StringValue(firstSlackChannel(sar.GetChannel(), sar.GetChannels())),
+			BlockUnauthenticatedSlackUsers: boolOrNull(sar.GetBlockUnauthenticatedSlackUsers()),
+			OnlyOwnerReactions:             boolOrNull(sar.GetOnlyOwnerReactions()),
+		}
+		tm.UserAllowlist = types.ListNull(types.StringType)
+
+	case *v1.Trigger_Pagerduty:
+		pd := trigger.Pagerduty
+		pm := &pagerDutyTriggerModel{ServiceIDs: types.ListNull(types.StringType)}
+		if len(pd.GetServiceIds()) > 0 {
+			pm.ServiceIDs, _ = types.ListValueFrom(ctx, types.StringType, pd.GetServiceIds())
+		}
+		switch pd.Event.(type) {
+		case *v1.PagerDutyTrigger_IncidentTriggered:
+			pm.IncidentTriggered = &emptyEventModel{}
+		case *v1.PagerDutyTrigger_IncidentAcknowledged:
+			pm.IncidentAcknowledged = &emptyEventModel{}
+		case *v1.PagerDutyTrigger_IncidentResolved:
+			pm.IncidentResolved = &emptyEventModel{}
+		case *v1.PagerDutyTrigger_IncidentEscalated:
+			pm.IncidentEscalated = &emptyEventModel{}
+		case *v1.PagerDutyTrigger_IncidentAny:
+			pm.IncidentAny = &emptyEventModel{}
+		}
+		tm.PagerDuty = pm
+		tm.UserAllowlist = types.ListNull(types.StringType)
+
+	case *v1.Trigger_Sentry:
+		sentry := trigger.Sentry
+		sm := &sentryTriggerModel{ProjectIDs: types.ListNull(types.StringType)}
+		if len(sentry.GetProjectIds()) > 0 {
+			sm.ProjectIDs, _ = types.ListValueFrom(ctx, types.StringType, sentry.GetProjectIds())
+		}
+		switch sentry.Event.(type) {
+		case *v1.SentryTrigger_IssueCreated:
+			sm.IssueCreated = &emptyEventModel{}
+		case *v1.SentryTrigger_IssueResolved:
+			sm.IssueResolved = &emptyEventModel{}
+		case *v1.SentryTrigger_IssueAssigned:
+			sm.IssueAssigned = &emptyEventModel{}
+		case *v1.SentryTrigger_IssueArchived:
+			sm.IssueArchived = &emptyEventModel{}
+		case *v1.SentryTrigger_IssueUnresolved:
+			sm.IssueUnresolved = &emptyEventModel{}
+		case *v1.SentryTrigger_IssueAny:
+			sm.IssueAny = &emptyEventModel{}
+		}
+		tm.Sentry = sm
+		tm.UserAllowlist = types.ListNull(types.StringType)
+
 	case *v1.Trigger_Linear:
 		linear := trigger.Linear
 		lm := &linearTriggerModel{}
@@ -2542,6 +3169,18 @@ func protoTriggerToModel(ctx context.Context, t *v1.Trigger) (triggerModel, erro
 	}
 
 	return tm, nil
+}
+
+// firstSlackChannel mirrors the server's preferRepeated: the repeated
+// `channels` field wins over the singular `channel` when populated. Only the
+// first channel is exposed, matching the existing `slack` trigger.
+func firstSlackChannel(channel string, channels []string) string {
+	for _, c := range channels {
+		if strings.TrimSpace(c) != "" {
+			return strings.TrimSpace(c)
+		}
+	}
+	return channel
 }
 
 func prActionToString(a v1.GitPullRequestAction) string {
