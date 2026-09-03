@@ -3,20 +3,21 @@
 page_title: "cursor_platform_workflow Resource - cursor"
 subcategory: ""
 description: |-
-  Manages a Cursor Automation: a prompt plus triggers (pull requests, pushes, CI completions, cron, Slack, Linear, webhooks, Microsoft Teams) and actions (PR comments, PRs, reviewers, MCP servers, Slack, Microsoft Teams).
+  Manages a Cursor Automation: a prompt plus triggers (pull requests, pushes, CI completions, cron, Slack, Linear, webhooks, PagerDuty, Sentry, Microsoft Teams) and actions (PR comments, PRs, reviewers, check runs, MCP servers, Slack, Microsoft Teams).
 ---
 
 # cursor_platform_workflow (Resource)
 
-Manages a Cursor Automation: a prompt plus triggers (pull requests, pushes, CI completions, cron, Slack, Linear, webhooks, Microsoft Teams) and actions (PR comments, PRs, reviewers, MCP servers, Slack, Microsoft Teams).
+Manages a Cursor Automation: a prompt plus triggers (pull requests, pushes, CI completions, cron, Slack, Linear, webhooks, PagerDuty, Sentry, Microsoft Teams) and actions (PR comments, PRs, reviewers, check runs, MCP servers, Slack, Microsoft Teams).
 
 ## Example Usage
 
 ```terraform
 resource "cursor_platform_workflow" "example_review" {
-  name    = "Example review automation"
-  scope   = "team"
-  enabled = true
+  name        = "Example review automation"
+  description = "Reviews pull requests and posts inline comments."
+  scope       = "team"
+  enabled     = true
 
   prompt = file("prompt.md")
   model  = "gpt-5.5"
@@ -46,9 +47,73 @@ resource "cursor_platform_workflow" "example_review" {
       }
     },
     {
+      manage_check_run = {}
+    },
+    {
+      resolve_review_threads = {}
+    },
+    {
       mcp = {
         server = "example-mcp-server"
       }
+    }
+  ]
+}
+
+resource "cursor_platform_workflow" "example_slack_triage" {
+  name   = "Triage Slack reactions"
+  prompt = "Investigate the message that received the reaction and reply in thread."
+
+  git_repo               = "github.com/example-org/example-repo"
+  disabled_default_tools = ["open_git_pr"]
+
+  trigger = [
+    {
+      slack_reaction_added = {
+        channel    = "C0123456789"
+        emoji_name = "eyes"
+      }
+    },
+    {
+      slack_mention = {
+        channel = "C0123456789"
+      }
+    }
+  ]
+
+  action = [
+    {
+      slack = {
+        channel = "C0123456789"
+      }
+    }
+  ]
+}
+
+resource "cursor_platform_workflow" "example_incidents" {
+  name   = "Incident responder"
+  prompt = "Summarise the incident and open a PR with a proposed fix."
+
+  git_repo = "github.com/example-org/example-repo"
+
+  trigger = [
+    {
+      pagerduty = {
+        incident_triggered = {}
+        service_ids        = ["PABC123"]
+      }
+    },
+    {
+      sentry = {
+        issue_created = {}
+        project_ids   = ["123456"]
+      }
+    }
+  ]
+
+  action = [
+    {
+      git_pr = {}
     }
   ]
 }
@@ -66,6 +131,8 @@ resource "cursor_platform_workflow" "example_review" {
 ### Optional
 
 - `action` (Attributes List) Actions the automation can perform. Each action block specifies one action type. (see [below for nested schema](#nestedatt--action))
+- `description` (String) Optional free-text description shown in the Cursor dashboard.
+- `disabled_default_tools` (List of String) Default automation tools to withhold from the agent. Supported values: "open_git_pr". Leave unset to keep the platform defaults.
 - `effort_level` (String) Effort level for the prompt: "standard" or "hard". Defaults to standard if unset.
 - `enabled` (Boolean) Whether the automation is enabled.
 - `environment_public_id` (String) Public ID of the Cloud Agent environment this automation should run in.
@@ -76,6 +143,7 @@ resource "cursor_platform_workflow" "example_review" {
 - `private_worker` (Attributes) Route this automation to private workers. An empty object targets any private worker; labels narrow the eligible workers. (see [below for nested schema](#nestedatt--private_worker))
 - `scope` (String) Automation ownership scope: "user", "team", "team_visible", "team_editable_user", or "team_editable". "user" is private (owner and admins only), "team" is shared (team admins can edit, runs as team service account), "team_visible" is viewable by team (team can view, only owner can edit, runs as owner), "team_editable_user" is editable by the team but still runs as the creator user, and "team_editable" is editable by the team and runs as the team service account. Defaults to "user" when unset.
 - `skip_install` (Boolean) Skip user install commands and cloud testing.
+- `team_id` (Number) Numeric Cursor team ID to create and read the automation under. When unset, the team associated with the token is used. Requires a user token that is a member (or org admin) of the team; service-account tokens must leave this unset. Changing it between two set values forces a new automation because an automation cannot move between teams.
 
 ### Read-Only
 
@@ -95,7 +163,13 @@ Optional:
 - `linear` (Attributes) Trigger on Linear events. (see [below for nested schema](#nestedatt--trigger--linear))
 - `microsoft_teams` (Attributes) Trigger on Microsoft Teams channel messages. (see [below for nested schema](#nestedatt--trigger--microsoft_teams))
 - `microsoft_teams_channel_created` (Attributes) Trigger when a new Microsoft Teams channel is created in a configured team. (see [below for nested schema](#nestedatt--trigger--microsoft_teams_channel_created))
+- `pagerduty` (Attributes) Trigger on PagerDuty incident events. Exactly one of incident_triggered, incident_acknowledged, incident_resolved, incident_escalated, or incident_any must be set. (see [below for nested schema](#nestedatt--trigger--pagerduty))
+- `sentry` (Attributes) Trigger on Sentry issue webhooks. Exactly one of issue_created, issue_resolved, issue_assigned, issue_archived, issue_unresolved, or issue_any must be set. The Cursor Sentry integration must be connected for the owner before the automation can be saved. (see [below for nested schema](#nestedatt--trigger--sentry))
 - `slack` (Attributes) Trigger on Slack messages. (see [below for nested schema](#nestedatt--trigger--slack))
+- `slack_any_reaction_added` (Attributes) Trigger when any emoji reaction is added to a message in a Slack channel. (see [below for nested schema](#nestedatt--trigger--slack_any_reaction_added))
+- `slack_channel_created` (Attributes) Trigger when a public Slack channel is created. (see [below for nested schema](#nestedatt--trigger--slack_channel_created))
+- `slack_mention` (Attributes) Trigger when the Cursor Slack app is mentioned in a Slack channel. (see [below for nested schema](#nestedatt--trigger--slack_mention))
+- `slack_reaction_added` (Attributes) Trigger when a specific emoji reaction is added to a message in a Slack channel. (see [below for nested schema](#nestedatt--trigger--slack_reaction_added))
 - `user_allowlist` (List of String) Git usernames allowed to trigger this automation. Empty means all users.
 - `webhook` (Attributes) Trigger on generic webhook POST requests. (see [below for nested schema](#nestedatt--trigger--webhook))
 
@@ -200,12 +274,83 @@ Optional:
 
 Required:
 
+- `team_ids` (List of String) AAD group IDs of the teams to watch. At least one is required.
 - `tenant_id` (String) AAD tenant GUID hosting the team.
 
 Optional:
 
 - `channel_name_contains` (String) Only trigger if the new channel name contains this text (case-insensitive).
-- `team_ids` (List of String) Optional AAD group IDs to scope to. Empty fires for any team in the tenant.
+
+
+<a id="nestedatt--trigger--pagerduty"></a>
+### Nested Schema for `trigger.pagerduty`
+
+Optional:
+
+- `incident_acknowledged` (Attributes) Trigger when an incident is acknowledged. (see [below for nested schema](#nestedatt--trigger--pagerduty--incident_acknowledged))
+- `incident_any` (Attributes) Trigger on any incident event (triggered, acknowledged, resolved, escalated). (see [below for nested schema](#nestedatt--trigger--pagerduty--incident_any))
+- `incident_escalated` (Attributes) Trigger when an incident is escalated. (see [below for nested schema](#nestedatt--trigger--pagerduty--incident_escalated))
+- `incident_resolved` (Attributes) Trigger when an incident is resolved. (see [below for nested schema](#nestedatt--trigger--pagerduty--incident_resolved))
+- `incident_triggered` (Attributes) Trigger when an incident is triggered. (see [below for nested schema](#nestedatt--trigger--pagerduty--incident_triggered))
+- `service_ids` (List of String) Optional PagerDuty service IDs to scope the trigger to. Empty fires for all services.
+
+<a id="nestedatt--trigger--pagerduty--incident_acknowledged"></a>
+### Nested Schema for `trigger.pagerduty.incident_acknowledged`
+
+
+<a id="nestedatt--trigger--pagerduty--incident_any"></a>
+### Nested Schema for `trigger.pagerduty.incident_any`
+
+
+<a id="nestedatt--trigger--pagerduty--incident_escalated"></a>
+### Nested Schema for `trigger.pagerduty.incident_escalated`
+
+
+<a id="nestedatt--trigger--pagerduty--incident_resolved"></a>
+### Nested Schema for `trigger.pagerduty.incident_resolved`
+
+
+<a id="nestedatt--trigger--pagerduty--incident_triggered"></a>
+### Nested Schema for `trigger.pagerduty.incident_triggered`
+
+
+
+<a id="nestedatt--trigger--sentry"></a>
+### Nested Schema for `trigger.sentry`
+
+Optional:
+
+- `issue_any` (Attributes) Trigger on any Sentry issue event. (see [below for nested schema](#nestedatt--trigger--sentry--issue_any))
+- `issue_archived` (Attributes) Trigger when a Sentry issue is archived. (see [below for nested schema](#nestedatt--trigger--sentry--issue_archived))
+- `issue_assigned` (Attributes) Trigger when a Sentry issue is assigned. (see [below for nested schema](#nestedatt--trigger--sentry--issue_assigned))
+- `issue_created` (Attributes) Trigger when a Sentry issue is created. (see [below for nested schema](#nestedatt--trigger--sentry--issue_created))
+- `issue_resolved` (Attributes) Trigger when a Sentry issue is resolved. (see [below for nested schema](#nestedatt--trigger--sentry--issue_resolved))
+- `issue_unresolved` (Attributes) Trigger when a Sentry issue is marked unresolved. (see [below for nested schema](#nestedatt--trigger--sentry--issue_unresolved))
+- `project_ids` (List of String) Optional Sentry numeric project IDs (as strings) to scope the trigger to. Empty matches all projects in the organization.
+
+<a id="nestedatt--trigger--sentry--issue_any"></a>
+### Nested Schema for `trigger.sentry.issue_any`
+
+
+<a id="nestedatt--trigger--sentry--issue_archived"></a>
+### Nested Schema for `trigger.sentry.issue_archived`
+
+
+<a id="nestedatt--trigger--sentry--issue_assigned"></a>
+### Nested Schema for `trigger.sentry.issue_assigned`
+
+
+<a id="nestedatt--trigger--sentry--issue_created"></a>
+### Nested Schema for `trigger.sentry.issue_created`
+
+
+<a id="nestedatt--trigger--sentry--issue_resolved"></a>
+### Nested Schema for `trigger.sentry.issue_resolved`
+
+
+<a id="nestedatt--trigger--sentry--issue_unresolved"></a>
+### Nested Schema for `trigger.sentry.issue_unresolved`
+
 
 
 <a id="nestedatt--trigger--slack"></a>
@@ -224,6 +369,53 @@ Optional:
 - `message_contains_is_regex` (Boolean) If true, message_contains is treated as a regex pattern (case-insensitive).
 
 
+<a id="nestedatt--trigger--slack_any_reaction_added"></a>
+### Nested Schema for `trigger.slack_any_reaction_added`
+
+Required:
+
+- `channel` (String) Slack channel ID.
+
+Optional:
+
+- `block_unauthenticated_slack_users` (Boolean) If true, only Slack users who linked Cursor can trigger. Omit/false = anyone (default).
+- `only_owner_reactions` (Boolean) If true, only the automation owner's own linked Slack user can trigger it. Stricter than block_unauthenticated_slack_users.
+
+
+<a id="nestedatt--trigger--slack_channel_created"></a>
+### Nested Schema for `trigger.slack_channel_created`
+
+Optional:
+
+- `channel_name_contains` (String) Only trigger if the new channel name contains this text (case-insensitive).
+
+
+<a id="nestedatt--trigger--slack_mention"></a>
+### Nested Schema for `trigger.slack_mention`
+
+Required:
+
+- `channel` (String) Slack channel ID.
+
+Optional:
+
+- `block_unauthenticated_slack_users` (Boolean) If true, only Slack users who linked Cursor can trigger. Omit/false = anyone (default).
+
+
+<a id="nestedatt--trigger--slack_reaction_added"></a>
+### Nested Schema for `trigger.slack_reaction_added`
+
+Required:
+
+- `channel` (String) Slack channel ID.
+- `emoji_name` (String) Slack emoji short name without colons, lowercase (e.g. "thumbsup", "white_check_mark").
+
+Optional:
+
+- `block_unauthenticated_slack_users` (Boolean) If true, only Slack users who linked Cursor can trigger. Omit/false = anyone (default).
+- `only_owner_reactions` (Boolean) If true, only the automation owner's own linked Slack user can trigger it. Stricter than block_unauthenticated_slack_users.
+
+
 <a id="nestedatt--trigger--webhook"></a>
 ### Nested Schema for `trigger.webhook`
 
@@ -234,17 +426,28 @@ Optional:
 
 Optional:
 
+- `approve_pr` (Attributes, Deprecated) Deprecated: allow the agent to approve the PR. Use pr_comment.allow_approve instead. (see [below for nested schema](#nestedatt--action--approve_pr))
 - `git_pr` (Attributes) Create a pull request. (see [below for nested schema](#nestedatt--action--git_pr))
+- `manage_check_run` (Attributes) Create and resolve a GitHub check run on the PR for each automation run. Only relevant for git_pull_request triggers; the check run lifecycle is always system-managed. (see [below for nested schema](#nestedatt--action--manage_check_run))
 - `mcp` (Attributes) Enable an MCP server for this automation. (see [below for nested schema](#nestedatt--action--mcp))
 - `microsoft_teams` (Attributes) Post messages to a Microsoft Teams channel. (see [below for nested schema](#nestedatt--action--microsoft_teams))
 - `pr_comment` (Attributes) Post a comment on the PR. (see [below for nested schema](#nestedatt--action--pr_comment))
 - `read_microsoft_teams` (Attributes) Give the agent read-only access to Microsoft Teams channels (ListMicrosoftTeamsChannels, ReadMicrosoftTeamsMessages tools). (see [below for nested schema](#nestedatt--action--read_microsoft_teams))
 - `read_slack` (Attributes) Give the agent read-only access to public Slack channels (ListSlackChannels, ReadSlackMessages tools). (see [below for nested schema](#nestedatt--action--read_slack))
 - `request_reviewers` (Attributes) Request reviewers on the PR. (see [below for nested schema](#nestedatt--action--request_reviewers))
+- `resolve_review_threads` (Attributes) Let the agent mark its own prior PR review threads as addressed and resolve them on GitHub (ResolveReviewThreads tool). (see [below for nested schema](#nestedatt--action--resolve_review_threads))
 - `slack` (Attributes) Post messages to a Slack channel. (see [below for nested schema](#nestedatt--action--slack))
+
+<a id="nestedatt--action--approve_pr"></a>
+### Nested Schema for `action.approve_pr`
+
 
 <a id="nestedatt--action--git_pr"></a>
 ### Nested Schema for `action.git_pr`
+
+
+<a id="nestedatt--action--manage_check_run"></a>
+### Nested Schema for `action.manage_check_run`
 
 
 <a id="nestedatt--action--mcp"></a>
@@ -294,6 +497,10 @@ Optional:
 ### Nested Schema for `action.request_reviewers`
 
 
+<a id="nestedatt--action--resolve_review_threads"></a>
+### Nested Schema for `action.resolve_review_threads`
+
+
 <a id="nestedatt--action--slack"></a>
 ### Nested Schema for `action.slack`
 
@@ -302,7 +509,7 @@ Optional:
 - `channel` (String) Slack channel ID to post to.
 - `generalized` (Boolean) If true, agent can list and send to any Slack channel or DM dynamically.
 - `post_as_thread` (Boolean) If true, post a parent message with the automation name and reply in the thread.
-- `respond_in_thread` (Boolean) If true, respond in the thread of the triggering Slack message (Slack triggers only).
+- `respond_in_thread` (Boolean, Deprecated) Deprecated: the server ignores this flag and always replies in the triggering Slack thread. Kept for compatibility with existing configurations.
 
 
 

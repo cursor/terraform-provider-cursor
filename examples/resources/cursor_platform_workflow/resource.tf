@@ -1,7 +1,8 @@
 resource "cursor_platform_workflow" "example_review" {
-  name    = "Example review automation"
-  scope   = "team"
-  enabled = true
+  name        = "Example review automation"
+  description = "Reviews pull requests and posts inline comments."
+  scope       = "team"
+  enabled     = true
 
   prompt = file("prompt.md")
   model  = "gpt-5.5"
@@ -31,9 +32,73 @@ resource "cursor_platform_workflow" "example_review" {
       }
     },
     {
+      manage_check_run = {}
+    },
+    {
+      resolve_review_threads = {}
+    },
+    {
       mcp = {
         server = "example-mcp-server"
       }
+    }
+  ]
+}
+
+resource "cursor_platform_workflow" "example_slack_triage" {
+  name   = "Triage Slack reactions"
+  prompt = "Investigate the message that received the reaction and reply in thread."
+
+  git_repo               = "github.com/example-org/example-repo"
+  disabled_default_tools = ["open_git_pr"]
+
+  trigger = [
+    {
+      slack_reaction_added = {
+        channel    = "C0123456789"
+        emoji_name = "eyes"
+      }
+    },
+    {
+      slack_mention = {
+        channel = "C0123456789"
+      }
+    }
+  ]
+
+  action = [
+    {
+      slack = {
+        channel = "C0123456789"
+      }
+    }
+  ]
+}
+
+resource "cursor_platform_workflow" "example_incidents" {
+  name   = "Incident responder"
+  prompt = "Summarise the incident and open a PR with a proposed fix."
+
+  git_repo = "github.com/example-org/example-repo"
+
+  trigger = [
+    {
+      pagerduty = {
+        incident_triggered = {}
+        service_ids        = ["PABC123"]
+      }
+    },
+    {
+      sentry = {
+        issue_created = {}
+        project_ids   = ["123456"]
+      }
+    }
+  ]
+
+  action = [
+    {
+      git_pr = {}
     }
   ]
 }
