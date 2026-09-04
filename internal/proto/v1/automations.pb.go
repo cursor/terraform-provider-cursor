@@ -1437,6 +1437,16 @@ type Workflow struct {
 	// Default automation tools that should not be available to this workflow.
 	// An empty list preserves the platform defaults.
 	DisabledDefaultTools []AutomationDefaultTool `protobuf:"varint,19,rep,packed,name=disabled_default_tools,json=disabledDefaultTools,proto3,enum=aiserver.v1.AutomationDefaultTool" json:"disabled_default_tools,omitempty"`
+	// Sand-only, server-managed (the wire never sets or changes it): the Grok Bot
+	// session the routine was created in, so its cron fires wake that
+	// conversation. Absent on routines created before sessions existed and on
+	// routines created from the main conversation; both run on main.
+	GrokBotSessionId *string `protobuf:"bytes,20,opt,name=grok_bot_session_id,json=grokBotSessionId,proto3,oneof" json:"grok_bot_session_id,omitempty"`
+	// Sand-only, server-managed: the Cursor auth id of the user whose turn
+	// created the routine, recorded with grok_bot_session_id so the fire runs as
+	// that user. Absent on main routines (the owner's) and on session routines
+	// from before it was recorded, which are refused rather than run as the owner.
+	GrokBotCreatorAuthId *string `protobuf:"bytes,21,opt,name=grok_bot_creator_auth_id,json=grokBotCreatorAuthId,proto3,oneof" json:"grok_bot_creator_auth_id,omitempty"`
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
@@ -1553,6 +1563,20 @@ func (x *Workflow) GetDisabledDefaultTools() []AutomationDefaultTool {
 		return x.DisabledDefaultTools
 	}
 	return nil
+}
+
+func (x *Workflow) GetGrokBotSessionId() string {
+	if x != nil && x.GrokBotSessionId != nil {
+		return *x.GrokBotSessionId
+	}
+	return ""
+}
+
+func (x *Workflow) GetGrokBotCreatorAuthId() string {
+	if x != nil && x.GrokBotCreatorAuthId != nil {
+		return *x.GrokBotCreatorAuthId
+	}
+	return ""
 }
 
 type Prompt struct {
@@ -5601,8 +5625,11 @@ type Automation struct {
 	ManagedType          *string             `protobuf:"bytes,15,opt,name=managed_type,json=managedType,proto3,oneof" json:"managed_type,omitempty"`
 	Hidden               *bool               `protobuf:"varint,16,opt,name=hidden,proto3,oneof" json:"hidden,omitempty"`
 	TemplateId           *string             `protobuf:"bytes,17,opt,name=template_id,json=templateId,proto3,oneof" json:"template_id,omitempty"`
-	unknownFields        protoimpl.UnknownFields
-	sizeCache            protoimpl.SizeCache
+	// Sand only: when this automation last fired, from its newest non-skipped
+	// run row (epoch ms). Absent when it has never run.
+	SandLastRunAtMs *int64 `protobuf:"varint,18,opt,name=sand_last_run_at_ms,json=sandLastRunAtMs,proto3,oneof" json:"sand_last_run_at_ms,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *Automation) Reset() {
@@ -5745,6 +5772,13 @@ func (x *Automation) GetTemplateId() string {
 		return *x.TemplateId
 	}
 	return ""
+}
+
+func (x *Automation) GetSandLastRunAtMs() int64 {
+	if x != nil && x.SandLastRunAtMs != nil {
+		return *x.SandLastRunAtMs
+	}
+	return 0
 }
 
 type AutomationMcpAuthState struct {
@@ -5945,7 +5979,7 @@ const file_aiserver_v1_automations_proto_rawDesc = "" +
 	"\x15environment_public_id\x18\x03 \x01(\tH\x02R\x13environmentPublicId\x88\x01\x01B\x0f\n" +
 	"\r_skip_installB\x11\n" +
 	"\x0f_private_workerB\x18\n" +
-	"\x16_environment_public_id\"\xcf\a\n" +
+	"\x16_environment_public_id\"\xf5\b\n" +
 	"\bWorkflow\x120\n" +
 	"\btriggers\x18\n" +
 	" \x03(\v2\x14.aiserver.v1.TriggerR\btriggers\x12-\n" +
@@ -5960,14 +5994,18 @@ const file_aiserver_v1_automations_proto_rawDesc = "" +
 	"\x1eslack_completion_reaction_mode\x18\x10 \x01(\x0e2(.aiserver.v1.SlackCompletionReactionModeH\x04R\x1bslackCompletionReactionMode\x88\x01\x01\x12W\n" +
 	"&slack_completion_reaction_custom_emoji\x18\x11 \x01(\tH\x05R\"slackCompletionReactionCustomEmoji\x88\x01\x01\x12C\n" +
 	"\x0emanaged_config\x18\x12 \x01(\v2\x17.google.protobuf.StructH\x06R\rmanagedConfig\x88\x01\x01\x12X\n" +
-	"\x16disabled_default_tools\x18\x13 \x03(\x0e2\".aiserver.v1.AutomationDefaultToolR\x14disabledDefaultToolsB\b\n" +
+	"\x16disabled_default_tools\x18\x13 \x03(\x0e2\".aiserver.v1.AutomationDefaultToolR\x14disabledDefaultTools\x122\n" +
+	"\x13grok_bot_session_id\x18\x14 \x01(\tH\aR\x10grokBotSessionId\x88\x01\x01\x12;\n" +
+	"\x18grok_bot_creator_auth_id\x18\x15 \x01(\tH\bR\x14grokBotCreatorAuthId\x88\x01\x01B\b\n" +
 	"\x06_modelB\r\n" +
 	"\v_git_configB\x10\n" +
 	"\x0e_agent_optionsB\x11\n" +
 	"\x0f_memory_enabledB!\n" +
 	"\x1f_slack_completion_reaction_modeB)\n" +
 	"'_slack_completion_reaction_custom_emojiB\x11\n" +
-	"\x0f_managed_configJ\x04\b\x01\x10\x02J\x04\b\x02\x10\x03J\x04\b\x04\x10\x05J\x04\b\x05\x10\x06J\x04\b\x06\x10\aJ\x04\b\a\x10\bJ\x04\b\t\x10\n" +
+	"\x0f_managed_configB\x16\n" +
+	"\x14_grok_bot_session_idB\x1b\n" +
+	"\x19_grok_bot_creator_auth_idJ\x04\b\x01\x10\x02J\x04\b\x02\x10\x03J\x04\b\x04\x10\x05J\x04\b\x05\x10\x06J\x04\b\x06\x10\aJ\x04\b\a\x10\bJ\x04\b\t\x10\n" +
 	"\"\xda\x02\n" +
 	"\x06Prompt\x12\x16\n" +
 	"\x06prompt\x18\x01 \x01(\tR\x06prompt\x12A\n" +
@@ -6255,7 +6293,7 @@ const file_aiserver_v1_automations_proto_rawDesc = "" +
 	"\bworkflow\x18\x01 \x01(\v2 .aiserver.v1.AutomationWithOwnerR\bworkflow\"D\n" +
 	"\x17DeleteAutomationRequest\x12#\n" +
 	"\rautomation_id\x18\x02 \x01(\tR\fautomationIdJ\x04\b\x01\x10\x02\"\x1a\n" +
-	"\x18DeleteAutomationResponse\"\xc3\x06\n" +
+	"\x18DeleteAutomationResponse\"\x8e\a\n" +
 	"\n" +
 	"Automation\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
@@ -6279,7 +6317,8 @@ const file_aiserver_v1_automations_proto_rawDesc = "" +
 	"\fmanaged_type\x18\x0f \x01(\tH\x05R\vmanagedType\x88\x01\x01\x12\x1b\n" +
 	"\x06hidden\x18\x10 \x01(\bH\x06R\x06hidden\x88\x01\x01\x12$\n" +
 	"\vtemplate_id\x18\x11 \x01(\tH\aR\n" +
-	"templateId\x88\x01\x01B\x0e\n" +
+	"templateId\x88\x01\x01\x121\n" +
+	"\x13sand_last_run_at_ms\x18\x12 \x01(\x03H\bR\x0fsandLastRunAtMs\x88\x01\x01B\x0e\n" +
 	"\f_descriptionB\x15\n" +
 	"\x13_service_account_idB\r\n" +
 	"\v_deploy_keyB\x19\n" +
@@ -6287,7 +6326,8 @@ const file_aiserver_v1_automations_proto_rawDesc = "" +
 	"\x18_deploy_last_apply_errorB\x0f\n" +
 	"\r_managed_typeB\t\n" +
 	"\a_hiddenB\x0e\n" +
-	"\f_template_idJ\x04\b\x01\x10\x02\"\xa3\x01\n" +
+	"\f_template_idB\x16\n" +
+	"\x14_sand_last_run_at_msJ\x04\b\x01\x10\x02\"\xa3\x01\n" +
 	"\x16AutomationMcpAuthState\x12 \n" +
 	"\tserver_id\x18\x01 \x01(\x03H\x00R\bserverId\x88\x01\x01\x12\x1f\n" +
 	"\vserver_name\x18\x02 \x01(\tR\n" +
