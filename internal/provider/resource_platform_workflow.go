@@ -19,6 +19,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/mapdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"google.golang.org/protobuf/encoding/protowire"
 )
@@ -119,30 +120,45 @@ func parseCustomErrorDetailsTitleDetail(b []byte) (string, string) {
 // ---------------------------------------------------------------------------
 
 type platformWorkflowModel struct {
-	ID                   types.String        `tfsdk:"id"`
-	Name                 types.String        `tfsdk:"name"`
-	Description          types.String        `tfsdk:"description"`
-	Scope                types.String        `tfsdk:"scope"`
-	TeamID               types.Int64         `tfsdk:"team_id"`
-	Enabled              types.Bool          `tfsdk:"enabled"`
-	Prompt               types.String        `tfsdk:"prompt"`
-	EffortLevel          types.String        `tfsdk:"effort_level"`
-	Model                types.String        `tfsdk:"model"`
-	GitRepo              types.String        `tfsdk:"git_repo"`
-	GitBranch            types.String        `tfsdk:"git_branch"`
-	SkipInstall          types.Bool          `tfsdk:"skip_install"`
-	EnvironmentPublicID  types.String        `tfsdk:"environment_public_id"`
-	PrivateWorker        *privateWorkerModel `tfsdk:"private_worker"`
-	MemoryEnabled        types.Bool          `tfsdk:"memory_enabled"`
-	DisabledDefaultTools types.List          `tfsdk:"disabled_default_tools"`
-	Triggers             []triggerModel      `tfsdk:"trigger"`
-	Actions              []actionModel       `tfsdk:"action"`
-	CreatedAt            types.Int64         `tfsdk:"created_at"`
-	UpdatedAt            types.Int64         `tfsdk:"updated_at"`
+	ID                   types.String         `tfsdk:"id"`
+	Name                 types.String         `tfsdk:"name"`
+	Description          types.String         `tfsdk:"description"`
+	Scope                types.String         `tfsdk:"scope"`
+	TeamID               types.Int64          `tfsdk:"team_id"`
+	Enabled              types.Bool           `tfsdk:"enabled"`
+	Prompt               types.String         `tfsdk:"prompt"`
+	EffortLevel          types.String         `tfsdk:"effort_level"`
+	Model                types.String         `tfsdk:"model"`
+	ModelSelection       *modelSelectionModel `tfsdk:"model_selection"`
+	GitRepo              types.String         `tfsdk:"git_repo"`
+	GitBranch            types.String         `tfsdk:"git_branch"`
+	SkipInstall          types.Bool           `tfsdk:"skip_install"`
+	EnvironmentPublicID  types.String         `tfsdk:"environment_public_id"`
+	PrivateWorker        *privateWorkerModel  `tfsdk:"private_worker"`
+	MemoryEnabled        types.Bool           `tfsdk:"memory_enabled"`
+	DisabledDefaultTools types.List           `tfsdk:"disabled_default_tools"`
+	Triggers             []triggerModel       `tfsdk:"trigger"`
+	Actions              []actionModel        `tfsdk:"action"`
+	CreatedAt            types.Int64          `tfsdk:"created_at"`
+	UpdatedAt            types.Int64          `tfsdk:"updated_at"`
 }
 
 type privateWorkerModel struct {
 	Labels types.Map `tfsdk:"labels"`
+}
+
+// modelSelectionModel mirrors AutomationModelSelection: the structured twin of
+// the legacy `model` slug, able to carry parameters the slug cannot (e.g. the
+// Auto tier via optimize_for).
+type modelSelectionModel struct {
+	ModelID    types.String                   `tfsdk:"model_id"`
+	Parameters []modelSelectionParameterModel `tfsdk:"parameters"`
+	MaxMode    types.Bool                     `tfsdk:"max_mode"`
+}
+
+type modelSelectionParameterModel struct {
+	ID    types.String `tfsdk:"id"`
+	Value types.String `tfsdk:"value"`
 }
 
 type triggerModel struct {
@@ -365,6 +381,11 @@ type platformWorkflowResource struct {
 	client *apiClient
 }
 
+var (
+	_ resource.ResourceWithImportState    = (*platformWorkflowResource)(nil)
+	_ resource.ResourceWithValidateConfig = (*platformWorkflowResource)(nil)
+)
+
 func NewPlatformWorkflowResource() resource.Resource {
 	return &platformWorkflowResource{}
 }
@@ -432,9 +453,47 @@ func (r *platformWorkflowResource) Schema(_ context.Context, _ resource.SchemaRe
 			"model": schema.StringAttribute{
 				Optional:    true,
 				Computed:    true,
-				Description: "Model to use (e.g. claude-4.6-opus-high-thinking, gpt-4o). If unset, the server assigns a default model.",
+				Description: "Legacy model slug (e.g. claude-4.6-opus-high-thinking, gpt-4o). If unset, the server assigns a default model. Cannot be combined with model_selection: when model_selection is set the server derives this value from it.",
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					modelUseStateUnlessSelectionChanged{},
+				},
+			},
+			"model_selection": schema.SingleNestedAttribute{
+				Optional:    true,
+				Description: `Structured model choice: a catalog model ID plus parameters the legacy model slug cannot carry. Use it to pick an Auto tier, e.g. model_id = "auto-smart" with parameters = [{ id = "optimize_for", value = "cost" }] (Auto Cost) or value = "balanced" (Auto Balance) or "intelligence". Takes priority over model at run time; leave model unset when using it.`,
+				Attributes: map[string]schema.Attribute{
+					"model_id": schema.StringAttribute{
+						Required:    true,
+						Description: `Catalog model ID (e.g. "auto-smart"). Use the canonical ID: the server rejects unknown IDs and rewrites aliases, which would show up as a diff.`,
+					},
+					"parameters": schema.ListNestedAttribute{
+						Optional:    true,
+						Computed:    true,
+						Description: `Parameter values selecting a model variant, e.g. { id = "optimize_for", value = "cost" }. Parameter IDs must be unique. When omitted the server picks the model's default variant and reports its parameters here.`,
+						PlanModifiers: []planmodifier.List{
+							modelSelectionParametersUseStateUnlessModelChanged{},
+						},
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"id": schema.StringAttribute{
+									Required:    true,
+									Description: "Parameter ID (e.g. optimize_for).",
+								},
+								"value": schema.StringAttribute{
+									Required:    true,
+									Description: `Parameter value. Enum parameters take one of their enum values (e.g. "cost", "balanced", "intelligence" for optimize_for); booleans take "true"/"false".`,
+								},
+							},
+						},
+					},
+					"max_mode": schema.BoolAttribute{
+						Optional:    true,
+						Computed:    true,
+						Description: "Run the model in max mode. Defaults to true and is reported back as true; the server currently rejects false.",
+						PlanModifiers: []planmodifier.Bool{
+							boolplanmodifier.UseStateForUnknown(),
+						},
+					},
 				},
 			},
 			"git_repo": schema.StringAttribute{
@@ -1092,6 +1151,7 @@ func preserveConfiguredValues(ctx context.Context, state *platformWorkflowModel,
 	preserveEquivalentGitPullRequestOrgs(ctx, state, reference)
 	preserveEquivalentGitCICompletionConditions(state, reference)
 	preserveEquivalentEnvironmentPublicID(state, reference)
+	preserveEquivalentModelSelection(state, reference)
 	state.TeamID = reference.TeamID
 }
 
@@ -1271,6 +1331,145 @@ func (r *platformWorkflowResource) ImportState(ctx context.Context, req resource
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
+// ValidateConfig rejects model together with model_selection: the server
+// overwrites model from the validated selection, so a configured slug that
+// disagrees with it could never be applied consistently.
+func (r *platformWorkflowResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var model types.String
+	var selection types.Object
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("model"), &model)...)
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("model_selection"), &selection)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	if !model.IsNull() && !selection.IsNull() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("model"),
+			"Conflicting model configuration",
+			"model cannot be set together with model_selection; the server derives model from model_selection. Remove model.",
+		)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// model / model_selection plan modifiers
+// ---------------------------------------------------------------------------
+
+// modelSelectionAttrs extracts the parts of a model_selection object value,
+// tolerating unknown nested values.
+type modelSelectionAttrs struct {
+	set        bool
+	modelID    types.String
+	parameters types.List
+	maxMode    types.Bool
+}
+
+func modelSelectionAttrsFrom(obj types.Object) modelSelectionAttrs {
+	if obj.IsNull() || obj.IsUnknown() {
+		return modelSelectionAttrs{}
+	}
+	attrs := obj.Attributes()
+	out := modelSelectionAttrs{set: true}
+	if v, ok := attrs["model_id"].(types.String); ok {
+		out.modelID = v
+	}
+	if v, ok := attrs["parameters"].(types.List); ok {
+		out.parameters = v
+	}
+	if v, ok := attrs["max_mode"].(types.Bool); ok {
+		out.maxMode = v
+	}
+	return out
+}
+
+// modelSelectionChangedForPlan reports whether the planned model_selection
+// differs from state in a way that makes the server re-derive model (and the
+// default variant parameters). Unknown planned parameters/max_mode are treated
+// as unchanged: they are only unknown because they were not configured, and the
+// server keeps them when model_id is unchanged.
+func modelSelectionChangedForPlan(ctx context.Context, plan tfsdk.Plan, state tfsdk.State) bool {
+	var planObj, stateObj types.Object
+	if diags := plan.GetAttribute(ctx, path.Root("model_selection"), &planObj); diags.HasError() {
+		return true
+	}
+	if diags := state.GetAttribute(ctx, path.Root("model_selection"), &stateObj); diags.HasError() {
+		return true
+	}
+	if planObj.IsUnknown() {
+		return true
+	}
+	p := modelSelectionAttrsFrom(planObj)
+	s := modelSelectionAttrsFrom(stateObj)
+	if p.set != s.set {
+		return true
+	}
+	if !p.set {
+		return false
+	}
+	if p.modelID.IsUnknown() || !p.modelID.Equal(s.modelID) {
+		return true
+	}
+	if !p.maxMode.IsUnknown() && !p.maxMode.Equal(s.maxMode) {
+		return true
+	}
+	if !p.parameters.IsUnknown() && !p.parameters.Equal(s.parameters) {
+		return true
+	}
+	return false
+}
+
+// modelUseStateUnlessSelectionChanged behaves like UseStateForUnknown for the
+// computed model slug, except when model_selection changed: the server then
+// rewrites model from the new selection, so the value must stay unknown.
+type modelUseStateUnlessSelectionChanged struct{}
+
+func (modelUseStateUnlessSelectionChanged) Description(_ context.Context) string {
+	return "Keeps the prior model unless model_selection changed."
+}
+
+func (m modelUseStateUnlessSelectionChanged) MarkdownDescription(ctx context.Context) string {
+	return m.Description(ctx)
+}
+
+func (modelUseStateUnlessSelectionChanged) PlanModifyString(ctx context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
+	if req.State.Raw.IsNull() || req.Plan.Raw.IsNull() {
+		return
+	}
+	if !req.PlanValue.IsUnknown() || req.StateValue.IsUnknown() {
+		return
+	}
+	if modelSelectionChangedForPlan(ctx, req.Plan, req.State) {
+		return
+	}
+	resp.PlanValue = req.StateValue
+}
+
+// modelSelectionParametersUseStateUnlessModelChanged keeps the server-reported
+// default-variant parameters across plans while model_id (and max_mode) stay
+// the same; a new model_id gets fresh defaults, so the value stays unknown.
+type modelSelectionParametersUseStateUnlessModelChanged struct{}
+
+func (modelSelectionParametersUseStateUnlessModelChanged) Description(_ context.Context) string {
+	return "Keeps the prior parameters unless model_selection.model_id changed."
+}
+
+func (m modelSelectionParametersUseStateUnlessModelChanged) MarkdownDescription(ctx context.Context) string {
+	return m.Description(ctx)
+}
+
+func (modelSelectionParametersUseStateUnlessModelChanged) PlanModifyList(ctx context.Context, req planmodifier.ListRequest, resp *planmodifier.ListResponse) {
+	if req.State.Raw.IsNull() || req.Plan.Raw.IsNull() {
+		return
+	}
+	if !req.PlanValue.IsUnknown() || req.StateValue.IsUnknown() {
+		return
+	}
+	if modelSelectionChangedForPlan(ctx, req.Plan, req.State) {
+		return
+	}
+	resp.PlanValue = req.StateValue
+}
+
 func (r *platformWorkflowResource) updateEnabled(ctx context.Context, state platformWorkflowModel, enabled bool) (platformWorkflowModel, error) {
 	workflowID, err := parseWorkflowID(state.ID)
 	if err != nil {
@@ -1447,6 +1646,100 @@ func preserveEquivalentEnvironmentPublicID(state *platformWorkflowModel, referen
 	}
 
 	state.EnvironmentPublicID = reference.EnvironmentPublicID
+}
+
+// modelSelectionToProto mirrors the server's save-time checks that can be done
+// without the catalog (validateStructuredModelSelectionForSave /
+// validateModelSelection): non-empty model_id, no incomplete or duplicate
+// parameters, and max_mode = false is not supported yet.
+func modelSelectionToProto(ms *modelSelectionModel) (*v1.AutomationModelSelection, error) {
+	if ms.ModelID.IsNull() || ms.ModelID.IsUnknown() || strings.TrimSpace(ms.ModelID.ValueString()) == "" {
+		return nil, fmt.Errorf("model_selection.model_id is required")
+	}
+	selection := &v1.AutomationModelSelection{ModelId: strings.TrimSpace(ms.ModelID.ValueString())}
+
+	seen := make(map[string]struct{}, len(ms.Parameters))
+	for i, p := range ms.Parameters {
+		if p.ID.IsUnknown() || p.Value.IsUnknown() {
+			continue
+		}
+		id := strings.TrimSpace(p.ID.ValueString())
+		value := strings.TrimSpace(p.Value.ValueString())
+		if id == "" || value == "" {
+			return nil, fmt.Errorf("model_selection.parameters[%d] must set both id and value", i)
+		}
+		if _, dup := seen[id]; dup {
+			return nil, fmt.Errorf("model_selection.parameters contains duplicate parameter %q", id)
+		}
+		seen[id] = struct{}{}
+		selection.Parameters = append(selection.Parameters, &v1.AutomationModelSelection_ParameterValue{Id: id, Value: value})
+	}
+
+	if !ms.MaxMode.IsNull() && !ms.MaxMode.IsUnknown() {
+		if !ms.MaxMode.ValueBool() {
+			return nil, fmt.Errorf("model_selection.max_mode = false is not supported by the server yet; omit it or set it to true")
+		}
+		maxMode := true
+		selection.MaxMode = &maxMode
+	}
+	return selection, nil
+}
+
+func protoModelSelectionToModel(selection *v1.AutomationModelSelection) *modelSelectionModel {
+	if selection == nil || strings.TrimSpace(selection.GetModelId()) == "" {
+		return nil
+	}
+	ms := &modelSelectionModel{
+		ModelID: types.StringValue(selection.GetModelId()),
+		MaxMode: types.BoolNull(),
+	}
+	if selection.MaxMode != nil {
+		ms.MaxMode = types.BoolValue(selection.GetMaxMode())
+	}
+	for _, p := range selection.GetParameters() {
+		ms.Parameters = append(ms.Parameters, modelSelectionParameterModel{
+			ID:    types.StringValue(p.GetId()),
+			Value: types.StringValue(p.GetValue()),
+		})
+	}
+	return ms
+}
+
+// Preserve the practitioner's model_selection spelling (model_id whitespace,
+// parameter order and whitespace) when the server echoes an equivalent
+// canonical selection, avoiding post-apply state mismatches.
+func preserveEquivalentModelSelection(state *platformWorkflowModel, reference platformWorkflowModel) {
+	if state == nil || state.ModelSelection == nil || reference.ModelSelection == nil {
+		return
+	}
+	current, ref := state.ModelSelection, reference.ModelSelection
+	if !ref.ModelID.IsNull() && !ref.ModelID.IsUnknown() &&
+		strings.TrimSpace(ref.ModelID.ValueString()) == current.ModelID.ValueString() {
+		current.ModelID = ref.ModelID
+	}
+	if ref.Parameters != nil && modelSelectionParametersEquivalent(current.Parameters, ref.Parameters) {
+		current.Parameters = ref.Parameters
+	}
+}
+
+func modelSelectionParametersEquivalent(current, reference []modelSelectionParameterModel) bool {
+	if len(current) != len(reference) {
+		return false
+	}
+	values := make(map[string]string, len(current))
+	for _, p := range current {
+		values[p.ID.ValueString()] = p.Value.ValueString()
+	}
+	for _, p := range reference {
+		if p.ID.IsUnknown() || p.Value.IsUnknown() {
+			return false
+		}
+		value, ok := values[strings.TrimSpace(p.ID.ValueString())]
+		if !ok || value != strings.TrimSpace(p.Value.ValueString()) {
+			return false
+		}
+	}
+	return true
 }
 
 func gitPullRequestOrgsEqualFold(ctx context.Context, current, reference types.List) bool {
@@ -1719,8 +2012,15 @@ func modelToWorkflow(ctx context.Context, m *platformWorkflowModel) (*v1.Workflo
 	}
 	w.Prompts = []*v1.Prompt{prompt}
 
-	// Model
-	if !m.Model.IsNull() && !m.Model.IsUnknown() {
+	// Model / ModelSelection. When a selection is set the server derives the
+	// slug from it, so the (possibly state-carried) slug is not sent.
+	if m.ModelSelection != nil {
+		selection, err := modelSelectionToProto(m.ModelSelection)
+		if err != nil {
+			return nil, err
+		}
+		w.ModelSelection = selection
+	} else if !m.Model.IsNull() && !m.Model.IsUnknown() {
 		model := m.Model.ValueString()
 		w.Model = &model
 	}
@@ -2717,6 +3017,7 @@ func protoToModel(ctx context.Context, withOwner *v1.AutomationWithOwner) (platf
 	} else {
 		m.Model = types.StringNull()
 	}
+	m.ModelSelection = protoModelSelectionToModel(wf.GetModelSelection())
 
 	// GitConfig
 	if gc := wf.GetGitConfig(); gc != nil {

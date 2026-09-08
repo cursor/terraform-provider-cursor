@@ -62,7 +62,37 @@ func (d *platformWorkflowDataSource) Schema(_ context.Context, _ datasource.Sche
 			},
 			"model": schema.StringAttribute{
 				Computed:    true,
-				Description: "Model name.",
+				Description: "Legacy model slug.",
+			},
+			"model_selection": schema.SingleNestedAttribute{
+				Computed:    true,
+				Description: "Structured model choice (catalog model ID plus parameters such as the Auto tier). Null when the automation only stores a legacy model slug.",
+				Attributes: map[string]schema.Attribute{
+					"model_id": schema.StringAttribute{
+						Computed:    true,
+						Description: "Catalog model ID (e.g. auto-smart).",
+					},
+					"parameters": schema.ListNestedAttribute{
+						Computed:    true,
+						Description: "Parameter values selecting the model variant (e.g. optimize_for = cost).",
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"id": schema.StringAttribute{
+									Computed:    true,
+									Description: "Parameter ID.",
+								},
+								"value": schema.StringAttribute{
+									Computed:    true,
+									Description: "Parameter value.",
+								},
+							},
+						},
+					},
+					"max_mode": schema.BoolAttribute{
+						Computed:    true,
+						Description: "Whether the model runs in max mode.",
+					},
+				},
 			},
 			"git_repo": schema.StringAttribute{
 				Computed:    true,

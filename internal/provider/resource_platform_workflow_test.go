@@ -7,10 +7,14 @@ import (
 	"testing"
 
 	v1 "github.com/cursor/terraform-provider-cursor/internal/proto/v1"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	datasourceschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -3272,4 +3276,365 @@ func TestDataSourceSchemaMirrorsResourceSchema(t *testing.T) {
 			}
 		}
 	}
+}
+
+func modelSelectionParams(pairs ...string) []modelSelectionParameterModel {
+	var out []modelSelectionParameterModel
+	for i := 0; i+1 < len(pairs); i += 2 {
+		out = append(out, modelSelectionParameterModel{
+			ID:    types.StringValue(pairs[i]),
+			Value: types.StringValue(pairs[i+1]),
+		})
+	}
+	return out
+}
+
+func TestModelSelectionRoundTrip(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("model_to_proto_auto_cost", func(t *testing.T) {
+		m := &platformWorkflowModel{
+			Prompt: types.StringValue("review code"),
+			// Carried over from state via the plan modifier; must not be sent
+			// alongside the selection.
+			Model: types.StringValue("auto-smart"),
+			ModelSelection: &modelSelectionModel{
+				ModelID:    types.StringValue("auto-smart"),
+				Parameters: modelSelectionParams("optimize_for", "cost"),
+				MaxMode:    types.BoolNull(),
+			},
+			Triggers: []triggerModel{
+				{Webhook: &webhookTriggerModel{}, UserAllowlist: types.ListNull(types.StringType)},
+			},
+		}
+
+		wf, err := modelToWorkflow(ctx, m)
+		if err != nil {
+			t.Fatalf("modelToWorkflow() error: %v", err)
+		}
+		if wf.Model != nil {
+			t.Fatalf("model slug should not be sent with a selection, got %q", wf.GetModel())
+		}
+		sel := wf.GetModelSelection()
+		if sel == nil {
+			t.Fatal("expected model_selection in proto")
+		}
+		if sel.GetModelId() != "auto-smart" {
+			t.Fatalf("ModelId = %q", sel.GetModelId())
+		}
+		if len(sel.GetParameters()) != 1 || sel.GetParameters()[0].GetId() != "optimize_for" || sel.GetParameters()[0].GetValue() != "cost" {
+			t.Fatalf("Parameters = %v", sel.GetParameters())
+		}
+		if sel.MaxMode != nil {
+			t.Fatal("max_mode should be omitted when unset so the server applies its default")
+		}
+	})
+
+	t.Run("model_to_proto_without_selection_sends_slug", func(t *testing.T) {
+		m := &platformWorkflowModel{
+			Prompt: types.StringValue("review code"),
+			Model:  types.StringValue("gpt-5.5"),
+			Triggers: []triggerModel{
+				{Webhook: &webhookTriggerModel{}, UserAllowlist: types.ListNull(types.StringType)},
+			},
+		}
+		wf, err := modelToWorkflow(ctx, m)
+		if err != nil {
+			t.Fatalf("modelToWorkflow() error: %v", err)
+		}
+		if wf.GetModel() != "gpt-5.5" || wf.GetModelSelection() != nil {
+			t.Fatalf("unexpected model fields: model=%q selection=%v", wf.GetModel(), wf.GetModelSelection())
+		}
+	})
+
+	t.Run("model_to_proto_validation", func(t *testing.T) {
+		cases := map[string]*modelSelectionModel{
+			"empty_model_id":      {ModelID: types.StringValue(" ")},
+			"incomplete_param":    {ModelID: types.StringValue("auto-smart"), Parameters: modelSelectionParams("optimize_for", "")},
+			"duplicate_param":     {ModelID: types.StringValue("auto-smart"), Parameters: modelSelectionParams("optimize_for", "cost", "optimize_for", "balanced")},
+			"max_mode_false":      {ModelID: types.StringValue("auto-smart"), MaxMode: types.BoolValue(false)},
+			"max_mode_false_only": {ModelID: types.StringValue("gpt-5.5"), MaxMode: types.BoolValue(false)},
+		}
+		for name, sel := range cases {
+			if _, err := modelSelectionToProto(sel); err == nil {
+				t.Errorf("%s: expected error", name)
+			}
+		}
+
+		sel, err := modelSelectionToProto(&modelSelectionModel{
+			ModelID: types.StringValue(" auto-smart "),
+			Parameters: []modelSelectionParameterModel{
+				{ID: types.StringValue(" optimize_for "), Value: types.StringValue(" balanced ")},
+			},
+			MaxMode: types.BoolValue(true),
+		})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if sel.GetModelId() != "auto-smart" || sel.GetParameters()[0].GetId() != "optimize_for" || sel.GetParameters()[0].GetValue() != "balanced" || sel.MaxMode == nil || !sel.GetMaxMode() {
+			t.Fatalf("unexpected trimmed selection: %v", sel)
+		}
+	})
+
+	t.Run("proto_to_model_set", func(t *testing.T) {
+		maxMode := true
+		model := "auto-smart"
+		out, err := protoToModel(ctx, &v1.AutomationWithOwner{
+			Workflow: &v1.Automation{
+				Workflow: &v1.Workflow{
+					Model: &model,
+					ModelSelection: &v1.AutomationModelSelection{
+						ModelId: "auto-smart",
+						Parameters: []*v1.AutomationModelSelection_ParameterValue{
+							{Id: "optimize_for", Value: "balanced"},
+						},
+						MaxMode: &maxMode,
+					},
+				},
+			},
+		})
+		if err != nil {
+			t.Fatalf("protoToModel() error: %v", err)
+		}
+		if out.Model.ValueString() != "auto-smart" {
+			t.Fatalf("model = %q", out.Model.ValueString())
+		}
+		sel := out.ModelSelection
+		if sel == nil {
+			t.Fatal("expected model_selection in terraform model")
+		}
+		if sel.ModelID.ValueString() != "auto-smart" {
+			t.Fatalf("model_id = %q", sel.ModelID.ValueString())
+		}
+		if len(sel.Parameters) != 1 || sel.Parameters[0].ID.ValueString() != "optimize_for" || sel.Parameters[0].Value.ValueString() != "balanced" {
+			t.Fatalf("parameters = %+v", sel.Parameters)
+		}
+		if !sel.MaxMode.ValueBool() {
+			t.Fatal("expected max_mode=true")
+		}
+	})
+
+	t.Run("proto_to_model_null_when_absent_or_blank", func(t *testing.T) {
+		model := "gpt-5.5"
+		for name, wf := range map[string]*v1.Workflow{
+			"absent": {Model: &model},
+			"blank":  {Model: &model, ModelSelection: &v1.AutomationModelSelection{ModelId: " "}},
+		} {
+			out, err := protoToModel(ctx, &v1.AutomationWithOwner{Workflow: &v1.Automation{Workflow: wf}})
+			if err != nil {
+				t.Fatalf("%s: protoToModel() error: %v", name, err)
+			}
+			if out.ModelSelection != nil {
+				t.Fatalf("%s: expected null model_selection, got %+v", name, out.ModelSelection)
+			}
+			if out.Model.ValueString() != "gpt-5.5" {
+				t.Fatalf("%s: model = %q", name, out.Model.ValueString())
+			}
+		}
+	})
+}
+
+func TestPreserveEquivalentModelSelection(t *testing.T) {
+	t.Run("keeps_configured_order_and_whitespace", func(t *testing.T) {
+		state := platformWorkflowModel{ModelSelection: &modelSelectionModel{
+			ModelID:    types.StringValue("auto-smart"),
+			Parameters: modelSelectionParams("a", "1", "optimize_for", "cost"),
+			MaxMode:    types.BoolValue(true),
+		}}
+		reference := platformWorkflowModel{ModelSelection: &modelSelectionModel{
+			ModelID:    types.StringValue(" auto-smart"),
+			Parameters: modelSelectionParams("optimize_for", "cost ", "a", "1"),
+			MaxMode:    types.BoolNull(),
+		}}
+		preserveEquivalentModelSelection(&state, reference)
+		if state.ModelSelection.ModelID.ValueString() != " auto-smart" {
+			t.Fatalf("model_id = %q, want configured spelling", state.ModelSelection.ModelID.ValueString())
+		}
+		if !reflect.DeepEqual(state.ModelSelection.Parameters, reference.ModelSelection.Parameters) {
+			t.Fatalf("parameters = %+v, want configured order", state.ModelSelection.Parameters)
+		}
+		if !state.ModelSelection.MaxMode.ValueBool() {
+			t.Fatal("max_mode must keep the server value")
+		}
+	})
+
+	t.Run("keeps_server_values_when_different", func(t *testing.T) {
+		state := platformWorkflowModel{ModelSelection: &modelSelectionModel{
+			ModelID:    types.StringValue("auto-smart"),
+			Parameters: modelSelectionParams("optimize_for", "balanced"),
+		}}
+		reference := platformWorkflowModel{ModelSelection: &modelSelectionModel{
+			ModelID:    types.StringValue("auto-smart"),
+			Parameters: modelSelectionParams("optimize_for", "cost"),
+		}}
+		preserveEquivalentModelSelection(&state, reference)
+		if state.ModelSelection.Parameters[0].Value.ValueString() != "balanced" {
+			t.Fatal("differing parameters must not be overwritten with the configured ones")
+		}
+
+		// Server-populated defaults when the config omitted parameters.
+		state = platformWorkflowModel{ModelSelection: &modelSelectionModel{
+			ModelID:    types.StringValue("auto-smart"),
+			Parameters: modelSelectionParams("optimize_for", "balanced"),
+		}}
+		reference = platformWorkflowModel{ModelSelection: &modelSelectionModel{ModelID: types.StringValue("auto-smart")}}
+		preserveEquivalentModelSelection(&state, reference)
+		if len(state.ModelSelection.Parameters) != 1 {
+			t.Fatal("server default parameters must be kept when the config omitted them")
+		}
+	})
+
+	t.Run("noop_without_selection", func(t *testing.T) {
+		state := platformWorkflowModel{}
+		preserveEquivalentModelSelection(&state, platformWorkflowModel{ModelSelection: &modelSelectionModel{ModelID: types.StringValue("x")}})
+		if state.ModelSelection != nil {
+			t.Fatal("state without a selection must stay null")
+		}
+	})
+}
+
+func TestModelSelectionSchema(t *testing.T) {
+	r := &platformWorkflowResource{}
+	schemaResp := &resource.SchemaResponse{}
+	r.Schema(context.Background(), resource.SchemaRequest{}, schemaResp)
+
+	sel, ok := schemaResp.Schema.Attributes["model_selection"].(schema.SingleNestedAttribute)
+	if !ok || !sel.Optional || sel.Computed {
+		t.Fatalf("model_selection should be an Optional, non-Computed SingleNestedAttribute, got %#v", schemaResp.Schema.Attributes["model_selection"])
+	}
+	if modelID := sel.Attributes["model_id"].(schema.StringAttribute); !modelID.Required {
+		t.Fatal("model_selection.model_id should be Required")
+	}
+	params := sel.Attributes["parameters"].(schema.ListNestedAttribute)
+	if !params.Optional || !params.Computed || len(params.PlanModifiers) == 0 {
+		t.Fatal("model_selection.parameters should be Optional+Computed with a plan modifier (server fills default variant parameters)")
+	}
+	maxMode := sel.Attributes["max_mode"].(schema.BoolAttribute)
+	if !maxMode.Optional || !maxMode.Computed || len(maxMode.PlanModifiers) == 0 {
+		t.Fatal("model_selection.max_mode should be Optional+Computed with UseStateForUnknown (server defaults it to true)")
+	}
+	model := schemaResp.Schema.Attributes["model"].(schema.StringAttribute)
+	if !model.Optional || !model.Computed || len(model.PlanModifiers) != 1 {
+		t.Fatal("model should stay Optional+Computed with a single plan modifier")
+	}
+	if _, ok := model.PlanModifiers[0].(modelUseStateUnlessSelectionChanged); !ok {
+		t.Fatalf("model plan modifier = %T, want modelUseStateUnlessSelectionChanged", model.PlanModifiers[0])
+	}
+}
+
+// planStateForModelSelection builds tfsdk.Plan/State values holding just the
+// attributes the model plan modifiers read.
+func planStateForModelSelection(t *testing.T, model types.String, selection *modelSelectionModel, selectionUnknownParams bool) (tfsdk.Plan, tfsdk.State) {
+	t.Helper()
+	ctx := context.Background()
+
+	r := &platformWorkflowResource{}
+	schemaResp := &resource.SchemaResponse{}
+	r.Schema(ctx, resource.SchemaRequest{}, schemaResp)
+
+	plan := tfsdk.Plan{Schema: schemaResp.Schema}
+	// Zero-value lists/maps carry no element type, so give them typed nulls.
+	m := &platformWorkflowModel{
+		Model:                model,
+		ModelSelection:       selection,
+		DisabledDefaultTools: types.ListNull(types.StringType),
+	}
+	if diags := plan.Set(ctx, m); diags.HasError() {
+		t.Fatalf("set plan: %v", diags)
+	}
+	if selection != nil && selectionUnknownParams {
+		paramType := types.ObjectType{AttrTypes: map[string]attr.Type{"id": types.StringType, "value": types.StringType}}
+		if diags := plan.SetAttribute(ctx, path.Root("model_selection").AtName("parameters"), types.ListUnknown(paramType)); diags.HasError() {
+			t.Fatalf("set unknown parameters: %v", diags)
+		}
+	}
+	return plan, tfsdk.State{Schema: schemaResp.Schema, Raw: plan.Raw}
+}
+
+func TestModelPlanModifiersFollowSelectionChanges(t *testing.T) {
+	ctx := context.Background()
+	balanced := &modelSelectionModel{ModelID: types.StringValue("auto-smart"), Parameters: modelSelectionParams("optimize_for", "balanced"), MaxMode: types.BoolValue(true)}
+	cost := &modelSelectionModel{ModelID: types.StringValue("auto-smart"), Parameters: modelSelectionParams("optimize_for", "cost"), MaxMode: types.BoolValue(true)}
+	other := &modelSelectionModel{ModelID: types.StringValue("gpt-5.5"), MaxMode: types.BoolValue(true)}
+
+	_, state := planStateForModelSelection(t, types.StringValue("auto-smart"), balanced, false)
+
+	run := func(t *testing.T, plan tfsdk.Plan) (types.String, types.List) {
+		t.Helper()
+		strReq := planmodifier.StringRequest{Path: path.Root("model"), Plan: plan, State: state, PlanValue: types.StringUnknown(), StateValue: types.StringValue("auto-smart"), ConfigValue: types.StringNull()}
+		strResp := &planmodifier.StringResponse{PlanValue: strReq.PlanValue}
+		modelUseStateUnlessSelectionChanged{}.PlanModifyString(ctx, strReq, strResp)
+
+		var stateSel types.Object
+		state.GetAttribute(ctx, path.Root("model_selection"), &stateSel)
+		stateParams := stateSel.Attributes()["parameters"].(types.List)
+		listReq := planmodifier.ListRequest{Path: path.Root("model_selection").AtName("parameters"), Plan: plan, State: state, PlanValue: types.ListUnknown(stateParams.ElementType(ctx)), StateValue: stateParams, ConfigValue: types.ListNull(stateParams.ElementType(ctx))}
+		listResp := &planmodifier.ListResponse{PlanValue: listReq.PlanValue}
+		modelSelectionParametersUseStateUnlessModelChanged{}.PlanModifyList(ctx, listReq, listResp)
+		return strResp.PlanValue, listResp.PlanValue
+	}
+
+	t.Run("unchanged_selection_keeps_state", func(t *testing.T) {
+		plan, _ := planStateForModelSelection(t, types.StringUnknown(), balanced, false)
+		model, params := run(t, plan)
+		if model.IsUnknown() || model.ValueString() != "auto-smart" {
+			t.Fatalf("model = %v, want state value", model)
+		}
+		if params.IsUnknown() {
+			t.Fatal("parameters should be carried from state")
+		}
+	})
+
+	t.Run("unconfigured_parameters_keep_state", func(t *testing.T) {
+		plan, _ := planStateForModelSelection(t, types.StringUnknown(), balanced, true)
+		model, params := run(t, plan)
+		if model.IsUnknown() || params.IsUnknown() {
+			t.Fatalf("unknown parameters with the same model_id must not reset model (%v) or parameters (%v)", model, params)
+		}
+	})
+
+	t.Run("changed_parameters_reset_model", func(t *testing.T) {
+		plan, _ := planStateForModelSelection(t, types.StringUnknown(), cost, false)
+		model, _ := run(t, plan)
+		if !model.IsUnknown() {
+			t.Fatalf("model = %v, want unknown after a parameter change", model)
+		}
+	})
+
+	t.Run("changed_model_id_resets_both", func(t *testing.T) {
+		plan, _ := planStateForModelSelection(t, types.StringUnknown(), other, true)
+		model, params := run(t, plan)
+		if !model.IsUnknown() || !params.IsUnknown() {
+			t.Fatalf("model (%v) and parameters (%v) must be unknown after a model_id change", model, params)
+		}
+	})
+
+	t.Run("removed_selection_resets_model", func(t *testing.T) {
+		plan, _ := planStateForModelSelection(t, types.StringUnknown(), nil, false)
+		model, _ := run(t, plan)
+		if !model.IsUnknown() {
+			t.Fatalf("model = %v, want unknown after removing model_selection", model)
+		}
+	})
+}
+
+func TestValidateConfigRejectsModelWithModelSelection(t *testing.T) {
+	ctx := context.Background()
+	r := &platformWorkflowResource{}
+
+	check := func(t *testing.T, model types.String, selection *modelSelectionModel, wantErr bool) {
+		t.Helper()
+		plan, _ := planStateForModelSelection(t, model, selection, false)
+		resp := &resource.ValidateConfigResponse{}
+		r.ValidateConfig(ctx, resource.ValidateConfigRequest{Config: tfsdk.Config{Schema: plan.Schema, Raw: plan.Raw}}, resp)
+		if resp.Diagnostics.HasError() != wantErr {
+			t.Fatalf("model=%v selection=%v: HasError=%v, want %v (%v)", model, selection != nil, resp.Diagnostics.HasError(), wantErr, resp.Diagnostics)
+		}
+	}
+
+	sel := &modelSelectionModel{ModelID: types.StringValue("auto-smart"), MaxMode: types.BoolNull()}
+	check(t, types.StringValue("auto-smart"), sel, true)
+	check(t, types.StringNull(), sel, false)
+	check(t, types.StringValue("gpt-5.5"), nil, false)
+	check(t, types.StringNull(), nil, false)
 }
