@@ -37,6 +37,7 @@ data "cursor_platform_workflow" "existing" {
 - `memory_enabled` (Boolean) Whether the AutomationMemory tool is enabled for persistent memory across runs.
 - `model` (String) Model name.
 - `name` (String) Display name for the automation.
+- `private_worker` (Attributes) Private-worker routing configuration for this automation. (see [below for nested schema](#nestedatt--private_worker))
 - `prompt` (String) The prompt text.
 - `scope` (String) Automation ownership scope: "user" or "team".
 - `skip_install` (Boolean) Whether to skip install commands.
@@ -115,6 +116,14 @@ Read-Only:
 - `post_as_thread` (Boolean) If true, post a parent message with the automation name and reply in the thread.
 - `respond_in_thread` (Boolean) If true, respond in the thread of the triggering Slack message (Slack triggers only).
 
+
+
+<a id="nestedatt--private_worker"></a>
+### Nested Schema for `private_worker`
+
+Read-Only:
+
+- `labels` (Map of String) Private-worker selector labels.
 
 
 <a id="nestedatt--trigger"></a>

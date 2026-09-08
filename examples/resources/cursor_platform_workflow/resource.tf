@@ -6,6 +6,13 @@ resource "cursor_platform_workflow" "example_review" {
   prompt = file("prompt.md")
   model  = "gpt-5.5"
 
+  private_worker = {
+    labels = {
+      repo = "example-org/example-repo"
+      pool = "example-reviewers"
+    }
+  }
+
   trigger = [
     {
       git_pull_request = {

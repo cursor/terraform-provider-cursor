@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	v1 "github.com/cursor/terraform-provider-cursor/internal/proto/v1"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	datasourceschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -20,6 +22,16 @@ func mustStringList(t *testing.T, ctx context.Context, values []string) types.Li
 		t.Fatalf("failed to build string list: %v", diags)
 	}
 	return list
+}
+
+func mustStringMap(t *testing.T, ctx context.Context, values map[string]string) types.Map {
+	t.Helper()
+
+	value, diags := types.MapValueFrom(ctx, types.StringType, values)
+	if diags.HasError() {
+		t.Fatalf("failed to build string map: %v", diags)
+	}
+	return value
 }
 
 // TestUpdatedAtHasNoPlanModifiers verifies that the updated_at attribute does
@@ -2301,4 +2313,192 @@ func TestPreserveEquivalentEnvironmentPublicID(t *testing.T) {
 			t.Fatalf("EnvironmentPublicID = %q, want %q", got, "env-abc123")
 		}
 	})
+}
+
+func TestPrivateWorkerSchemaParity(t *testing.T) {
+	resourceResponse := &resource.SchemaResponse{}
+	(&platformWorkflowResource{}).Schema(context.Background(), resource.SchemaRequest{}, resourceResponse)
+
+	resourceAttribute, ok := resourceResponse.Schema.Attributes["private_worker"]
+	if !ok {
+		t.Fatal("resource schema is missing private_worker")
+	}
+	resourcePrivateWorker, ok := resourceAttribute.(schema.SingleNestedAttribute)
+	if !ok || !resourcePrivateWorker.Optional {
+		t.Fatalf("resource private_worker = %#v, want optional SingleNestedAttribute", resourceAttribute)
+	}
+	resourceLabels, ok := resourcePrivateWorker.Attributes["labels"].(schema.MapAttribute)
+	if !ok || !resourceLabels.Optional || !resourceLabels.Computed || resourceLabels.Default == nil || resourceLabels.ElementType != types.StringType {
+		t.Fatalf("resource private_worker.labels = %#v, want optional+computed map(string) with an empty default", resourcePrivateWorker.Attributes["labels"])
+	}
+
+	dataSourceResponse := &datasource.SchemaResponse{}
+	(&platformWorkflowDataSource{}).Schema(context.Background(), datasource.SchemaRequest{}, dataSourceResponse)
+
+	dataSourceAttribute, ok := dataSourceResponse.Schema.Attributes["private_worker"]
+	if !ok {
+		t.Fatal("data source schema is missing private_worker")
+	}
+	dataSourcePrivateWorker, ok := dataSourceAttribute.(datasourceschema.SingleNestedAttribute)
+	if !ok || !dataSourcePrivateWorker.Computed {
+		t.Fatalf("data source private_worker = %#v, want computed SingleNestedAttribute", dataSourceAttribute)
+	}
+	dataSourceLabels, ok := dataSourcePrivateWorker.Attributes["labels"].(datasourceschema.MapAttribute)
+	if !ok || !dataSourceLabels.Computed || dataSourceLabels.ElementType != types.StringType {
+		t.Fatalf("data source private_worker.labels = %#v, want computed map(string)", dataSourcePrivateWorker.Attributes["labels"])
+	}
+}
+
+func TestPrivateWorkerRoundTrip(t *testing.T) {
+	ctx := context.Background()
+	wantLabels := map[string]string{
+		"repo": "example-org/example-repo",
+		"pool": "example-production-pool",
+	}
+	skipInstall := false
+
+	model := &platformWorkflowModel{
+		Prompt:              types.StringValue("review requests"),
+		SkipInstall:         types.BoolValue(skipInstall),
+		EnvironmentPublicID: types.StringValue("environment-id"),
+		PrivateWorker: &privateWorkerModel{
+			Labels: mustStringMap(t, ctx, wantLabels),
+		},
+		Triggers: []triggerModel{{Webhook: &webhookTriggerModel{}}},
+	}
+
+	workflow, err := modelToWorkflow(ctx, model)
+	if err != nil {
+		t.Fatalf("modelToWorkflow() error = %v", err)
+	}
+	if workflow.GetAgentOptions().GetPrivateWorker() == nil {
+		t.Fatal("AgentOptions.PrivateWorker is nil")
+	}
+	gotProtoLabels := workflow.GetAgentOptions().GetPrivateWorker().GetLabels()
+	if len(gotProtoLabels) != 2 || gotProtoLabels[0].GetKey() != "pool" || gotProtoLabels[1].GetKey() != "repo" {
+		t.Fatalf("private worker labels are not serialized deterministically: %#v", gotProtoLabels)
+	}
+	if workflow.GetAgentOptions().SkipInstall == nil || workflow.GetAgentOptions().GetSkipInstall() != skipInstall {
+		t.Fatal("adding private_worker clobbered skip_install")
+	}
+	if got := workflow.GetAgentOptions().GetEnvironmentPublicId(); got != "environment-id" {
+		t.Fatalf("adding private_worker clobbered environment_public_id: got %q", got)
+	}
+
+	state, err := protoToModel(ctx, &v1.AutomationWithOwner{
+		Workflow: &v1.Automation{Workflow: workflow},
+	})
+	if err != nil {
+		t.Fatalf("protoToModel() error = %v", err)
+	}
+	if state.PrivateWorker == nil {
+		t.Fatal("PrivateWorker is nil after round trip")
+	}
+	var gotLabels map[string]string
+	diags := state.PrivateWorker.Labels.ElementsAs(ctx, &gotLabels, false)
+	if diags.HasError() {
+		t.Fatalf("failed to read private worker labels: %v", diags)
+	}
+	if !reflect.DeepEqual(gotLabels, wantLabels) {
+		t.Fatalf("private worker labels = %#v, want %#v", gotLabels, wantLabels)
+	}
+
+	state.Prompt = types.StringValue("updated review prompt")
+	updatedWorkflow, err := modelToWorkflow(ctx, &state)
+	if err != nil {
+		t.Fatalf("modelToWorkflow() after unrelated update error = %v", err)
+	}
+	updatedLabels := updatedWorkflow.GetAgentOptions().GetPrivateWorker().GetLabels()
+	if len(updatedLabels) != 2 || updatedLabels[0].GetKey() != "pool" || updatedLabels[1].GetKey() != "repo" {
+		t.Fatalf("unrelated update did not retain private worker labels: %#v", updatedLabels)
+	}
+}
+
+func TestPrivateWorkerPresenceSemantics(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("absent_uses_default_worker_routing", func(t *testing.T) {
+		workflow, err := modelToWorkflow(ctx, &platformWorkflowModel{
+			Prompt:   types.StringValue("do the thing"),
+			Triggers: []triggerModel{{Webhook: &webhookTriggerModel{}}},
+		})
+		if err != nil {
+			t.Fatalf("modelToWorkflow() error = %v", err)
+		}
+		if workflow.GetAgentOptions() != nil {
+			t.Fatalf("AgentOptions = %#v, want nil", workflow.GetAgentOptions())
+		}
+	})
+
+	t.Run("removal_preserves_other_agent_options", func(t *testing.T) {
+		workflow, err := modelToWorkflow(ctx, &platformWorkflowModel{
+			Prompt:      types.StringValue("do the thing"),
+			SkipInstall: types.BoolValue(true),
+			Triggers:    []triggerModel{{Webhook: &webhookTriggerModel{}}},
+		})
+		if err != nil {
+			t.Fatalf("modelToWorkflow() error = %v", err)
+		}
+		if workflow.GetAgentOptions() == nil || !workflow.GetAgentOptions().GetSkipInstall() {
+			t.Fatal("removing private_worker clobbered skip_install")
+		}
+		if workflow.GetAgentOptions().GetPrivateWorker() != nil {
+			t.Fatalf("PrivateWorker = %#v, want nil", workflow.GetAgentOptions().GetPrivateWorker())
+		}
+	})
+
+	t.Run("present_empty_targets_any_private_worker", func(t *testing.T) {
+		workflow, err := modelToWorkflow(ctx, &platformWorkflowModel{
+			Prompt: types.StringValue("do the thing"),
+			PrivateWorker: &privateWorkerModel{
+				Labels: mustStringMap(t, ctx, map[string]string{}),
+			},
+			Triggers: []triggerModel{{Webhook: &webhookTriggerModel{}}},
+		})
+		if err != nil {
+			t.Fatalf("modelToWorkflow() error = %v", err)
+		}
+		if workflow.GetAgentOptions().GetPrivateWorker() == nil {
+			t.Fatal("PrivateWorker is nil for a present empty object")
+		}
+		if got := workflow.GetAgentOptions().GetPrivateWorker().GetLabels(); len(got) != 0 {
+			t.Fatalf("PrivateWorker.Labels = %#v, want empty", got)
+		}
+
+		state, err := protoToModel(ctx, &v1.AutomationWithOwner{
+			Workflow: &v1.Automation{Workflow: workflow},
+		})
+		if err != nil {
+			t.Fatalf("protoToModel() error = %v", err)
+		}
+		if state.PrivateWorker == nil || state.PrivateWorker.Labels.IsNull() {
+			t.Fatal("present empty PrivateWorker did not survive round trip")
+		}
+	})
+}
+
+func TestPrivateWorkerAPILabelOrderDoesNotDrift(t *testing.T) {
+	ctx := context.Background()
+	state, err := protoToModel(ctx, &v1.AutomationWithOwner{
+		Workflow: &v1.Automation{Workflow: &v1.Workflow{
+			AgentOptions: &v1.AgentOptions{
+				PrivateWorker: &v1.AgentPrivateWorkerConfig{Labels: []*v1.AgentPrivateWorkerLabel{
+					{Key: "repo", Value: "example-org/example-repo"},
+					{Key: "pool", Value: "example-production-pool"},
+				}},
+			},
+		}},
+	})
+	if err != nil {
+		t.Fatalf("protoToModel() error = %v", err)
+	}
+
+	workflow, err := modelToWorkflow(ctx, &state)
+	if err != nil {
+		t.Fatalf("modelToWorkflow() error = %v", err)
+	}
+	labels := workflow.GetAgentOptions().GetPrivateWorker().GetLabels()
+	if len(labels) != 2 || labels[0].GetKey() != "pool" || labels[1].GetKey() != "repo" {
+		t.Fatalf("private worker labels were not canonicalized: %#v", labels)
+	}
 }

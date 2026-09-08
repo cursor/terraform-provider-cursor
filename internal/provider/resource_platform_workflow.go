@@ -5,15 +5,18 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"sort"
 	"strings"
 
 	connect "connectrpc.com/connect"
 	v1 "github.com/cursor/terraform-provider-cursor/internal/proto/v1"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/mapdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -116,22 +119,27 @@ func parseCustomErrorDetailsTitleDetail(b []byte) (string, string) {
 // ---------------------------------------------------------------------------
 
 type platformWorkflowModel struct {
-	ID                  types.String   `tfsdk:"id"`
-	Name                types.String   `tfsdk:"name"`
-	Scope               types.String   `tfsdk:"scope"`
-	Enabled             types.Bool     `tfsdk:"enabled"`
-	Prompt              types.String   `tfsdk:"prompt"`
-	EffortLevel         types.String   `tfsdk:"effort_level"`
-	Model               types.String   `tfsdk:"model"`
-	GitRepo             types.String   `tfsdk:"git_repo"`
-	GitBranch           types.String   `tfsdk:"git_branch"`
-	SkipInstall         types.Bool     `tfsdk:"skip_install"`
-	EnvironmentPublicID types.String   `tfsdk:"environment_public_id"`
-	MemoryEnabled       types.Bool     `tfsdk:"memory_enabled"`
-	Triggers            []triggerModel `tfsdk:"trigger"`
-	Actions             []actionModel  `tfsdk:"action"`
-	CreatedAt           types.Int64    `tfsdk:"created_at"`
-	UpdatedAt           types.Int64    `tfsdk:"updated_at"`
+	ID                  types.String        `tfsdk:"id"`
+	Name                types.String        `tfsdk:"name"`
+	Scope               types.String        `tfsdk:"scope"`
+	Enabled             types.Bool          `tfsdk:"enabled"`
+	Prompt              types.String        `tfsdk:"prompt"`
+	EffortLevel         types.String        `tfsdk:"effort_level"`
+	Model               types.String        `tfsdk:"model"`
+	GitRepo             types.String        `tfsdk:"git_repo"`
+	GitBranch           types.String        `tfsdk:"git_branch"`
+	SkipInstall         types.Bool          `tfsdk:"skip_install"`
+	EnvironmentPublicID types.String        `tfsdk:"environment_public_id"`
+	PrivateWorker       *privateWorkerModel `tfsdk:"private_worker"`
+	MemoryEnabled       types.Bool          `tfsdk:"memory_enabled"`
+	Triggers            []triggerModel      `tfsdk:"trigger"`
+	Actions             []actionModel       `tfsdk:"action"`
+	CreatedAt           types.Int64         `tfsdk:"created_at"`
+	UpdatedAt           types.Int64         `tfsdk:"updated_at"`
+}
+
+type privateWorkerModel struct {
+	Labels types.Map `tfsdk:"labels"`
 }
 
 type triggerModel struct {
@@ -353,6 +361,22 @@ func (r *platformWorkflowResource) Schema(_ context.Context, _ resource.SchemaRe
 			"environment_public_id": schema.StringAttribute{
 				Optional:    true,
 				Description: "Public ID of the Cloud Agent environment this automation should run in.",
+			},
+			"private_worker": schema.SingleNestedAttribute{
+				Optional:    true,
+				Description: "Route this automation to private workers. An empty object targets any private worker; labels narrow the eligible workers.",
+				Attributes: map[string]schema.Attribute{
+					"labels": schema.MapAttribute{
+						Optional:    true,
+						Computed:    true,
+						ElementType: types.StringType,
+						Default: mapdefault.StaticValue(types.MapValueMust(
+							types.StringType,
+							map[string]attr.Value{},
+						)),
+						Description: "Private-worker selector labels. Label keys and values are matched exactly.",
+					},
+				},
 			},
 			"memory_enabled": schema.BoolAttribute{
 				Optional:    true,
@@ -1406,6 +1430,33 @@ func modelToWorkflow(ctx context.Context, m *platformWorkflowModel) (*v1.Workflo
 			agentOptions.EnvironmentPublicId = &environmentPublicID
 		}
 	}
+	if m.PrivateWorker != nil {
+		if agentOptions == nil {
+			agentOptions = &v1.AgentOptions{}
+		}
+
+		privateWorker := &v1.AgentPrivateWorkerConfig{}
+		if !m.PrivateWorker.Labels.IsNull() && !m.PrivateWorker.Labels.IsUnknown() {
+			labels := make(map[string]string)
+			diags := m.PrivateWorker.Labels.ElementsAs(ctx, &labels, false)
+			if diags.HasError() {
+				return nil, fmt.Errorf("failed to read private_worker.labels")
+			}
+
+			keys := make([]string, 0, len(labels))
+			for key := range labels {
+				keys = append(keys, key)
+			}
+			sort.Strings(keys)
+			for _, key := range keys {
+				privateWorker.Labels = append(privateWorker.Labels, &v1.AgentPrivateWorkerLabel{
+					Key:   key,
+					Value: labels[key],
+				})
+			}
+		}
+		agentOptions.PrivateWorker = privateWorker
+	}
 	if agentOptions != nil {
 		w.AgentOptions = agentOptions
 	}
@@ -2130,9 +2181,29 @@ func protoToModel(ctx context.Context, withOwner *v1.AutomationWithOwner) (platf
 		} else {
 			m.EnvironmentPublicID = types.StringNull()
 		}
+		if privateWorker := ao.GetPrivateWorker(); privateWorker != nil {
+			labels := make(map[string]string, len(privateWorker.GetLabels()))
+			for _, label := range privateWorker.GetLabels() {
+				if label == nil {
+					continue
+				}
+				if _, exists := labels[label.GetKey()]; exists {
+					return platformWorkflowModel{}, fmt.Errorf("private_worker contains duplicate label key %q", label.GetKey())
+				}
+				labels[label.GetKey()] = label.GetValue()
+			}
+			labelMap, diags := types.MapValueFrom(ctx, types.StringType, labels)
+			if diags.HasError() {
+				return platformWorkflowModel{}, fmt.Errorf("reading private_worker.labels")
+			}
+			m.PrivateWorker = &privateWorkerModel{Labels: labelMap}
+		} else {
+			m.PrivateWorker = nil
+		}
 	} else {
 		m.SkipInstall = types.BoolNull()
 		m.EnvironmentPublicID = types.StringNull()
+		m.PrivateWorker = nil
 	}
 
 	// MemoryEnabled
