@@ -49,6 +49,16 @@ resource "cursor_platform_workflow" "example_slack_triage" {
   name   = "Triage Slack reactions"
   prompt = "Investigate the message that received the reaction and reply in thread."
 
+  # Structured model choice. Auto tiers all share the "auto-smart" model ID and
+  # differ by optimize_for: "cost" (Auto Cost), "balanced" (Auto Balance) or
+  # "intelligence". Leave `model` unset: the server derives it from the selection.
+  model_selection = {
+    model_id = "auto-smart"
+    parameters = [
+      { id = "optimize_for", value = "cost" }
+    ]
+  }
+
   git_repo               = "github.com/example-org/example-repo"
   disabled_default_tools = ["open_git_pr"]
 
@@ -78,6 +88,14 @@ resource "cursor_platform_workflow" "example_slack_triage" {
 resource "cursor_platform_workflow" "example_incidents" {
   name   = "Incident responder"
   prompt = "Summarise the incident and open a PR with a proposed fix."
+
+  # Auto Balance.
+  model_selection = {
+    model_id = "auto-smart"
+    parameters = [
+      { id = "optimize_for", value = "balanced" }
+    ]
+  }
 
   git_repo = "github.com/example-org/example-repo"
 

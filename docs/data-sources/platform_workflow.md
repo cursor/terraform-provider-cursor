@@ -41,7 +41,8 @@ data "cursor_platform_workflow" "existing" {
 - `git_branch` (String) Git branch for non-git triggers.
 - `git_repo` (String) Git repository for non-git triggers.
 - `memory_enabled` (Boolean) Whether the AutomationMemory tool is enabled for persistent memory across runs.
-- `model` (String) Model name.
+- `model` (String) Legacy model slug.
+- `model_selection` (Attributes) Structured model choice (catalog model ID plus parameters such as the Auto tier). Null when the automation only stores a legacy model slug. (see [below for nested schema](#nestedatt--model_selection))
 - `name` (String) Display name for the automation.
 - `private_worker` (Attributes) Private-worker routing configuration for this automation. (see [below for nested schema](#nestedatt--private_worker))
 - `prompt` (String) The prompt text.
@@ -136,6 +137,25 @@ Read-Only:
 - `generalized` (Boolean) If true, agent can list and send to any Slack channel or DM dynamically.
 - `post_as_thread` (Boolean) If true, post a parent message with the automation name and reply in the thread.
 - `respond_in_thread` (Boolean, Deprecated) Deprecated: ignored by the server, which always replies in the triggering Slack thread.
+
+
+
+<a id="nestedatt--model_selection"></a>
+### Nested Schema for `model_selection`
+
+Read-Only:
+
+- `max_mode` (Boolean) Whether the model runs in max mode.
+- `model_id` (String) Catalog model ID (e.g. auto-smart).
+- `parameters` (Attributes List) Parameter values selecting the model variant (e.g. optimize_for = cost). (see [below for nested schema](#nestedatt--model_selection--parameters))
+
+<a id="nestedatt--model_selection--parameters"></a>
+### Nested Schema for `model_selection.parameters`
+
+Read-Only:
+
+- `id` (String) Parameter ID.
+- `value` (String) Parameter value.
 
 
 

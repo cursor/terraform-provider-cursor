@@ -64,6 +64,16 @@ resource "cursor_platform_workflow" "example_slack_triage" {
   name   = "Triage Slack reactions"
   prompt = "Investigate the message that received the reaction and reply in thread."
 
+  # Structured model choice. Auto tiers all share the "auto-smart" model ID and
+  # differ by optimize_for: "cost" (Auto Cost), "balanced" (Auto Balance) or
+  # "intelligence". Leave `model` unset: the server derives it from the selection.
+  model_selection = {
+    model_id = "auto-smart"
+    parameters = [
+      { id = "optimize_for", value = "cost" }
+    ]
+  }
+
   git_repo               = "github.com/example-org/example-repo"
   disabled_default_tools = ["open_git_pr"]
 
@@ -93,6 +103,14 @@ resource "cursor_platform_workflow" "example_slack_triage" {
 resource "cursor_platform_workflow" "example_incidents" {
   name   = "Incident responder"
   prompt = "Summarise the incident and open a PR with a proposed fix."
+
+  # Auto Balance.
+  model_selection = {
+    model_id = "auto-smart"
+    parameters = [
+      { id = "optimize_for", value = "balanced" }
+    ]
+  }
 
   git_repo = "github.com/example-org/example-repo"
 
@@ -139,7 +157,8 @@ resource "cursor_platform_workflow" "example_incidents" {
 - `git_branch` (String) Git branch for non-git triggers. Defaults to main.
 - `git_repo` (String) Git repository for non-git triggers (cron, slack, linear). E.g. github.com/org/repo.
 - `memory_enabled` (Boolean) Enable the AutomationMemory tool, giving the agent persistent memory across runs.
-- `model` (String) Model to use (e.g. claude-4.6-opus-high-thinking, gpt-4o). If unset, the server assigns a default model.
+- `model` (String) Legacy model slug (e.g. claude-4.6-opus-high-thinking, gpt-4o). If unset, the server assigns a default model. Cannot be combined with model_selection: when model_selection is set the server derives this value from it.
+- `model_selection` (Attributes) Structured model choice: a catalog model ID plus parameters the legacy model slug cannot carry. Use it to pick an Auto tier, e.g. model_id = "auto-smart" with parameters = [{ id = "optimize_for", value = "cost" }] (Auto Cost) or value = "balanced" (Auto Balance) or "intelligence". Takes priority over model at run time; leave model unset when using it. (see [below for nested schema](#nestedatt--model_selection))
 - `private_worker` (Attributes) Route this automation to private workers. An empty object targets any private worker; labels narrow the eligible workers. (see [below for nested schema](#nestedatt--private_worker))
 - `scope` (String) Automation ownership scope: "user", "team", "team_visible", "team_editable_user", or "team_editable". "user" is private (owner and admins only), "team" is shared (team admins can edit, runs as team service account), "team_visible" is viewable by team (team can view, only owner can edit, runs as owner), "team_editable_user" is editable by the team but still runs as the creator user, and "team_editable" is editable by the team and runs as the team service account. Defaults to "user" when unset.
 - `skip_install` (Boolean) Skip user install commands and cloud testing.
@@ -510,6 +529,28 @@ Optional:
 - `generalized` (Boolean) If true, agent can list and send to any Slack channel or DM dynamically.
 - `post_as_thread` (Boolean) If true, post a parent message with the automation name and reply in the thread.
 - `respond_in_thread` (Boolean, Deprecated) Deprecated: the server ignores this flag and always replies in the triggering Slack thread. Kept for compatibility with existing configurations.
+
+
+
+<a id="nestedatt--model_selection"></a>
+### Nested Schema for `model_selection`
+
+Required:
+
+- `model_id` (String) Catalog model ID (e.g. "auto-smart"). Use the canonical ID: the server rejects unknown IDs and rewrites aliases, which would show up as a diff.
+
+Optional:
+
+- `max_mode` (Boolean) Run the model in max mode. Defaults to true and is reported back as true; the server currently rejects false.
+- `parameters` (Attributes List) Parameter values selecting a model variant, e.g. { id = "optimize_for", value = "cost" }. Parameter IDs must be unique. When omitted the server picks the model's default variant and reports its parameters here. (see [below for nested schema](#nestedatt--model_selection--parameters))
+
+<a id="nestedatt--model_selection--parameters"></a>
+### Nested Schema for `model_selection.parameters`
+
+Required:
+
+- `id` (String) Parameter ID (e.g. optimize_for).
+- `value` (String) Parameter value. Enum parameters take one of their enum values (e.g. "cost", "balanced", "intelligence" for optimize_for); booleans take "true"/"false".
 
 
 
