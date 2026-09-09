@@ -22,6 +22,52 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type AutomationDefaultTool int32
+
+const (
+	AutomationDefaultTool_AUTOMATION_DEFAULT_TOOL_UNSPECIFIED AutomationDefaultTool = 0
+	AutomationDefaultTool_AUTOMATION_DEFAULT_TOOL_OPEN_GIT_PR AutomationDefaultTool = 1
+)
+
+// Enum value maps for AutomationDefaultTool.
+var (
+	AutomationDefaultTool_name = map[int32]string{
+		0: "AUTOMATION_DEFAULT_TOOL_UNSPECIFIED",
+		1: "AUTOMATION_DEFAULT_TOOL_OPEN_GIT_PR",
+	}
+	AutomationDefaultTool_value = map[string]int32{
+		"AUTOMATION_DEFAULT_TOOL_UNSPECIFIED": 0,
+		"AUTOMATION_DEFAULT_TOOL_OPEN_GIT_PR": 1,
+	}
+)
+
+func (x AutomationDefaultTool) Enum() *AutomationDefaultTool {
+	p := new(AutomationDefaultTool)
+	*p = x
+	return p
+}
+
+func (x AutomationDefaultTool) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (AutomationDefaultTool) Descriptor() protoreflect.EnumDescriptor {
+	return file_aiserver_v1_automations_proto_enumTypes[0].Descriptor()
+}
+
+func (AutomationDefaultTool) Type() protoreflect.EnumType {
+	return &file_aiserver_v1_automations_proto_enumTypes[0]
+}
+
+func (x AutomationDefaultTool) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use AutomationDefaultTool.Descriptor instead.
+func (AutomationDefaultTool) EnumDescriptor() ([]byte, []int) {
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{0}
+}
+
 type SlackCompletionReactionMode int32
 
 const (
@@ -58,11 +104,11 @@ func (x SlackCompletionReactionMode) String() string {
 }
 
 func (SlackCompletionReactionMode) Descriptor() protoreflect.EnumDescriptor {
-	return file_aiserver_v1_automations_proto_enumTypes[0].Descriptor()
+	return file_aiserver_v1_automations_proto_enumTypes[1].Descriptor()
 }
 
 func (SlackCompletionReactionMode) Type() protoreflect.EnumType {
-	return &file_aiserver_v1_automations_proto_enumTypes[0]
+	return &file_aiserver_v1_automations_proto_enumTypes[1]
 }
 
 func (x SlackCompletionReactionMode) Number() protoreflect.EnumNumber {
@@ -71,7 +117,7 @@ func (x SlackCompletionReactionMode) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use SlackCompletionReactionMode.Descriptor instead.
 func (SlackCompletionReactionMode) EnumDescriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{0}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{1}
 }
 
 type AutomationScope int32
@@ -124,11 +170,11 @@ func (x AutomationScope) String() string {
 }
 
 func (AutomationScope) Descriptor() protoreflect.EnumDescriptor {
-	return file_aiserver_v1_automations_proto_enumTypes[1].Descriptor()
+	return file_aiserver_v1_automations_proto_enumTypes[2].Descriptor()
 }
 
 func (AutomationScope) Type() protoreflect.EnumType {
-	return &file_aiserver_v1_automations_proto_enumTypes[1]
+	return &file_aiserver_v1_automations_proto_enumTypes[2]
 }
 
 func (x AutomationScope) Number() protoreflect.EnumNumber {
@@ -137,7 +183,7 @@ func (x AutomationScope) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use AutomationScope.Descriptor instead.
 func (AutomationScope) EnumDescriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{1}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{2}
 }
 
 type AutomationCreationSource int32
@@ -179,11 +225,11 @@ func (x AutomationCreationSource) String() string {
 }
 
 func (AutomationCreationSource) Descriptor() protoreflect.EnumDescriptor {
-	return file_aiserver_v1_automations_proto_enumTypes[2].Descriptor()
+	return file_aiserver_v1_automations_proto_enumTypes[3].Descriptor()
 }
 
 func (AutomationCreationSource) Type() protoreflect.EnumType {
-	return &file_aiserver_v1_automations_proto_enumTypes[2]
+	return &file_aiserver_v1_automations_proto_enumTypes[3]
 }
 
 func (x AutomationCreationSource) Number() protoreflect.EnumNumber {
@@ -192,7 +238,7 @@ func (x AutomationCreationSource) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use AutomationCreationSource.Descriptor instead.
 func (AutomationCreationSource) EnumDescriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{2}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{3}
 }
 
 type AutomationManagedBy int32
@@ -232,11 +278,11 @@ func (x AutomationManagedBy) String() string {
 }
 
 func (AutomationManagedBy) Descriptor() protoreflect.EnumDescriptor {
-	return file_aiserver_v1_automations_proto_enumTypes[3].Descriptor()
+	return file_aiserver_v1_automations_proto_enumTypes[4].Descriptor()
 }
 
 func (AutomationManagedBy) Type() protoreflect.EnumType {
-	return &file_aiserver_v1_automations_proto_enumTypes[3]
+	return &file_aiserver_v1_automations_proto_enumTypes[4]
 }
 
 func (x AutomationManagedBy) Number() protoreflect.EnumNumber {
@@ -245,7 +291,7 @@ func (x AutomationManagedBy) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use AutomationManagedBy.Descriptor instead.
 func (AutomationManagedBy) EnumDescriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{3}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{4}
 }
 
 type PromptEffortLevel int32
@@ -281,11 +327,11 @@ func (x PromptEffortLevel) String() string {
 }
 
 func (PromptEffortLevel) Descriptor() protoreflect.EnumDescriptor {
-	return file_aiserver_v1_automations_proto_enumTypes[4].Descriptor()
+	return file_aiserver_v1_automations_proto_enumTypes[5].Descriptor()
 }
 
 func (PromptEffortLevel) Type() protoreflect.EnumType {
-	return &file_aiserver_v1_automations_proto_enumTypes[4]
+	return &file_aiserver_v1_automations_proto_enumTypes[5]
 }
 
 func (x PromptEffortLevel) Number() protoreflect.EnumNumber {
@@ -294,7 +340,7 @@ func (x PromptEffortLevel) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use PromptEffortLevel.Descriptor instead.
 func (PromptEffortLevel) EnumDescriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{4}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{5}
 }
 
 type PromptRunMode int32
@@ -330,11 +376,11 @@ func (x PromptRunMode) String() string {
 }
 
 func (PromptRunMode) Descriptor() protoreflect.EnumDescriptor {
-	return file_aiserver_v1_automations_proto_enumTypes[5].Descriptor()
+	return file_aiserver_v1_automations_proto_enumTypes[6].Descriptor()
 }
 
 func (PromptRunMode) Type() protoreflect.EnumType {
-	return &file_aiserver_v1_automations_proto_enumTypes[5]
+	return &file_aiserver_v1_automations_proto_enumTypes[6]
 }
 
 func (x PromptRunMode) Number() protoreflect.EnumNumber {
@@ -343,7 +389,7 @@ func (x PromptRunMode) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use PromptRunMode.Descriptor instead.
 func (PromptRunMode) EnumDescriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{5}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{6}
 }
 
 // Which GitHub PR action triggers this automation.
@@ -358,6 +404,7 @@ const (
 	GitPullRequestAction_GIT_PULL_REQUEST_ACTION_DRAFT_OPENED GitPullRequestAction = 5 // Draft PR opened (non-draft PRs excluded)
 	GitPullRequestAction_GIT_PULL_REQUEST_ACTION_LABELED      GitPullRequestAction = 6 // Deprecated: use GitLabelEvent instead.
 	GitPullRequestAction_GIT_PULL_REQUEST_ACTION_UNLABELED    GitPullRequestAction = 7 // Deprecated: use GitLabelEvent instead.
+	GitPullRequestAction_GIT_PULL_REQUEST_ACTION_CLOSED       GitPullRequestAction = 8 // PR closed without merging
 )
 
 // Enum value maps for GitPullRequestAction.
@@ -371,6 +418,7 @@ var (
 		5: "GIT_PULL_REQUEST_ACTION_DRAFT_OPENED",
 		6: "GIT_PULL_REQUEST_ACTION_LABELED",
 		7: "GIT_PULL_REQUEST_ACTION_UNLABELED",
+		8: "GIT_PULL_REQUEST_ACTION_CLOSED",
 	}
 	GitPullRequestAction_value = map[string]int32{
 		"GIT_PULL_REQUEST_ACTION_UNSPECIFIED":  0,
@@ -381,6 +429,7 @@ var (
 		"GIT_PULL_REQUEST_ACTION_DRAFT_OPENED": 5,
 		"GIT_PULL_REQUEST_ACTION_LABELED":      6,
 		"GIT_PULL_REQUEST_ACTION_UNLABELED":    7,
+		"GIT_PULL_REQUEST_ACTION_CLOSED":       8,
 	}
 )
 
@@ -395,11 +444,11 @@ func (x GitPullRequestAction) String() string {
 }
 
 func (GitPullRequestAction) Descriptor() protoreflect.EnumDescriptor {
-	return file_aiserver_v1_automations_proto_enumTypes[6].Descriptor()
+	return file_aiserver_v1_automations_proto_enumTypes[7].Descriptor()
 }
 
 func (GitPullRequestAction) Type() protoreflect.EnumType {
-	return &file_aiserver_v1_automations_proto_enumTypes[6]
+	return &file_aiserver_v1_automations_proto_enumTypes[7]
 }
 
 func (x GitPullRequestAction) Number() protoreflect.EnumNumber {
@@ -408,7 +457,7 @@ func (x GitPullRequestAction) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use GitPullRequestAction.Descriptor instead.
 func (GitPullRequestAction) EnumDescriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{6}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{7}
 }
 
 // Condition for when CI completed trigger should fire.
@@ -448,11 +497,11 @@ func (x GitCICompletionCondition) String() string {
 }
 
 func (GitCICompletionCondition) Descriptor() protoreflect.EnumDescriptor {
-	return file_aiserver_v1_automations_proto_enumTypes[7].Descriptor()
+	return file_aiserver_v1_automations_proto_enumTypes[8].Descriptor()
 }
 
 func (GitCICompletionCondition) Type() protoreflect.EnumType {
-	return &file_aiserver_v1_automations_proto_enumTypes[7]
+	return &file_aiserver_v1_automations_proto_enumTypes[8]
 }
 
 func (x GitCICompletionCondition) Number() protoreflect.EnumNumber {
@@ -461,7 +510,7 @@ func (x GitCICompletionCondition) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use GitCICompletionCondition.Descriptor instead.
 func (GitCICompletionCondition) EnumDescriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{7}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{8}
 }
 
 // Conclusion filter for GitWorkflowRunEvent.
@@ -504,11 +553,11 @@ func (x GitWorkflowRunConclusion) String() string {
 }
 
 func (GitWorkflowRunConclusion) Descriptor() protoreflect.EnumDescriptor {
-	return file_aiserver_v1_automations_proto_enumTypes[8].Descriptor()
+	return file_aiserver_v1_automations_proto_enumTypes[9].Descriptor()
 }
 
 func (GitWorkflowRunConclusion) Type() protoreflect.EnumType {
-	return &file_aiserver_v1_automations_proto_enumTypes[8]
+	return &file_aiserver_v1_automations_proto_enumTypes[9]
 }
 
 func (x GitWorkflowRunConclusion) Number() protoreflect.EnumNumber {
@@ -517,7 +566,7 @@ func (x GitWorkflowRunConclusion) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use GitWorkflowRunConclusion.Descriptor instead.
 func (GitWorkflowRunConclusion) EnumDescriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{8}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{9}
 }
 
 // Response wrapper that includes Automation plus user context.
@@ -560,11 +609,11 @@ func (x McpAuthState) String() string {
 }
 
 func (McpAuthState) Descriptor() protoreflect.EnumDescriptor {
-	return file_aiserver_v1_automations_proto_enumTypes[9].Descriptor()
+	return file_aiserver_v1_automations_proto_enumTypes[10].Descriptor()
 }
 
 func (McpAuthState) Type() protoreflect.EnumType {
-	return &file_aiserver_v1_automations_proto_enumTypes[9]
+	return &file_aiserver_v1_automations_proto_enumTypes[10]
 }
 
 func (x McpAuthState) Number() protoreflect.EnumNumber {
@@ -573,7 +622,7 @@ func (x McpAuthState) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use McpAuthState.Descriptor instead.
 func (McpAuthState) EnumDescriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{9}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{10}
 }
 
 // The two main concepts of automations are "Triggers" and "Actions (tools/MCPs)".
@@ -592,6 +641,8 @@ type Trigger struct {
 	//	*Trigger_MicrosoftTeamsTrigger
 	//	*Trigger_MicrosoftTeamsChannelCreated
 	//	*Trigger_SlackReactionAdded
+	//	*Trigger_SlackMention
+	//	*Trigger_SlackAnyReactionAdded
 	Trigger isTrigger_Trigger `protobuf_oneof:"trigger"`
 	// Optional natural-language filter evaluated by a lightweight model before the
 	// main automation run. When empty, no filter step runs.
@@ -736,6 +787,24 @@ func (x *Trigger) GetSlackReactionAdded() *SlackReactionAddedTrigger {
 	return nil
 }
 
+func (x *Trigger) GetSlackMention() *SlackMentionTrigger {
+	if x != nil {
+		if x, ok := x.Trigger.(*Trigger_SlackMention); ok {
+			return x.SlackMention
+		}
+	}
+	return nil
+}
+
+func (x *Trigger) GetSlackAnyReactionAdded() *SlackAnyReactionAddedTrigger {
+	if x != nil {
+		if x, ok := x.Trigger.(*Trigger_SlackAnyReactionAdded); ok {
+			return x.SlackAnyReactionAdded
+		}
+	}
+	return nil
+}
+
 func (x *Trigger) GetAgenticFilterPrompt() string {
 	if x != nil && x.AgenticFilterPrompt != nil {
 		return *x.AgenticFilterPrompt
@@ -791,6 +860,14 @@ type Trigger_SlackReactionAdded struct {
 	SlackReactionAdded *SlackReactionAddedTrigger `protobuf:"bytes,18,opt,name=slack_reaction_added,json=slackReactionAdded,proto3,oneof"` // Triggered when a specific emoji reaction is added in a Slack channel
 }
 
+type Trigger_SlackMention struct {
+	SlackMention *SlackMentionTrigger `protobuf:"bytes,19,opt,name=slack_mention,json=slackMention,proto3,oneof"`
+}
+
+type Trigger_SlackAnyReactionAdded struct {
+	SlackAnyReactionAdded *SlackAnyReactionAddedTrigger `protobuf:"bytes,20,opt,name=slack_any_reaction_added,json=slackAnyReactionAdded,proto3,oneof"`
+}
+
 func (*Trigger_Cron) isTrigger_Trigger() {}
 
 func (*Trigger_Git) isTrigger_Trigger() {}
@@ -812,6 +889,10 @@ func (*Trigger_MicrosoftTeamsTrigger) isTrigger_Trigger() {}
 func (*Trigger_MicrosoftTeamsChannelCreated) isTrigger_Trigger() {}
 
 func (*Trigger_SlackReactionAdded) isTrigger_Trigger() {}
+
+func (*Trigger_SlackMention) isTrigger_Trigger() {}
+
+func (*Trigger_SlackAnyReactionAdded) isTrigger_Trigger() {}
 
 // Each built-in action type (git_pr, pr_comment, slack, manage_check_run,
 // request_reviewers) may appear at most once per workflow.
@@ -1353,8 +1434,26 @@ type Workflow struct {
 	// VULNERABILITY_SCANNER). Carries check toggles and other type-specific settings
 	// so the backend can build the final prompt server-side when needed.
 	ManagedConfig *structpb.Struct `protobuf:"bytes,18,opt,name=managed_config,json=managedConfig,proto3,oneof" json:"managed_config,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	// Default automation tools that should not be available to this workflow.
+	// An empty list preserves the platform defaults.
+	DisabledDefaultTools []AutomationDefaultTool `protobuf:"varint,19,rep,packed,name=disabled_default_tools,json=disabledDefaultTools,proto3,enum=aiserver.v1.AutomationDefaultTool" json:"disabled_default_tools,omitempty"`
+	// Sand-only, server-managed (the wire never sets or changes it): the Grok Bot
+	// session the routine was created in, so its cron fires wake that
+	// conversation. Absent on routines created before sessions existed and on
+	// routines created from the main conversation; both run on main.
+	GrokBotSessionId *string `protobuf:"bytes,20,opt,name=grok_bot_session_id,json=grokBotSessionId,proto3,oneof" json:"grok_bot_session_id,omitempty"`
+	// Sand-only, server-managed: the Cursor auth id of the user whose turn
+	// created the routine, recorded with grok_bot_session_id so the fire runs as
+	// that user. Absent on main routines (the owner's) and on session routines
+	// from before it was recorded, which are refused rather than run as the owner.
+	GrokBotCreatorAuthId *string `protobuf:"bytes,21,opt,name=grok_bot_creator_auth_id,json=grokBotCreatorAuthId,proto3,oneof" json:"grok_bot_creator_auth_id,omitempty"`
+	// Structured form of `model`: model id plus parameters (e.g. Auto's
+	// optimize_for), which the legacy slug in `model` cannot carry. Writers set
+	// both; readers prefer this and fall back to `model` when it is absent or
+	// names a different model than `model` does.
+	ModelSelection *AutomationModelSelection `protobuf:"bytes,22,opt,name=model_selection,json=modelSelection,proto3,oneof" json:"model_selection,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *Workflow) Reset() {
@@ -1464,6 +1563,34 @@ func (x *Workflow) GetManagedConfig() *structpb.Struct {
 	return nil
 }
 
+func (x *Workflow) GetDisabledDefaultTools() []AutomationDefaultTool {
+	if x != nil {
+		return x.DisabledDefaultTools
+	}
+	return nil
+}
+
+func (x *Workflow) GetGrokBotSessionId() string {
+	if x != nil && x.GrokBotSessionId != nil {
+		return *x.GrokBotSessionId
+	}
+	return ""
+}
+
+func (x *Workflow) GetGrokBotCreatorAuthId() string {
+	if x != nil && x.GrokBotCreatorAuthId != nil {
+		return *x.GrokBotCreatorAuthId
+	}
+	return ""
+}
+
+func (x *Workflow) GetModelSelection() *AutomationModelSelection {
+	if x != nil {
+		return x.ModelSelection
+	}
+	return nil
+}
+
 type Prompt struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
 	Prompt string                 `protobuf:"bytes,1,opt,name=prompt,proto3" json:"prompt,omitempty"`
@@ -1477,8 +1604,10 @@ type Prompt struct {
 	RunMode *PromptRunMode `protobuf:"varint,5,opt,name=run_mode,json=runMode,proto3,enum=aiserver.v1.PromptRunMode,oneof" json:"run_mode,omitempty"`
 	// Skip Slack hourglass / "is reviewing" status while this prompt runs.
 	SuppressSlackReaction *bool `protobuf:"varint,6,opt,name=suppress_slack_reaction,json=suppressSlackReaction,proto3,oneof" json:"suppress_slack_reaction,omitempty"`
-	unknownFields         protoimpl.UnknownFields
-	sizeCache             protoimpl.SizeCache
+	// Structured form of `model`, same contract as Workflow.model_selection.
+	ModelSelection *AutomationModelSelection `protobuf:"bytes,7,opt,name=model_selection,json=modelSelection,proto3,oneof" json:"model_selection,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *Prompt) Reset() {
@@ -1553,6 +1682,77 @@ func (x *Prompt) GetSuppressSlackReaction() bool {
 	return false
 }
 
+func (x *Prompt) GetModelSelection() *AutomationModelSelection {
+	if x != nil {
+		return x.ModelSelection
+	}
+	return nil
+}
+
+// A durable model choice: the catalog model id plus the parameter values the
+// legacy slug cannot carry. Same shape as CloudAgentModelSelection, declared
+// here so the public Terraform provider's pruned copy of this file stays
+// self-contained.
+type AutomationModelSelection struct {
+	state         protoimpl.MessageState                     `protogen:"open.v1"`
+	ModelId       string                                     `protobuf:"bytes,1,opt,name=model_id,json=modelId,proto3" json:"model_id,omitempty"`
+	Parameters    []*AutomationModelSelection_ParameterValue `protobuf:"bytes,2,rep,name=parameters,proto3" json:"parameters,omitempty"`
+	MaxMode       *bool                                      `protobuf:"varint,3,opt,name=max_mode,json=maxMode,proto3,oneof" json:"max_mode,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AutomationModelSelection) Reset() {
+	*x = AutomationModelSelection{}
+	mi := &file_aiserver_v1_automations_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AutomationModelSelection) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AutomationModelSelection) ProtoMessage() {}
+
+func (x *AutomationModelSelection) ProtoReflect() protoreflect.Message {
+	mi := &file_aiserver_v1_automations_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AutomationModelSelection.ProtoReflect.Descriptor instead.
+func (*AutomationModelSelection) Descriptor() ([]byte, []int) {
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *AutomationModelSelection) GetModelId() string {
+	if x != nil {
+		return x.ModelId
+	}
+	return ""
+}
+
+func (x *AutomationModelSelection) GetParameters() []*AutomationModelSelection_ParameterValue {
+	if x != nil {
+		return x.Parameters
+	}
+	return nil
+}
+
+func (x *AutomationModelSelection) GetMaxMode() bool {
+	if x != nil && x.MaxMode != nil {
+		return *x.MaxMode
+	}
+	return false
+}
+
 // Used in non-git triggers to define which repo to use.
 type GitConfig struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -1565,7 +1765,7 @@ type GitConfig struct {
 
 func (x *GitConfig) Reset() {
 	*x = GitConfig{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[9]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1577,7 +1777,7 @@ func (x *GitConfig) String() string {
 func (*GitConfig) ProtoMessage() {}
 
 func (x *GitConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[9]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1590,7 +1790,7 @@ func (x *GitConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GitConfig.ProtoReflect.Descriptor instead.
 func (*GitConfig) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{9}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *GitConfig) GetRepo() string {
@@ -1623,7 +1823,7 @@ type CronTrigger struct {
 
 func (x *CronTrigger) Reset() {
 	*x = CronTrigger{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[10]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1635,7 +1835,7 @@ func (x *CronTrigger) String() string {
 func (*CronTrigger) ProtoMessage() {}
 
 func (x *CronTrigger) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[10]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1648,7 +1848,7 @@ func (x *CronTrigger) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CronTrigger.ProtoReflect.Descriptor instead.
 func (*CronTrigger) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{10}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *CronTrigger) GetCron() string {
@@ -1672,6 +1872,8 @@ type GitTrigger struct {
 	//	*GitTrigger_PullRequestReview
 	//	*GitTrigger_ReviewThread
 	//	*GitTrigger_WorkflowRun
+	//	*GitTrigger_PullRequestReviewRequested
+	//	*GitTrigger_IssueAssigned
 	Event isGitTrigger_Event `protobuf_oneof:"event"`
 	// Optional allowlist of git usernames that can trigger this automation.
 	// If empty, all users can trigger it.
@@ -1682,7 +1884,7 @@ type GitTrigger struct {
 
 func (x *GitTrigger) Reset() {
 	*x = GitTrigger{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[11]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1694,7 +1896,7 @@ func (x *GitTrigger) String() string {
 func (*GitTrigger) ProtoMessage() {}
 
 func (x *GitTrigger) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[11]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1707,7 +1909,7 @@ func (x *GitTrigger) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GitTrigger.ProtoReflect.Descriptor instead.
 func (*GitTrigger) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{11}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *GitTrigger) GetEvent() isGitTrigger_Event {
@@ -1807,6 +2009,24 @@ func (x *GitTrigger) GetWorkflowRun() *GitWorkflowRunEvent {
 	return nil
 }
 
+func (x *GitTrigger) GetPullRequestReviewRequested() *GitPullRequestReviewRequestedEvent {
+	if x != nil {
+		if x, ok := x.Event.(*GitTrigger_PullRequestReviewRequested); ok {
+			return x.PullRequestReviewRequested
+		}
+	}
+	return nil
+}
+
+func (x *GitTrigger) GetIssueAssigned() *GitIssueAssignedEvent {
+	if x != nil {
+		if x, ok := x.Event.(*GitTrigger_IssueAssigned); ok {
+			return x.IssueAssigned
+		}
+	}
+	return nil
+}
+
 func (x *GitTrigger) GetUserAllowlist() []string {
 	if x != nil {
 		return x.UserAllowlist
@@ -1858,6 +2078,14 @@ type GitTrigger_WorkflowRun struct {
 	WorkflowRun *GitWorkflowRunEvent `protobuf:"bytes,11,opt,name=workflow_run,json=workflowRun,proto3,oneof"`
 }
 
+type GitTrigger_PullRequestReviewRequested struct {
+	PullRequestReviewRequested *GitPullRequestReviewRequestedEvent `protobuf:"bytes,12,opt,name=pull_request_review_requested,json=pullRequestReviewRequested,proto3,oneof"`
+}
+
+type GitTrigger_IssueAssigned struct {
+	IssueAssigned *GitIssueAssignedEvent `protobuf:"bytes,13,opt,name=issue_assigned,json=issueAssigned,proto3,oneof"`
+}
+
 func (*GitTrigger_PullRequest) isGitTrigger_Event() {}
 
 func (*GitTrigger_Push) isGitTrigger_Event() {}
@@ -1877,6 +2105,10 @@ func (*GitTrigger_PullRequestReview) isGitTrigger_Event() {}
 func (*GitTrigger_ReviewThread) isGitTrigger_Event() {}
 
 func (*GitTrigger_WorkflowRun) isGitTrigger_Event() {}
+
+func (*GitTrigger_PullRequestReviewRequested) isGitTrigger_Event() {}
+
+func (*GitTrigger_IssueAssigned) isGitTrigger_Event() {}
 
 type GitPullRequestEvent struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -1909,7 +2141,7 @@ type GitPullRequestEvent struct {
 
 func (x *GitPullRequestEvent) Reset() {
 	*x = GitPullRequestEvent{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[12]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1921,7 +2153,7 @@ func (x *GitPullRequestEvent) String() string {
 func (*GitPullRequestEvent) ProtoMessage() {}
 
 func (x *GitPullRequestEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[12]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1934,7 +2166,7 @@ func (x *GitPullRequestEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GitPullRequestEvent.ProtoReflect.Descriptor instead.
 func (*GitPullRequestEvent) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{12}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *GitPullRequestEvent) GetRepo() string {
@@ -2007,6 +2239,94 @@ func (x *GitPullRequestEvent) GetOrgs() []string {
 	return nil
 }
 
+type GitPullRequestReviewRequestedEvent struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Repos         []string               `protobuf:"bytes,1,rep,name=repos,proto3" json:"repos,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GitPullRequestReviewRequestedEvent) Reset() {
+	*x = GitPullRequestReviewRequestedEvent{}
+	mi := &file_aiserver_v1_automations_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GitPullRequestReviewRequestedEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GitPullRequestReviewRequestedEvent) ProtoMessage() {}
+
+func (x *GitPullRequestReviewRequestedEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_aiserver_v1_automations_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GitPullRequestReviewRequestedEvent.ProtoReflect.Descriptor instead.
+func (*GitPullRequestReviewRequestedEvent) Descriptor() ([]byte, []int) {
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *GitPullRequestReviewRequestedEvent) GetRepos() []string {
+	if x != nil {
+		return x.Repos
+	}
+	return nil
+}
+
+type GitIssueAssignedEvent struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Repos         []string               `protobuf:"bytes,1,rep,name=repos,proto3" json:"repos,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GitIssueAssignedEvent) Reset() {
+	*x = GitIssueAssignedEvent{}
+	mi := &file_aiserver_v1_automations_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GitIssueAssignedEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GitIssueAssignedEvent) ProtoMessage() {}
+
+func (x *GitIssueAssignedEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_aiserver_v1_automations_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GitIssueAssignedEvent.ProtoReflect.Descriptor instead.
+func (*GitIssueAssignedEvent) Descriptor() ([]byte, []int) {
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *GitIssueAssignedEvent) GetRepos() []string {
+	if x != nil {
+		return x.Repos
+	}
+	return nil
+}
+
 type GitPushEvent struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Repo          string                 `protobuf:"bytes,1,opt,name=repo,proto3" json:"repo,omitempty"`
@@ -2018,7 +2338,7 @@ type GitPushEvent struct {
 
 func (x *GitPushEvent) Reset() {
 	*x = GitPushEvent{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[13]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2030,7 +2350,7 @@ func (x *GitPushEvent) String() string {
 func (*GitPushEvent) ProtoMessage() {}
 
 func (x *GitPushEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[13]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2043,7 +2363,7 @@ func (x *GitPushEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GitPushEvent.ProtoReflect.Descriptor instead.
 func (*GitPushEvent) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{13}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *GitPushEvent) GetRepo() string {
@@ -2077,14 +2397,16 @@ type GitCICompletedEvent struct {
 	// If set, trigger on CI completion for this branch directly (e.g. "main")
 	// instead of on PRs. User allowlist and ignore_base_failures are ignored
 	// in branch mode.
-	Branch        string `protobuf:"bytes,4,opt,name=branch,proto3" json:"branch,omitempty"`
+	Branch string `protobuf:"bytes,4,opt,name=branch,proto3" json:"branch,omitempty"`
+	// If set, trigger only for this PR. Mutually exclusive with branch.
+	PrNumber      int32 `protobuf:"varint,5,opt,name=pr_number,json=prNumber,proto3" json:"pr_number,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GitCICompletedEvent) Reset() {
 	*x = GitCICompletedEvent{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[14]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2096,7 +2418,7 @@ func (x *GitCICompletedEvent) String() string {
 func (*GitCICompletedEvent) ProtoMessage() {}
 
 func (x *GitCICompletedEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[14]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2109,7 +2431,7 @@ func (x *GitCICompletedEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GitCICompletedEvent.ProtoReflect.Descriptor instead.
 func (*GitCICompletedEvent) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{14}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *GitCICompletedEvent) GetRepos() []string {
@@ -2140,6 +2462,13 @@ func (x *GitCICompletedEvent) GetBranch() string {
 	return ""
 }
 
+func (x *GitCICompletedEvent) GetPrNumber() int32 {
+	if x != nil {
+		return x.PrNumber
+	}
+	return 0
+}
+
 // Deprecated: use GitLabelEvent instead.
 type GitIssueLabeledEvent struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -2152,7 +2481,7 @@ type GitIssueLabeledEvent struct {
 
 func (x *GitIssueLabeledEvent) Reset() {
 	*x = GitIssueLabeledEvent{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[15]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2164,7 +2493,7 @@ func (x *GitIssueLabeledEvent) String() string {
 func (*GitIssueLabeledEvent) ProtoMessage() {}
 
 func (x *GitIssueLabeledEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[15]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2177,7 +2506,7 @@ func (x *GitIssueLabeledEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GitIssueLabeledEvent.ProtoReflect.Descriptor instead.
 func (*GitIssueLabeledEvent) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{15}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *GitIssueLabeledEvent) GetRepos() []string {
@@ -2221,7 +2550,7 @@ type GitIssueCommentEvent struct {
 
 func (x *GitIssueCommentEvent) Reset() {
 	*x = GitIssueCommentEvent{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[16]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2233,7 +2562,7 @@ func (x *GitIssueCommentEvent) String() string {
 func (*GitIssueCommentEvent) ProtoMessage() {}
 
 func (x *GitIssueCommentEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[16]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2246,7 +2575,7 @@ func (x *GitIssueCommentEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GitIssueCommentEvent.ProtoReflect.Descriptor instead.
 func (*GitIssueCommentEvent) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{16}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *GitIssueCommentEvent) GetRepos() []string {
@@ -2298,7 +2627,7 @@ type GitPullRequestReviewCommentEvent struct {
 
 func (x *GitPullRequestReviewCommentEvent) Reset() {
 	*x = GitPullRequestReviewCommentEvent{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[17]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2310,7 +2639,7 @@ func (x *GitPullRequestReviewCommentEvent) String() string {
 func (*GitPullRequestReviewCommentEvent) ProtoMessage() {}
 
 func (x *GitPullRequestReviewCommentEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[17]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2323,7 +2652,7 @@ func (x *GitPullRequestReviewCommentEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GitPullRequestReviewCommentEvent.ProtoReflect.Descriptor instead.
 func (*GitPullRequestReviewCommentEvent) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{17}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *GitPullRequestReviewCommentEvent) GetRepos() []string {
@@ -2371,7 +2700,7 @@ type GitPullRequestReviewEvent struct {
 
 func (x *GitPullRequestReviewEvent) Reset() {
 	*x = GitPullRequestReviewEvent{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[18]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2383,7 +2712,7 @@ func (x *GitPullRequestReviewEvent) String() string {
 func (*GitPullRequestReviewEvent) ProtoMessage() {}
 
 func (x *GitPullRequestReviewEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[18]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2396,7 +2725,7 @@ func (x *GitPullRequestReviewEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GitPullRequestReviewEvent.ProtoReflect.Descriptor instead.
 func (*GitPullRequestReviewEvent) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{18}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *GitPullRequestReviewEvent) GetRepos() []string {
@@ -2441,7 +2770,7 @@ type GitReviewThreadEvent struct {
 
 func (x *GitReviewThreadEvent) Reset() {
 	*x = GitReviewThreadEvent{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[19]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2453,7 +2782,7 @@ func (x *GitReviewThreadEvent) String() string {
 func (*GitReviewThreadEvent) ProtoMessage() {}
 
 func (x *GitReviewThreadEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[19]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2466,7 +2795,7 @@ func (x *GitReviewThreadEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GitReviewThreadEvent.ProtoReflect.Descriptor instead.
 func (*GitReviewThreadEvent) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{19}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *GitReviewThreadEvent) GetRepos() []string {
@@ -2509,7 +2838,7 @@ type GitWorkflowRunEvent struct {
 
 func (x *GitWorkflowRunEvent) Reset() {
 	*x = GitWorkflowRunEvent{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[20]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2521,7 +2850,7 @@ func (x *GitWorkflowRunEvent) String() string {
 func (*GitWorkflowRunEvent) ProtoMessage() {}
 
 func (x *GitWorkflowRunEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[20]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2534,7 +2863,7 @@ func (x *GitWorkflowRunEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GitWorkflowRunEvent.ProtoReflect.Descriptor instead.
 func (*GitWorkflowRunEvent) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{20}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *GitWorkflowRunEvent) GetRepos() []string {
@@ -2586,7 +2915,7 @@ type GitLabelEvent struct {
 
 func (x *GitLabelEvent) Reset() {
 	*x = GitLabelEvent{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[21]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2598,7 +2927,7 @@ func (x *GitLabelEvent) String() string {
 func (*GitLabelEvent) ProtoMessage() {}
 
 func (x *GitLabelEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[21]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2611,7 +2940,7 @@ func (x *GitLabelEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GitLabelEvent.ProtoReflect.Descriptor instead.
 func (*GitLabelEvent) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{21}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *GitLabelEvent) GetRepos() []string {
@@ -2685,7 +3014,7 @@ type SlackTrigger struct {
 
 func (x *SlackTrigger) Reset() {
 	*x = SlackTrigger{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[22]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2697,7 +3026,7 @@ func (x *SlackTrigger) String() string {
 func (*SlackTrigger) ProtoMessage() {}
 
 func (x *SlackTrigger) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[22]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2710,7 +3039,7 @@ func (x *SlackTrigger) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SlackTrigger.ProtoReflect.Descriptor instead.
 func (*SlackTrigger) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{22}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *SlackTrigger) GetChannel() string {
@@ -2780,7 +3109,7 @@ type SlackChannelCreatedTrigger struct {
 
 func (x *SlackChannelCreatedTrigger) Reset() {
 	*x = SlackChannelCreatedTrigger{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[23]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2792,7 +3121,7 @@ func (x *SlackChannelCreatedTrigger) String() string {
 func (*SlackChannelCreatedTrigger) ProtoMessage() {}
 
 func (x *SlackChannelCreatedTrigger) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[23]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2805,7 +3134,7 @@ func (x *SlackChannelCreatedTrigger) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SlackChannelCreatedTrigger.ProtoReflect.Descriptor instead.
 func (*SlackChannelCreatedTrigger) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{23}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *SlackChannelCreatedTrigger) GetChannelNameContains() string {
@@ -2828,13 +3157,17 @@ type SlackReactionAddedTrigger struct {
 	// If true, only Slack users who linked Cursor can trigger (bots/unknown blocked).
 	// Omitted/false = anyone in the channel can trigger (default).
 	BlockUnauthenticatedSlackUsers bool `protobuf:"varint,6,opt,name=block_unauthenticated_slack_users,json=blockUnauthenticatedSlackUsers,proto3" json:"block_unauthenticated_slack_users,omitempty"`
-	unknownFields                  protoimpl.UnknownFields
-	sizeCache                      protoimpl.SizeCache
+	// If true, only the automation owner's own linked Slack user can trigger it
+	// ("when I react"). Stricter than block_unauthenticated_slack_users, which
+	// admits any member of an owning team, and it does not redact message_text.
+	OnlyOwnerReactions bool `protobuf:"varint,9,opt,name=only_owner_reactions,json=onlyOwnerReactions,proto3" json:"only_owner_reactions,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *SlackReactionAddedTrigger) Reset() {
 	*x = SlackReactionAddedTrigger{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[24]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2846,7 +3179,7 @@ func (x *SlackReactionAddedTrigger) String() string {
 func (*SlackReactionAddedTrigger) ProtoMessage() {}
 
 func (x *SlackReactionAddedTrigger) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[24]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2859,7 +3192,7 @@ func (x *SlackReactionAddedTrigger) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SlackReactionAddedTrigger.ProtoReflect.Descriptor instead.
 func (*SlackReactionAddedTrigger) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{24}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *SlackReactionAddedTrigger) GetChannel() string {
@@ -2890,6 +3223,142 @@ func (x *SlackReactionAddedTrigger) GetBlockUnauthenticatedSlackUsers() bool {
 	return false
 }
 
+func (x *SlackReactionAddedTrigger) GetOnlyOwnerReactions() bool {
+	if x != nil {
+		return x.OnlyOwnerReactions
+	}
+	return false
+}
+
+type SlackMentionTrigger struct {
+	state                          protoimpl.MessageState `protogen:"open.v1"`
+	Channel                        string                 `protobuf:"bytes,1,opt,name=channel,proto3" json:"channel,omitempty"`
+	Channels                       []string               `protobuf:"bytes,2,rep,name=channels,proto3" json:"channels,omitempty"`
+	BlockUnauthenticatedSlackUsers bool                   `protobuf:"varint,3,opt,name=block_unauthenticated_slack_users,json=blockUnauthenticatedSlackUsers,proto3" json:"block_unauthenticated_slack_users,omitempty"`
+	unknownFields                  protoimpl.UnknownFields
+	sizeCache                      protoimpl.SizeCache
+}
+
+func (x *SlackMentionTrigger) Reset() {
+	*x = SlackMentionTrigger{}
+	mi := &file_aiserver_v1_automations_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SlackMentionTrigger) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SlackMentionTrigger) ProtoMessage() {}
+
+func (x *SlackMentionTrigger) ProtoReflect() protoreflect.Message {
+	mi := &file_aiserver_v1_automations_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SlackMentionTrigger.ProtoReflect.Descriptor instead.
+func (*SlackMentionTrigger) Descriptor() ([]byte, []int) {
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *SlackMentionTrigger) GetChannel() string {
+	if x != nil {
+		return x.Channel
+	}
+	return ""
+}
+
+func (x *SlackMentionTrigger) GetChannels() []string {
+	if x != nil {
+		return x.Channels
+	}
+	return nil
+}
+
+func (x *SlackMentionTrigger) GetBlockUnauthenticatedSlackUsers() bool {
+	if x != nil {
+		return x.BlockUnauthenticatedSlackUsers
+	}
+	return false
+}
+
+type SlackAnyReactionAddedTrigger struct {
+	state                          protoimpl.MessageState `protogen:"open.v1"`
+	Channel                        string                 `protobuf:"bytes,1,opt,name=channel,proto3" json:"channel,omitempty"`
+	Channels                       []string               `protobuf:"bytes,2,rep,name=channels,proto3" json:"channels,omitempty"`
+	BlockUnauthenticatedSlackUsers bool                   `protobuf:"varint,3,opt,name=block_unauthenticated_slack_users,json=blockUnauthenticatedSlackUsers,proto3" json:"block_unauthenticated_slack_users,omitempty"`
+	// See SlackReactionAddedTrigger.only_owner_reactions.
+	OnlyOwnerReactions bool `protobuf:"varint,4,opt,name=only_owner_reactions,json=onlyOwnerReactions,proto3" json:"only_owner_reactions,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *SlackAnyReactionAddedTrigger) Reset() {
+	*x = SlackAnyReactionAddedTrigger{}
+	mi := &file_aiserver_v1_automations_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SlackAnyReactionAddedTrigger) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SlackAnyReactionAddedTrigger) ProtoMessage() {}
+
+func (x *SlackAnyReactionAddedTrigger) ProtoReflect() protoreflect.Message {
+	mi := &file_aiserver_v1_automations_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SlackAnyReactionAddedTrigger.ProtoReflect.Descriptor instead.
+func (*SlackAnyReactionAddedTrigger) Descriptor() ([]byte, []int) {
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *SlackAnyReactionAddedTrigger) GetChannel() string {
+	if x != nil {
+		return x.Channel
+	}
+	return ""
+}
+
+func (x *SlackAnyReactionAddedTrigger) GetChannels() []string {
+	if x != nil {
+		return x.Channels
+	}
+	return nil
+}
+
+func (x *SlackAnyReactionAddedTrigger) GetBlockUnauthenticatedSlackUsers() bool {
+	if x != nil {
+		return x.BlockUnauthenticatedSlackUsers
+	}
+	return false
+}
+
+func (x *SlackAnyReactionAddedTrigger) GetOnlyOwnerReactions() bool {
+	if x != nil {
+		return x.OnlyOwnerReactions
+	}
+	return false
+}
+
 // LinearTrigger fires when Linear events occur.
 type LinearTrigger struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -2911,7 +3380,7 @@ type LinearTrigger struct {
 
 func (x *LinearTrigger) Reset() {
 	*x = LinearTrigger{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[25]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2923,7 +3392,7 @@ func (x *LinearTrigger) String() string {
 func (*LinearTrigger) ProtoMessage() {}
 
 func (x *LinearTrigger) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[25]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2936,7 +3405,7 @@ func (x *LinearTrigger) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LinearTrigger.ProtoReflect.Descriptor instead.
 func (*LinearTrigger) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{25}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *LinearTrigger) GetEvent() isLinearTrigger_Event {
@@ -3017,7 +3486,7 @@ type LinearIssueCreatedEvent struct {
 
 func (x *LinearIssueCreatedEvent) Reset() {
 	*x = LinearIssueCreatedEvent{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[26]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3029,7 +3498,7 @@ func (x *LinearIssueCreatedEvent) String() string {
 func (*LinearIssueCreatedEvent) ProtoMessage() {}
 
 func (x *LinearIssueCreatedEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[26]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3042,7 +3511,7 @@ func (x *LinearIssueCreatedEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LinearIssueCreatedEvent.ProtoReflect.Descriptor instead.
 func (*LinearIssueCreatedEvent) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{26}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{31}
 }
 
 type LinearStatusChangedEvent struct {
@@ -3055,7 +3524,7 @@ type LinearStatusChangedEvent struct {
 
 func (x *LinearStatusChangedEvent) Reset() {
 	*x = LinearStatusChangedEvent{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[27]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3067,7 +3536,7 @@ func (x *LinearStatusChangedEvent) String() string {
 func (*LinearStatusChangedEvent) ProtoMessage() {}
 
 func (x *LinearStatusChangedEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[27]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3080,7 +3549,7 @@ func (x *LinearStatusChangedEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LinearStatusChangedEvent.ProtoReflect.Descriptor instead.
 func (*LinearStatusChangedEvent) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{27}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *LinearStatusChangedEvent) GetStatusIds() []string {
@@ -3100,7 +3569,7 @@ type LinearEndOfCycleEvent struct {
 
 func (x *LinearEndOfCycleEvent) Reset() {
 	*x = LinearEndOfCycleEvent{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[28]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3112,7 +3581,7 @@ func (x *LinearEndOfCycleEvent) String() string {
 func (*LinearEndOfCycleEvent) ProtoMessage() {}
 
 func (x *LinearEndOfCycleEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[28]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3125,7 +3594,7 @@ func (x *LinearEndOfCycleEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LinearEndOfCycleEvent.ProtoReflect.Descriptor instead.
 func (*LinearEndOfCycleEvent) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{28}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *LinearEndOfCycleEvent) GetCycleIds() []string {
@@ -3144,7 +3613,7 @@ type WebhookTrigger struct {
 
 func (x *WebhookTrigger) Reset() {
 	*x = WebhookTrigger{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[29]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3156,7 +3625,7 @@ func (x *WebhookTrigger) String() string {
 func (*WebhookTrigger) ProtoMessage() {}
 
 func (x *WebhookTrigger) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[29]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3169,7 +3638,7 @@ func (x *WebhookTrigger) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WebhookTrigger.ProtoReflect.Descriptor instead.
 func (*WebhookTrigger) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{29}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{34}
 }
 
 // PagerDutyTrigger fires when PagerDuty incident events occur.
@@ -3192,7 +3661,7 @@ type PagerDutyTrigger struct {
 
 func (x *PagerDutyTrigger) Reset() {
 	*x = PagerDutyTrigger{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[30]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3204,7 +3673,7 @@ func (x *PagerDutyTrigger) String() string {
 func (*PagerDutyTrigger) ProtoMessage() {}
 
 func (x *PagerDutyTrigger) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[30]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3217,7 +3686,7 @@ func (x *PagerDutyTrigger) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PagerDutyTrigger.ProtoReflect.Descriptor instead.
 func (*PagerDutyTrigger) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{30}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *PagerDutyTrigger) GetEvent() isPagerDutyTrigger_Event {
@@ -3321,7 +3790,7 @@ type PagerDutyIncidentTriggeredEvent struct {
 
 func (x *PagerDutyIncidentTriggeredEvent) Reset() {
 	*x = PagerDutyIncidentTriggeredEvent{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[31]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3333,7 +3802,7 @@ func (x *PagerDutyIncidentTriggeredEvent) String() string {
 func (*PagerDutyIncidentTriggeredEvent) ProtoMessage() {}
 
 func (x *PagerDutyIncidentTriggeredEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[31]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3346,7 +3815,7 @@ func (x *PagerDutyIncidentTriggeredEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PagerDutyIncidentTriggeredEvent.ProtoReflect.Descriptor instead.
 func (*PagerDutyIncidentTriggeredEvent) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{31}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{36}
 }
 
 type PagerDutyIncidentAcknowledgedEvent struct {
@@ -3357,7 +3826,7 @@ type PagerDutyIncidentAcknowledgedEvent struct {
 
 func (x *PagerDutyIncidentAcknowledgedEvent) Reset() {
 	*x = PagerDutyIncidentAcknowledgedEvent{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[32]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3369,7 +3838,7 @@ func (x *PagerDutyIncidentAcknowledgedEvent) String() string {
 func (*PagerDutyIncidentAcknowledgedEvent) ProtoMessage() {}
 
 func (x *PagerDutyIncidentAcknowledgedEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[32]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3382,7 +3851,7 @@ func (x *PagerDutyIncidentAcknowledgedEvent) ProtoReflect() protoreflect.Message
 
 // Deprecated: Use PagerDutyIncidentAcknowledgedEvent.ProtoReflect.Descriptor instead.
 func (*PagerDutyIncidentAcknowledgedEvent) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{32}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{37}
 }
 
 type PagerDutyIncidentResolvedEvent struct {
@@ -3393,7 +3862,7 @@ type PagerDutyIncidentResolvedEvent struct {
 
 func (x *PagerDutyIncidentResolvedEvent) Reset() {
 	*x = PagerDutyIncidentResolvedEvent{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[33]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3405,7 +3874,7 @@ func (x *PagerDutyIncidentResolvedEvent) String() string {
 func (*PagerDutyIncidentResolvedEvent) ProtoMessage() {}
 
 func (x *PagerDutyIncidentResolvedEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[33]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3418,7 +3887,7 @@ func (x *PagerDutyIncidentResolvedEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PagerDutyIncidentResolvedEvent.ProtoReflect.Descriptor instead.
 func (*PagerDutyIncidentResolvedEvent) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{33}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{38}
 }
 
 type PagerDutyIncidentEscalatedEvent struct {
@@ -3429,7 +3898,7 @@ type PagerDutyIncidentEscalatedEvent struct {
 
 func (x *PagerDutyIncidentEscalatedEvent) Reset() {
 	*x = PagerDutyIncidentEscalatedEvent{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[34]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3441,7 +3910,7 @@ func (x *PagerDutyIncidentEscalatedEvent) String() string {
 func (*PagerDutyIncidentEscalatedEvent) ProtoMessage() {}
 
 func (x *PagerDutyIncidentEscalatedEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[34]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3454,7 +3923,7 @@ func (x *PagerDutyIncidentEscalatedEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PagerDutyIncidentEscalatedEvent.ProtoReflect.Descriptor instead.
 func (*PagerDutyIncidentEscalatedEvent) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{34}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{39}
 }
 
 // Matches any incident event type (triggered, acknowledged, resolved, escalated).
@@ -3466,7 +3935,7 @@ type PagerDutyIncidentAnyEvent struct {
 
 func (x *PagerDutyIncidentAnyEvent) Reset() {
 	*x = PagerDutyIncidentAnyEvent{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[35]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3478,7 +3947,7 @@ func (x *PagerDutyIncidentAnyEvent) String() string {
 func (*PagerDutyIncidentAnyEvent) ProtoMessage() {}
 
 func (x *PagerDutyIncidentAnyEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[35]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3491,7 +3960,7 @@ func (x *PagerDutyIncidentAnyEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PagerDutyIncidentAnyEvent.ProtoReflect.Descriptor instead.
 func (*PagerDutyIncidentAnyEvent) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{35}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{40}
 }
 
 // SentryTrigger fires when Sentry issue webhooks are delivered to the Integration Platform
@@ -3517,7 +3986,7 @@ type SentryTrigger struct {
 
 func (x *SentryTrigger) Reset() {
 	*x = SentryTrigger{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[36]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3529,7 +3998,7 @@ func (x *SentryTrigger) String() string {
 func (*SentryTrigger) ProtoMessage() {}
 
 func (x *SentryTrigger) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[36]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3542,7 +4011,7 @@ func (x *SentryTrigger) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SentryTrigger.ProtoReflect.Descriptor instead.
 func (*SentryTrigger) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{36}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *SentryTrigger) GetEvent() isSentryTrigger_Event {
@@ -3661,7 +4130,7 @@ type SentryIssueCreatedEvent struct {
 
 func (x *SentryIssueCreatedEvent) Reset() {
 	*x = SentryIssueCreatedEvent{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[37]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3673,7 +4142,7 @@ func (x *SentryIssueCreatedEvent) String() string {
 func (*SentryIssueCreatedEvent) ProtoMessage() {}
 
 func (x *SentryIssueCreatedEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[37]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3686,7 +4155,7 @@ func (x *SentryIssueCreatedEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SentryIssueCreatedEvent.ProtoReflect.Descriptor instead.
 func (*SentryIssueCreatedEvent) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{37}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{42}
 }
 
 type SentryIssueResolvedEvent struct {
@@ -3697,7 +4166,7 @@ type SentryIssueResolvedEvent struct {
 
 func (x *SentryIssueResolvedEvent) Reset() {
 	*x = SentryIssueResolvedEvent{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[38]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3709,7 +4178,7 @@ func (x *SentryIssueResolvedEvent) String() string {
 func (*SentryIssueResolvedEvent) ProtoMessage() {}
 
 func (x *SentryIssueResolvedEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[38]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3722,7 +4191,7 @@ func (x *SentryIssueResolvedEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SentryIssueResolvedEvent.ProtoReflect.Descriptor instead.
 func (*SentryIssueResolvedEvent) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{38}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{43}
 }
 
 type SentryIssueAssignedEvent struct {
@@ -3733,7 +4202,7 @@ type SentryIssueAssignedEvent struct {
 
 func (x *SentryIssueAssignedEvent) Reset() {
 	*x = SentryIssueAssignedEvent{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[39]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3745,7 +4214,7 @@ func (x *SentryIssueAssignedEvent) String() string {
 func (*SentryIssueAssignedEvent) ProtoMessage() {}
 
 func (x *SentryIssueAssignedEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[39]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3758,7 +4227,7 @@ func (x *SentryIssueAssignedEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SentryIssueAssignedEvent.ProtoReflect.Descriptor instead.
 func (*SentryIssueAssignedEvent) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{39}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{44}
 }
 
 type SentryIssueArchivedEvent struct {
@@ -3769,7 +4238,7 @@ type SentryIssueArchivedEvent struct {
 
 func (x *SentryIssueArchivedEvent) Reset() {
 	*x = SentryIssueArchivedEvent{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[40]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3781,7 +4250,7 @@ func (x *SentryIssueArchivedEvent) String() string {
 func (*SentryIssueArchivedEvent) ProtoMessage() {}
 
 func (x *SentryIssueArchivedEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[40]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3794,7 +4263,7 @@ func (x *SentryIssueArchivedEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SentryIssueArchivedEvent.ProtoReflect.Descriptor instead.
 func (*SentryIssueArchivedEvent) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{40}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{45}
 }
 
 type SentryIssueUnresolvedEvent struct {
@@ -3805,7 +4274,7 @@ type SentryIssueUnresolvedEvent struct {
 
 func (x *SentryIssueUnresolvedEvent) Reset() {
 	*x = SentryIssueUnresolvedEvent{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[41]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3817,7 +4286,7 @@ func (x *SentryIssueUnresolvedEvent) String() string {
 func (*SentryIssueUnresolvedEvent) ProtoMessage() {}
 
 func (x *SentryIssueUnresolvedEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[41]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3830,7 +4299,7 @@ func (x *SentryIssueUnresolvedEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SentryIssueUnresolvedEvent.ProtoReflect.Descriptor instead.
 func (*SentryIssueUnresolvedEvent) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{41}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{46}
 }
 
 type SentryIssueAnyEvent struct {
@@ -3841,7 +4310,7 @@ type SentryIssueAnyEvent struct {
 
 func (x *SentryIssueAnyEvent) Reset() {
 	*x = SentryIssueAnyEvent{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[42]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[47]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3853,7 +4322,7 @@ func (x *SentryIssueAnyEvent) String() string {
 func (*SentryIssueAnyEvent) ProtoMessage() {}
 
 func (x *SentryIssueAnyEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[42]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[47]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3866,7 +4335,7 @@ func (x *SentryIssueAnyEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SentryIssueAnyEvent.ProtoReflect.Descriptor instead.
 func (*SentryIssueAnyEvent) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{42}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{47}
 }
 
 // MicrosoftTeamsTrigger fires when messages are posted in a configured
@@ -3905,7 +4374,7 @@ type MicrosoftTeamsTrigger struct {
 
 func (x *MicrosoftTeamsTrigger) Reset() {
 	*x = MicrosoftTeamsTrigger{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[43]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3917,7 +4386,7 @@ func (x *MicrosoftTeamsTrigger) String() string {
 func (*MicrosoftTeamsTrigger) ProtoMessage() {}
 
 func (x *MicrosoftTeamsTrigger) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[43]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3930,7 +4399,7 @@ func (x *MicrosoftTeamsTrigger) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MicrosoftTeamsTrigger.ProtoReflect.Descriptor instead.
 func (*MicrosoftTeamsTrigger) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{43}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{48}
 }
 
 func (x *MicrosoftTeamsTrigger) GetTenantId() string {
@@ -3999,7 +4468,7 @@ type MicrosoftTeamsChannelCreatedTrigger struct {
 
 func (x *MicrosoftTeamsChannelCreatedTrigger) Reset() {
 	*x = MicrosoftTeamsChannelCreatedTrigger{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[44]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4011,7 +4480,7 @@ func (x *MicrosoftTeamsChannelCreatedTrigger) String() string {
 func (*MicrosoftTeamsChannelCreatedTrigger) ProtoMessage() {}
 
 func (x *MicrosoftTeamsChannelCreatedTrigger) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[44]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4024,7 +4493,7 @@ func (x *MicrosoftTeamsChannelCreatedTrigger) ProtoReflect() protoreflect.Messag
 
 // Deprecated: Use MicrosoftTeamsChannelCreatedTrigger.ProtoReflect.Descriptor instead.
 func (*MicrosoftTeamsChannelCreatedTrigger) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{44}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{49}
 }
 
 func (x *MicrosoftTeamsChannelCreatedTrigger) GetTenantId() string {
@@ -4057,7 +4526,7 @@ type GitPrAction struct {
 
 func (x *GitPrAction) Reset() {
 	*x = GitPrAction{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[45]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4069,7 +4538,7 @@ func (x *GitPrAction) String() string {
 func (*GitPrAction) ProtoMessage() {}
 
 func (x *GitPrAction) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[45]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4082,7 +4551,7 @@ func (x *GitPrAction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GitPrAction.ProtoReflect.Descriptor instead.
 func (*GitPrAction) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{45}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{50}
 }
 
 // Action: posts a comment/review on a PR. Defaults to the pull request from a
@@ -4105,7 +4574,7 @@ type PrCommentAction struct {
 
 func (x *PrCommentAction) Reset() {
 	*x = PrCommentAction{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[46]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4117,7 +4586,7 @@ func (x *PrCommentAction) String() string {
 func (*PrCommentAction) ProtoMessage() {}
 
 func (x *PrCommentAction) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[46]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4130,7 +4599,7 @@ func (x *PrCommentAction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PrCommentAction.ProtoReflect.Descriptor instead.
 func (*PrCommentAction) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{46}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{51}
 }
 
 // Deprecated: Marked as deprecated in aiserver/v1/automations.proto.
@@ -4178,7 +4647,7 @@ type ManageCheckRunAction struct {
 
 func (x *ManageCheckRunAction) Reset() {
 	*x = ManageCheckRunAction{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[47]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[52]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4190,7 +4659,7 @@ func (x *ManageCheckRunAction) String() string {
 func (*ManageCheckRunAction) ProtoMessage() {}
 
 func (x *ManageCheckRunAction) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[47]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[52]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4203,7 +4672,7 @@ func (x *ManageCheckRunAction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ManageCheckRunAction.ProtoReflect.Descriptor instead.
 func (*ManageCheckRunAction) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{47}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{52}
 }
 
 // Deprecated: Marked as deprecated in aiserver/v1/automations.proto.
@@ -4226,7 +4695,7 @@ type RequestReviewersAction struct {
 
 func (x *RequestReviewersAction) Reset() {
 	*x = RequestReviewersAction{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[48]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4238,7 +4707,7 @@ func (x *RequestReviewersAction) String() string {
 func (*RequestReviewersAction) ProtoMessage() {}
 
 func (x *RequestReviewersAction) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[48]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4251,7 +4720,7 @@ func (x *RequestReviewersAction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RequestReviewersAction.ProtoReflect.Descriptor instead.
 func (*RequestReviewersAction) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{48}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{53}
 }
 
 // Deprecated: approve capability is now a field on PrCommentAction.allow_approve.
@@ -4266,7 +4735,7 @@ type ApprovePrAction struct {
 
 func (x *ApprovePrAction) Reset() {
 	*x = ApprovePrAction{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[49]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[54]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4278,7 +4747,7 @@ func (x *ApprovePrAction) String() string {
 func (*ApprovePrAction) ProtoMessage() {}
 
 func (x *ApprovePrAction) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[49]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[54]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4291,7 +4760,7 @@ func (x *ApprovePrAction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ApprovePrAction.ProtoReflect.Descriptor instead.
 func (*ApprovePrAction) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{49}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{54}
 }
 
 // Action: gives the agent read-only access to public Slack channels the user belongs to.
@@ -4304,7 +4773,7 @@ type ReadSlackAction struct {
 
 func (x *ReadSlackAction) Reset() {
 	*x = ReadSlackAction{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[50]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[55]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4316,7 +4785,7 @@ func (x *ReadSlackAction) String() string {
 func (*ReadSlackAction) ProtoMessage() {}
 
 func (x *ReadSlackAction) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[50]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[55]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4329,7 +4798,7 @@ func (x *ReadSlackAction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReadSlackAction.ProtoReflect.Descriptor instead.
 func (*ReadSlackAction) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{50}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{55}
 }
 
 // Action: lets the automation mark its own prior PR review threads as addressed
@@ -4345,7 +4814,7 @@ type ResolveReviewThreadsAction struct {
 
 func (x *ResolveReviewThreadsAction) Reset() {
 	*x = ResolveReviewThreadsAction{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[51]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[56]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4357,7 +4826,7 @@ func (x *ResolveReviewThreadsAction) String() string {
 func (*ResolveReviewThreadsAction) ProtoMessage() {}
 
 func (x *ResolveReviewThreadsAction) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[51]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[56]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4370,7 +4839,7 @@ func (x *ResolveReviewThreadsAction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolveReviewThreadsAction.ProtoReflect.Descriptor instead.
 func (*ResolveReviewThreadsAction) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{51}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{56}
 }
 
 type SlackAction struct {
@@ -4379,8 +4848,9 @@ type SlackAction struct {
 	// If true, the agent can list and send to any Slack channel or DM dynamically.
 	// When set, channel is ignored and the agent uses ListSlackChannels + SendSlackMessage tools instead of PostToSlack.
 	Generalized bool `protobuf:"varint,2,opt,name=generalized,proto3" json:"generalized,omitempty"`
-	// If true, respond in the thread of the triggering Slack message (only valid for Slack triggers).
-	// When this is set, the channel field is ignored and determined from the trigger.
+	// Ignored (replies thread automatically, CPROD-2013); kept for compatibility with existing configs.
+	//
+	// Deprecated: Marked as deprecated in aiserver/v1/automations.proto.
 	RespondInThread bool `protobuf:"varint,3,opt,name=respond_in_thread,json=respondInThread,proto3" json:"respond_in_thread,omitempty"`
 	// If true, post a parent message with the automation name and reply with output messages in the thread.
 	PostAsThread  bool     `protobuf:"varint,4,opt,name=post_as_thread,json=postAsThread,proto3" json:"post_as_thread,omitempty"`
@@ -4391,7 +4861,7 @@ type SlackAction struct {
 
 func (x *SlackAction) Reset() {
 	*x = SlackAction{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[52]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[57]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4403,7 +4873,7 @@ func (x *SlackAction) String() string {
 func (*SlackAction) ProtoMessage() {}
 
 func (x *SlackAction) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[52]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[57]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4416,7 +4886,7 @@ func (x *SlackAction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SlackAction.ProtoReflect.Descriptor instead.
 func (*SlackAction) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{52}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{57}
 }
 
 func (x *SlackAction) GetChannel() string {
@@ -4433,6 +4903,7 @@ func (x *SlackAction) GetGeneralized() bool {
 	return false
 }
 
+// Deprecated: Marked as deprecated in aiserver/v1/automations.proto.
 func (x *SlackAction) GetRespondInThread() bool {
 	if x != nil {
 		return x.RespondInThread
@@ -4487,7 +4958,7 @@ type MicrosoftTeamsAction struct {
 
 func (x *MicrosoftTeamsAction) Reset() {
 	*x = MicrosoftTeamsAction{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[53]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[58]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4499,7 +4970,7 @@ func (x *MicrosoftTeamsAction) String() string {
 func (*MicrosoftTeamsAction) ProtoMessage() {}
 
 func (x *MicrosoftTeamsAction) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[53]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[58]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4512,7 +4983,7 @@ func (x *MicrosoftTeamsAction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MicrosoftTeamsAction.ProtoReflect.Descriptor instead.
 func (*MicrosoftTeamsAction) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{53}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{58}
 }
 
 func (x *MicrosoftTeamsAction) GetTenantId() string {
@@ -4575,7 +5046,7 @@ type ReadMicrosoftTeamsAction struct {
 
 func (x *ReadMicrosoftTeamsAction) Reset() {
 	*x = ReadMicrosoftTeamsAction{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[54]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[59]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4587,7 +5058,7 @@ func (x *ReadMicrosoftTeamsAction) String() string {
 func (*ReadMicrosoftTeamsAction) ProtoMessage() {}
 
 func (x *ReadMicrosoftTeamsAction) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[54]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[59]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4600,7 +5071,7 @@ func (x *ReadMicrosoftTeamsAction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReadMicrosoftTeamsAction.ProtoReflect.Descriptor instead.
 func (*ReadMicrosoftTeamsAction) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{54}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{59}
 }
 
 type CreateAutomationRequest struct {
@@ -4608,7 +5079,8 @@ type CreateAutomationRequest struct {
 	Name        string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	Workflow    *Workflow              `protobuf:"bytes,2,opt,name=workflow,proto3" json:"workflow,omitempty"`
 	Description *string                `protobuf:"bytes,3,opt,name=description,proto3,oneof" json:"description,omitempty"`
-	// Scope for the new automation. Defaults to USER when omitted.
+	// Scope for the new automation. When omitted, team requests use the team's
+	// default automation visibility and individual requests use USER.
 	Scope       *AutomationScope `protobuf:"varint,4,opt,name=scope,proto3,enum=aiserver.v1.AutomationScope,oneof" json:"scope,omitempty"`
 	TemplateId  *string          `protobuf:"bytes,5,opt,name=template_id,json=templateId,proto3,oneof" json:"template_id,omitempty"`
 	ManagedType *string          `protobuf:"bytes,6,opt,name=managed_type,json=managedType,proto3,oneof" json:"managed_type,omitempty"`
@@ -4618,14 +5090,16 @@ type CreateAutomationRequest struct {
 	TeamId         *int32                   `protobuf:"varint,8,opt,name=team_id,json=teamId,proto3,oneof" json:"team_id,omitempty"`
 	CreationSource AutomationCreationSource `protobuf:"varint,9,opt,name=creation_source,json=creationSource,proto3,enum=aiserver.v1.AutomationCreationSource" json:"creation_source,omitempty"`
 	// Defaults to true when omitted.
-	Enabled       *bool `protobuf:"varint,10,opt,name=enabled,proto3,oneof" json:"enabled,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Enabled          *bool   `protobuf:"varint,10,opt,name=enabled,proto3,oneof" json:"enabled,omitempty"`
+	SandAgentId      *string `protobuf:"bytes,11,opt,name=sand_agent_id,json=sandAgentId,proto3,oneof" json:"sand_agent_id,omitempty"`
+	SandAutomationId *string `protobuf:"bytes,12,opt,name=sand_automation_id,json=sandAutomationId,proto3,oneof" json:"sand_automation_id,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *CreateAutomationRequest) Reset() {
 	*x = CreateAutomationRequest{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[55]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[60]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4637,7 +5111,7 @@ func (x *CreateAutomationRequest) String() string {
 func (*CreateAutomationRequest) ProtoMessage() {}
 
 func (x *CreateAutomationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[55]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[60]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4650,7 +5124,7 @@ func (x *CreateAutomationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateAutomationRequest.ProtoReflect.Descriptor instead.
 func (*CreateAutomationRequest) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{55}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{60}
 }
 
 func (x *CreateAutomationRequest) GetName() string {
@@ -4723,6 +5197,20 @@ func (x *CreateAutomationRequest) GetEnabled() bool {
 	return false
 }
 
+func (x *CreateAutomationRequest) GetSandAgentId() string {
+	if x != nil && x.SandAgentId != nil {
+		return *x.SandAgentId
+	}
+	return ""
+}
+
+func (x *CreateAutomationRequest) GetSandAutomationId() string {
+	if x != nil && x.SandAutomationId != nil {
+		return *x.SandAutomationId
+	}
+	return ""
+}
+
 type CreateAutomationResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Workflow      *AutomationWithOwner   `protobuf:"bytes,1,opt,name=workflow,proto3" json:"workflow,omitempty"`
@@ -4732,7 +5220,7 @@ type CreateAutomationResponse struct {
 
 func (x *CreateAutomationResponse) Reset() {
 	*x = CreateAutomationResponse{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[56]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[61]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4744,7 +5232,7 @@ func (x *CreateAutomationResponse) String() string {
 func (*CreateAutomationResponse) ProtoMessage() {}
 
 func (x *CreateAutomationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[56]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[61]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4757,7 +5245,7 @@ func (x *CreateAutomationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateAutomationResponse.ProtoReflect.Descriptor instead.
 func (*CreateAutomationResponse) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{56}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{61}
 }
 
 func (x *CreateAutomationResponse) GetWorkflow() *AutomationWithOwner {
@@ -4770,14 +5258,17 @@ func (x *CreateAutomationResponse) GetWorkflow() *AutomationWithOwner {
 type GetAutomationRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Automation ID (UUID) of the automation to fetch.
-	AutomationId  string `protobuf:"bytes,2,opt,name=automation_id,json=automationId,proto3" json:"automation_id,omitempty"`
+	AutomationId string `protobuf:"bytes,2,opt,name=automation_id,json=automationId,proto3" json:"automation_id,omitempty"`
+	// Optional selected team to use when authorizing team-visible automations.
+	// Omitted by older clients, which keeps the legacy authenticated-team behavior.
+	TeamId        *int32 `protobuf:"varint,3,opt,name=team_id,json=teamId,proto3,oneof" json:"team_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GetAutomationRequest) Reset() {
 	*x = GetAutomationRequest{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[57]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[62]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4789,7 +5280,7 @@ func (x *GetAutomationRequest) String() string {
 func (*GetAutomationRequest) ProtoMessage() {}
 
 func (x *GetAutomationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[57]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[62]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4802,7 +5293,7 @@ func (x *GetAutomationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAutomationRequest.ProtoReflect.Descriptor instead.
 func (*GetAutomationRequest) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{57}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{62}
 }
 
 func (x *GetAutomationRequest) GetAutomationId() string {
@@ -4810,6 +5301,13 @@ func (x *GetAutomationRequest) GetAutomationId() string {
 		return x.AutomationId
 	}
 	return ""
+}
+
+func (x *GetAutomationRequest) GetTeamId() int32 {
+	if x != nil && x.TeamId != nil {
+		return *x.TeamId
+	}
+	return 0
 }
 
 type RestrictedAutomationSummary struct {
@@ -4826,7 +5324,7 @@ type RestrictedAutomationSummary struct {
 
 func (x *RestrictedAutomationSummary) Reset() {
 	*x = RestrictedAutomationSummary{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[58]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[63]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4838,7 +5336,7 @@ func (x *RestrictedAutomationSummary) String() string {
 func (*RestrictedAutomationSummary) ProtoMessage() {}
 
 func (x *RestrictedAutomationSummary) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[58]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[63]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4851,7 +5349,7 @@ func (x *RestrictedAutomationSummary) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RestrictedAutomationSummary.ProtoReflect.Descriptor instead.
 func (*RestrictedAutomationSummary) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{58}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{63}
 }
 
 func (x *RestrictedAutomationSummary) GetAutomationId() string {
@@ -4895,7 +5393,7 @@ type GetAutomationResponse struct {
 
 func (x *GetAutomationResponse) Reset() {
 	*x = GetAutomationResponse{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[59]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[64]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4907,7 +5405,7 @@ func (x *GetAutomationResponse) String() string {
 func (*GetAutomationResponse) ProtoMessage() {}
 
 func (x *GetAutomationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[59]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[64]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4920,7 +5418,7 @@ func (x *GetAutomationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAutomationResponse.ProtoReflect.Descriptor instead.
 func (*GetAutomationResponse) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{59}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{64}
 }
 
 func (x *GetAutomationResponse) GetResult() isGetAutomationResponse_Result {
@@ -4982,7 +5480,7 @@ type UpdateAutomationRequest struct {
 
 func (x *UpdateAutomationRequest) Reset() {
 	*x = UpdateAutomationRequest{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[60]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[65]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4994,7 +5492,7 @@ func (x *UpdateAutomationRequest) String() string {
 func (*UpdateAutomationRequest) ProtoMessage() {}
 
 func (x *UpdateAutomationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[60]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[65]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5007,7 +5505,7 @@ func (x *UpdateAutomationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateAutomationRequest.ProtoReflect.Descriptor instead.
 func (*UpdateAutomationRequest) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{60}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{65}
 }
 
 func (x *UpdateAutomationRequest) GetName() string {
@@ -5075,7 +5573,7 @@ type UpdateAutomationResponse struct {
 
 func (x *UpdateAutomationResponse) Reset() {
 	*x = UpdateAutomationResponse{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[61]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[66]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5087,7 +5585,7 @@ func (x *UpdateAutomationResponse) String() string {
 func (*UpdateAutomationResponse) ProtoMessage() {}
 
 func (x *UpdateAutomationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[61]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[66]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5100,7 +5598,7 @@ func (x *UpdateAutomationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateAutomationResponse.ProtoReflect.Descriptor instead.
 func (*UpdateAutomationResponse) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{61}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{66}
 }
 
 func (x *UpdateAutomationResponse) GetWorkflow() *AutomationWithOwner {
@@ -5120,7 +5618,7 @@ type DeleteAutomationRequest struct {
 
 func (x *DeleteAutomationRequest) Reset() {
 	*x = DeleteAutomationRequest{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[62]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[67]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5132,7 +5630,7 @@ func (x *DeleteAutomationRequest) String() string {
 func (*DeleteAutomationRequest) ProtoMessage() {}
 
 func (x *DeleteAutomationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[62]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[67]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5145,7 +5643,7 @@ func (x *DeleteAutomationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteAutomationRequest.ProtoReflect.Descriptor instead.
 func (*DeleteAutomationRequest) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{62}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{67}
 }
 
 func (x *DeleteAutomationRequest) GetAutomationId() string {
@@ -5163,7 +5661,7 @@ type DeleteAutomationResponse struct {
 
 func (x *DeleteAutomationResponse) Reset() {
 	*x = DeleteAutomationResponse{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[63]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[68]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5175,7 +5673,7 @@ func (x *DeleteAutomationResponse) String() string {
 func (*DeleteAutomationResponse) ProtoMessage() {}
 
 func (x *DeleteAutomationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[63]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[68]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5188,7 +5686,7 @@ func (x *DeleteAutomationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteAutomationResponse.ProtoReflect.Descriptor instead.
 func (*DeleteAutomationResponse) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{63}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{68}
 }
 
 type Automation struct {
@@ -5212,13 +5710,16 @@ type Automation struct {
 	ManagedType          *string             `protobuf:"bytes,15,opt,name=managed_type,json=managedType,proto3,oneof" json:"managed_type,omitempty"`
 	Hidden               *bool               `protobuf:"varint,16,opt,name=hidden,proto3,oneof" json:"hidden,omitempty"`
 	TemplateId           *string             `protobuf:"bytes,17,opt,name=template_id,json=templateId,proto3,oneof" json:"template_id,omitempty"`
-	unknownFields        protoimpl.UnknownFields
-	sizeCache            protoimpl.SizeCache
+	// Sand only: when this automation last fired, from its newest non-skipped
+	// run row (epoch ms). Absent when it has never run.
+	SandLastRunAtMs *int64 `protobuf:"varint,18,opt,name=sand_last_run_at_ms,json=sandLastRunAtMs,proto3,oneof" json:"sand_last_run_at_ms,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *Automation) Reset() {
 	*x = Automation{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[64]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[69]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5230,7 +5731,7 @@ func (x *Automation) String() string {
 func (*Automation) ProtoMessage() {}
 
 func (x *Automation) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[64]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[69]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5243,7 +5744,7 @@ func (x *Automation) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Automation.ProtoReflect.Descriptor instead.
 func (*Automation) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{64}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{69}
 }
 
 func (x *Automation) GetName() string {
@@ -5358,6 +5859,13 @@ func (x *Automation) GetTemplateId() string {
 	return ""
 }
 
+func (x *Automation) GetSandLastRunAtMs() int64 {
+	if x != nil && x.SandLastRunAtMs != nil {
+		return *x.SandLastRunAtMs
+	}
+	return 0
+}
+
 type AutomationMcpAuthState struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ServerId      *int64                 `protobuf:"varint,1,opt,name=server_id,json=serverId,proto3,oneof" json:"server_id,omitempty"`
@@ -5369,7 +5877,7 @@ type AutomationMcpAuthState struct {
 
 func (x *AutomationMcpAuthState) Reset() {
 	*x = AutomationMcpAuthState{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[65]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[70]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5381,7 +5889,7 @@ func (x *AutomationMcpAuthState) String() string {
 func (*AutomationMcpAuthState) ProtoMessage() {}
 
 func (x *AutomationMcpAuthState) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[65]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[70]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5394,7 +5902,7 @@ func (x *AutomationMcpAuthState) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AutomationMcpAuthState.ProtoReflect.Descriptor instead.
 func (*AutomationMcpAuthState) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{65}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{70}
 }
 
 func (x *AutomationMcpAuthState) GetServerId() int64 {
@@ -5436,7 +5944,7 @@ type AutomationWithOwner struct {
 
 func (x *AutomationWithOwner) Reset() {
 	*x = AutomationWithOwner{}
-	mi := &file_aiserver_v1_automations_proto_msgTypes[66]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[71]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5448,7 +5956,7 @@ func (x *AutomationWithOwner) String() string {
 func (*AutomationWithOwner) ProtoMessage() {}
 
 func (x *AutomationWithOwner) ProtoReflect() protoreflect.Message {
-	mi := &file_aiserver_v1_automations_proto_msgTypes[66]
+	mi := &file_aiserver_v1_automations_proto_msgTypes[71]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5461,7 +5969,7 @@ func (x *AutomationWithOwner) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AutomationWithOwner.ProtoReflect.Descriptor instead.
 func (*AutomationWithOwner) Descriptor() ([]byte, []int) {
-	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{66}
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{71}
 }
 
 func (x *AutomationWithOwner) GetWorkflow() *Automation {
@@ -5499,11 +6007,64 @@ func (x *AutomationWithOwner) GetTeamId() int32 {
 	return 0
 }
 
+type AutomationModelSelection_ParameterValue struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// Enum parameters carry one of the enum values; booleans carry "true"/"false".
+	Value         string `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AutomationModelSelection_ParameterValue) Reset() {
+	*x = AutomationModelSelection_ParameterValue{}
+	mi := &file_aiserver_v1_automations_proto_msgTypes[72]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AutomationModelSelection_ParameterValue) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AutomationModelSelection_ParameterValue) ProtoMessage() {}
+
+func (x *AutomationModelSelection_ParameterValue) ProtoReflect() protoreflect.Message {
+	mi := &file_aiserver_v1_automations_proto_msgTypes[72]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AutomationModelSelection_ParameterValue.ProtoReflect.Descriptor instead.
+func (*AutomationModelSelection_ParameterValue) Descriptor() ([]byte, []int) {
+	return file_aiserver_v1_automations_proto_rawDescGZIP(), []int{9, 0}
+}
+
+func (x *AutomationModelSelection_ParameterValue) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *AutomationModelSelection_ParameterValue) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
 var File_aiserver_v1_automations_proto protoreflect.FileDescriptor
 
 const file_aiserver_v1_automations_proto_rawDesc = "" +
 	"\n" +
-	"\x1daiserver/v1/automations.proto\x12\vaiserver.v1\x1a\x1cgoogle/protobuf/struct.proto\"\x84\a\n" +
+	"\x1daiserver/v1/automations.proto\x12\vaiserver.v1\x1a\x1cgoogle/protobuf/struct.proto\"\xb3\b\n" +
 	"\aTrigger\x12.\n" +
 	"\x04cron\x18\x01 \x01(\v2\x18.aiserver.v1.CronTriggerH\x00R\x04cron\x12+\n" +
 	"\x03git\x18\x02 \x01(\v2\x17.aiserver.v1.GitTriggerH\x00R\x03git\x12@\n" +
@@ -5515,7 +6076,9 @@ const file_aiserver_v1_automations_proto_rawDesc = "" +
 	"\x06sentry\x18\x0f \x01(\v2\x1a.aiserver.v1.SentryTriggerH\x00R\x06sentry\x12\\\n" +
 	"\x17microsoft_teams_trigger\x18\x10 \x01(\v2\".aiserver.v1.MicrosoftTeamsTriggerH\x00R\x15microsoftTeamsTrigger\x12y\n" +
 	"\x1fmicrosoft_teams_channel_created\x18\x11 \x01(\v20.aiserver.v1.MicrosoftTeamsChannelCreatedTriggerH\x00R\x1cmicrosoftTeamsChannelCreated\x12Z\n" +
-	"\x14slack_reaction_added\x18\x12 \x01(\v2&.aiserver.v1.SlackReactionAddedTriggerH\x00R\x12slackReactionAdded\x127\n" +
+	"\x14slack_reaction_added\x18\x12 \x01(\v2&.aiserver.v1.SlackReactionAddedTriggerH\x00R\x12slackReactionAdded\x12G\n" +
+	"\rslack_mention\x18\x13 \x01(\v2 .aiserver.v1.SlackMentionTriggerH\x00R\fslackMention\x12d\n" +
+	"\x18slack_any_reaction_added\x18\x14 \x01(\v2).aiserver.v1.SlackAnyReactionAddedTriggerH\x00R\x15slackAnyReactionAdded\x127\n" +
 	"\x15agentic_filter_prompt\x18\x0e \x01(\tH\x01R\x13agenticFilterPrompt\x88\x01\x01B\t\n" +
 	"\atriggerB\x18\n" +
 	"\x16_agentic_filter_promptJ\x04\b\n" +
@@ -5554,7 +6117,7 @@ const file_aiserver_v1_automations_proto_rawDesc = "" +
 	"\x15environment_public_id\x18\x03 \x01(\tH\x02R\x13environmentPublicId\x88\x01\x01B\x0f\n" +
 	"\r_skip_installB\x11\n" +
 	"\x0f_private_workerB\x18\n" +
-	"\x16_environment_public_id\"\xf5\x06\n" +
+	"\x16_environment_public_id\"\xde\t\n" +
 	"\bWorkflow\x120\n" +
 	"\btriggers\x18\n" +
 	" \x03(\v2\x14.aiserver.v1.TriggerR\btriggers\x12-\n" +
@@ -5568,33 +6131,52 @@ const file_aiserver_v1_automations_proto_rawDesc = "" +
 	"\x17slack_notified_channels\x18\x0f \x03(\tR\x15slackNotifiedChannels\x12r\n" +
 	"\x1eslack_completion_reaction_mode\x18\x10 \x01(\x0e2(.aiserver.v1.SlackCompletionReactionModeH\x04R\x1bslackCompletionReactionMode\x88\x01\x01\x12W\n" +
 	"&slack_completion_reaction_custom_emoji\x18\x11 \x01(\tH\x05R\"slackCompletionReactionCustomEmoji\x88\x01\x01\x12C\n" +
-	"\x0emanaged_config\x18\x12 \x01(\v2\x17.google.protobuf.StructH\x06R\rmanagedConfig\x88\x01\x01B\b\n" +
+	"\x0emanaged_config\x18\x12 \x01(\v2\x17.google.protobuf.StructH\x06R\rmanagedConfig\x88\x01\x01\x12X\n" +
+	"\x16disabled_default_tools\x18\x13 \x03(\x0e2\".aiserver.v1.AutomationDefaultToolR\x14disabledDefaultTools\x122\n" +
+	"\x13grok_bot_session_id\x18\x14 \x01(\tH\aR\x10grokBotSessionId\x88\x01\x01\x12;\n" +
+	"\x18grok_bot_creator_auth_id\x18\x15 \x01(\tH\bR\x14grokBotCreatorAuthId\x88\x01\x01\x12S\n" +
+	"\x0fmodel_selection\x18\x16 \x01(\v2%.aiserver.v1.AutomationModelSelectionH\tR\x0emodelSelection\x88\x01\x01B\b\n" +
 	"\x06_modelB\r\n" +
 	"\v_git_configB\x10\n" +
 	"\x0e_agent_optionsB\x11\n" +
 	"\x0f_memory_enabledB!\n" +
 	"\x1f_slack_completion_reaction_modeB)\n" +
 	"'_slack_completion_reaction_custom_emojiB\x11\n" +
-	"\x0f_managed_configJ\x04\b\x01\x10\x02J\x04\b\x02\x10\x03J\x04\b\x04\x10\x05J\x04\b\x05\x10\x06J\x04\b\x06\x10\aJ\x04\b\a\x10\bJ\x04\b\t\x10\n" +
-	"\"\xda\x02\n" +
+	"\x0f_managed_configB\x16\n" +
+	"\x14_grok_bot_session_idB\x1b\n" +
+	"\x19_grok_bot_creator_auth_idB\x12\n" +
+	"\x10_model_selectionJ\x04\b\x01\x10\x02J\x04\b\x02\x10\x03J\x04\b\x04\x10\x05J\x04\b\x05\x10\x06J\x04\b\x06\x10\aJ\x04\b\a\x10\bJ\x04\b\t\x10\n" +
+	"\"\xc3\x03\n" +
 	"\x06Prompt\x12\x16\n" +
 	"\x06prompt\x18\x01 \x01(\tR\x06prompt\x12A\n" +
 	"\feffort_level\x18\x02 \x01(\x0e2\x1e.aiserver.v1.PromptEffortLevelR\veffortLevel\x12\x19\n" +
 	"\x05model\x18\x03 \x01(\tH\x00R\x05model\x88\x01\x01\x12 \n" +
 	"\tis_filter\x18\x04 \x01(\bH\x01R\bisFilter\x88\x01\x01\x12:\n" +
 	"\brun_mode\x18\x05 \x01(\x0e2\x1a.aiserver.v1.PromptRunModeH\x02R\arunMode\x88\x01\x01\x12;\n" +
-	"\x17suppress_slack_reaction\x18\x06 \x01(\bH\x03R\x15suppressSlackReaction\x88\x01\x01B\b\n" +
+	"\x17suppress_slack_reaction\x18\x06 \x01(\bH\x03R\x15suppressSlackReaction\x88\x01\x01\x12S\n" +
+	"\x0fmodel_selection\x18\a \x01(\v2%.aiserver.v1.AutomationModelSelectionH\x04R\x0emodelSelection\x88\x01\x01B\b\n" +
 	"\x06_modelB\f\n" +
 	"\n" +
 	"_is_filterB\v\n" +
 	"\t_run_modeB\x1a\n" +
-	"\x18_suppress_slack_reaction\"Y\n" +
+	"\x18_suppress_slack_reactionB\x12\n" +
+	"\x10_model_selection\"\xf0\x01\n" +
+	"\x18AutomationModelSelection\x12\x19\n" +
+	"\bmodel_id\x18\x01 \x01(\tR\amodelId\x12T\n" +
+	"\n" +
+	"parameters\x18\x02 \x03(\v24.aiserver.v1.AutomationModelSelection.ParameterValueR\n" +
+	"parameters\x12\x1e\n" +
+	"\bmax_mode\x18\x03 \x01(\bH\x00R\amaxMode\x88\x01\x01\x1a6\n" +
+	"\x0eParameterValue\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05valueB\v\n" +
+	"\t_max_mode\"Y\n" +
 	"\tGitConfig\x12\x12\n" +
 	"\x04repo\x18\x03 \x01(\tR\x04repo\x12\x16\n" +
 	"\x06branch\x18\x04 \x01(\tR\x06branch\x12\x14\n" +
 	"\x05repos\x18\x05 \x03(\tR\x05reposJ\x04\b\x01\x10\x02J\x04\b\x02\x10\x03\"'\n" +
 	"\vCronTrigger\x12\x12\n" +
-	"\x04cron\x18\x01 \x01(\tR\x04cronJ\x04\b\x02\x10\x03\"\x9e\x06\n" +
+	"\x04cron\x18\x01 \x01(\tR\x04cronJ\x04\b\x02\x10\x03\"\xe1\a\n" +
 	"\n" +
 	"GitTrigger\x12E\n" +
 	"\fpull_request\x18\x01 \x01(\v2 .aiserver.v1.GitPullRequestEventH\x00R\vpullRequest\x12/\n" +
@@ -5607,7 +6189,9 @@ const file_aiserver_v1_automations_proto_rawDesc = "" +
 	"\x13pull_request_review\x18\t \x01(\v2&.aiserver.v1.GitPullRequestReviewEventH\x00R\x11pullRequestReview\x12H\n" +
 	"\rreview_thread\x18\n" +
 	" \x01(\v2!.aiserver.v1.GitReviewThreadEventH\x00R\freviewThread\x12E\n" +
-	"\fworkflow_run\x18\v \x01(\v2 .aiserver.v1.GitWorkflowRunEventH\x00R\vworkflowRun\x12%\n" +
+	"\fworkflow_run\x18\v \x01(\v2 .aiserver.v1.GitWorkflowRunEventH\x00R\vworkflowRun\x12t\n" +
+	"\x1dpull_request_review_requested\x18\f \x01(\v2/.aiserver.v1.GitPullRequestReviewRequestedEventH\x00R\x1apullRequestReviewRequested\x12K\n" +
+	"\x0eissue_assigned\x18\r \x01(\v2\".aiserver.v1.GitIssueAssignedEventH\x00R\rissueAssigned\x12%\n" +
 	"\x0euser_allowlist\x18\x03 \x03(\tR\ruserAllowlistB\a\n" +
 	"\x05event\"\x90\x03\n" +
 	"\x13GitPullRequestEvent\x12\x12\n" +
@@ -5622,16 +6206,21 @@ const file_aiserver_v1_automations_proto_rawDesc = "" +
 	" \x01(\bR\x16commentContainsIsRegex\x12\x1d\n" +
 	"\n" +
 	"label_name\x18\b \x01(\tR\tlabelName\x12\x12\n" +
-	"\x04orgs\x18\t \x03(\tR\x04orgs\"P\n" +
+	"\x04orgs\x18\t \x03(\tR\x04orgs\":\n" +
+	"\"GitPullRequestReviewRequestedEvent\x12\x14\n" +
+	"\x05repos\x18\x01 \x03(\tR\x05repos\"-\n" +
+	"\x15GitIssueAssignedEvent\x12\x14\n" +
+	"\x05repos\x18\x01 \x03(\tR\x05repos\"P\n" +
 	"\fGitPushEvent\x12\x12\n" +
 	"\x04repo\x18\x01 \x01(\tR\x04repo\x12\x16\n" +
 	"\x06branch\x18\x02 \x01(\tR\x06branch\x12\x14\n" +
-	"\x05repos\x18\x03 \x03(\tR\x05repos\"\xba\x01\n" +
+	"\x05repos\x18\x03 \x03(\tR\x05repos\"\xd7\x01\n" +
 	"\x13GitCICompletedEvent\x12\x14\n" +
 	"\x05repos\x18\x01 \x03(\tR\x05repos\x12C\n" +
 	"\tcondition\x18\x02 \x01(\x0e2%.aiserver.v1.GitCICompletionConditionR\tcondition\x120\n" +
 	"\x14ignore_base_failures\x18\x03 \x01(\bR\x12ignoreBaseFailures\x12\x16\n" +
-	"\x06branch\x18\x04 \x01(\tR\x06branch\"i\n" +
+	"\x06branch\x18\x04 \x01(\tR\x06branch\x12\x1b\n" +
+	"\tpr_number\x18\x05 \x01(\x05R\bprNumber\"i\n" +
 	"\x14GitIssueLabeledEvent\x12\x14\n" +
 	"\x05repos\x18\x01 \x03(\tR\x05repos\x12\x1d\n" +
 	"\n" +
@@ -5687,13 +6276,23 @@ const file_aiserver_v1_automations_proto_rawDesc = "" +
 	"'_slack_completion_reaction_custom_emojiB\x11\n" +
 	"\x0f_top_level_onlyJ\x04\b\x02\x10\x03\"P\n" +
 	"\x1aSlackChannelCreatedTrigger\x122\n" +
-	"\x15channel_name_contains\x18\x01 \x01(\tR\x13channelNameContains\"\x9b\x02\n" +
+	"\x15channel_name_contains\x18\x01 \x01(\tR\x13channelNameContains\"\xcd\x02\n" +
 	"\x19SlackReactionAddedTrigger\x12\x18\n" +
 	"\achannel\x18\x01 \x01(\tR\achannel\x12\x1d\n" +
 	"\n" +
 	"emoji_name\x18\x03 \x01(\tR\temojiName\x12\x1a\n" +
 	"\bchannels\x18\x05 \x03(\tR\bchannels\x12I\n" +
-	"!block_unauthenticated_slack_users\x18\x06 \x01(\bR\x1eblockUnauthenticatedSlackUsersJ\x04\b\x02\x10\x03J\x04\b\x04\x10\x05J\x04\b\a\x10\bJ\x04\b\b\x10\tR\x1eslack_completion_reaction_modeR&slack_completion_reaction_custom_emoji\"\xbf\x02\n" +
+	"!block_unauthenticated_slack_users\x18\x06 \x01(\bR\x1eblockUnauthenticatedSlackUsers\x120\n" +
+	"\x14only_owner_reactions\x18\t \x01(\bR\x12onlyOwnerReactionsJ\x04\b\x02\x10\x03J\x04\b\x04\x10\x05J\x04\b\a\x10\bJ\x04\b\b\x10\tR\x1eslack_completion_reaction_modeR&slack_completion_reaction_custom_emoji\"\x96\x01\n" +
+	"\x13SlackMentionTrigger\x12\x18\n" +
+	"\achannel\x18\x01 \x01(\tR\achannel\x12\x1a\n" +
+	"\bchannels\x18\x02 \x03(\tR\bchannels\x12I\n" +
+	"!block_unauthenticated_slack_users\x18\x03 \x01(\bR\x1eblockUnauthenticatedSlackUsers\"\xd1\x01\n" +
+	"\x1cSlackAnyReactionAddedTrigger\x12\x18\n" +
+	"\achannel\x18\x01 \x01(\tR\achannel\x12\x1a\n" +
+	"\bchannels\x18\x02 \x03(\tR\bchannels\x12I\n" +
+	"!block_unauthenticated_slack_users\x18\x03 \x01(\bR\x1eblockUnauthenticatedSlackUsers\x120\n" +
+	"\x14only_owner_reactions\x18\x04 \x01(\bR\x12onlyOwnerReactions\"\xbf\x02\n" +
 	"\rLinearTrigger\x12K\n" +
 	"\rissue_created\x18\x01 \x01(\v2$.aiserver.v1.LinearIssueCreatedEventH\x00R\fissueCreated\x12N\n" +
 	"\x0estatus_changed\x18\x02 \x01(\v2%.aiserver.v1.LinearStatusChangedEventH\x00R\rstatusChanged\x12F\n" +
@@ -5764,11 +6363,11 @@ const file_aiserver_v1_automations_proto_rawDesc = "" +
 	"\x16RequestReviewersAction\"\x15\n" +
 	"\x0fApprovePrAction:\x02\x18\x01\"\x11\n" +
 	"\x0fReadSlackAction\"\x1c\n" +
-	"\x1aResolveReviewThreadsAction\"\xb7\x01\n" +
+	"\x1aResolveReviewThreadsAction\"\xbb\x01\n" +
 	"\vSlackAction\x12\x18\n" +
 	"\achannel\x18\x01 \x01(\tR\achannel\x12 \n" +
-	"\vgeneralized\x18\x02 \x01(\bR\vgeneralized\x12*\n" +
-	"\x11respond_in_thread\x18\x03 \x01(\bR\x0frespondInThread\x12$\n" +
+	"\vgeneralized\x18\x02 \x01(\bR\vgeneralized\x12.\n" +
+	"\x11respond_in_thread\x18\x03 \x01(\bB\x02\x18\x01R\x0frespondInThread\x12$\n" +
 	"\x0epost_as_thread\x18\x04 \x01(\bR\fpostAsThread\x12\x1a\n" +
 	"\bchannels\x18\x05 \x03(\tR\bchannels\"\x80\x02\n" +
 	"\x14MicrosoftTeamsAction\x12\x1b\n" +
@@ -5781,7 +6380,7 @@ const file_aiserver_v1_automations_proto_rawDesc = "" +
 	"\vgeneralized\x18\x05 \x01(\bR\vgeneralized\x12*\n" +
 	"\x11respond_in_thread\x18\x06 \x01(\bR\x0frespondInThread\x12$\n" +
 	"\x0epost_as_thread\x18\a \x01(\bR\fpostAsThread\"\x1a\n" +
-	"\x18ReadMicrosoftTeamsAction\"\x96\x04\n" +
+	"\x18ReadMicrosoftTeamsAction\"\x9b\x05\n" +
 	"\x17CreateAutomationRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x121\n" +
 	"\bworkflow\x18\x02 \x01(\v2\x15.aiserver.v1.WorkflowR\bworkflow\x12%\n" +
@@ -5794,7 +6393,9 @@ const file_aiserver_v1_automations_proto_rawDesc = "" +
 	"\ateam_id\x18\b \x01(\x05H\x05R\x06teamId\x88\x01\x01\x12N\n" +
 	"\x0fcreation_source\x18\t \x01(\x0e2%.aiserver.v1.AutomationCreationSourceR\x0ecreationSource\x12\x1d\n" +
 	"\aenabled\x18\n" +
-	" \x01(\bH\x06R\aenabled\x88\x01\x01B\x0e\n" +
+	" \x01(\bH\x06R\aenabled\x88\x01\x01\x12'\n" +
+	"\rsand_agent_id\x18\v \x01(\tH\aR\vsandAgentId\x88\x01\x01\x121\n" +
+	"\x12sand_automation_id\x18\f \x01(\tH\bR\x10sandAutomationId\x88\x01\x01B\x0e\n" +
 	"\f_descriptionB\b\n" +
 	"\x06_scopeB\x0e\n" +
 	"\f_template_idB\x0f\n" +
@@ -5803,11 +6404,16 @@ const file_aiserver_v1_automations_proto_rawDesc = "" +
 	"\n" +
 	"\b_team_idB\n" +
 	"\n" +
-	"\b_enabled\"X\n" +
+	"\b_enabledB\x10\n" +
+	"\x0e_sand_agent_idB\x15\n" +
+	"\x13_sand_automation_id\"X\n" +
 	"\x18CreateAutomationResponse\x12<\n" +
-	"\bworkflow\x18\x01 \x01(\v2 .aiserver.v1.AutomationWithOwnerR\bworkflow\"A\n" +
+	"\bworkflow\x18\x01 \x01(\v2 .aiserver.v1.AutomationWithOwnerR\bworkflow\"k\n" +
 	"\x14GetAutomationRequest\x12#\n" +
-	"\rautomation_id\x18\x02 \x01(\tR\fautomationIdJ\x04\b\x01\x10\x02\"\x8f\x01\n" +
+	"\rautomation_id\x18\x02 \x01(\tR\fautomationId\x12\x1c\n" +
+	"\ateam_id\x18\x03 \x01(\x05H\x00R\x06teamId\x88\x01\x01B\n" +
+	"\n" +
+	"\b_team_idJ\x04\b\x01\x10\x02\"\x8f\x01\n" +
 	"\x1bRestrictedAutomationSummary\x12#\n" +
 	"\rautomation_id\x18\x01 \x01(\tR\fautomationId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
@@ -5839,7 +6445,7 @@ const file_aiserver_v1_automations_proto_rawDesc = "" +
 	"\bworkflow\x18\x01 \x01(\v2 .aiserver.v1.AutomationWithOwnerR\bworkflow\"D\n" +
 	"\x17DeleteAutomationRequest\x12#\n" +
 	"\rautomation_id\x18\x02 \x01(\tR\fautomationIdJ\x04\b\x01\x10\x02\"\x1a\n" +
-	"\x18DeleteAutomationResponse\"\xc3\x06\n" +
+	"\x18DeleteAutomationResponse\"\x8e\a\n" +
 	"\n" +
 	"Automation\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
@@ -5863,7 +6469,8 @@ const file_aiserver_v1_automations_proto_rawDesc = "" +
 	"\fmanaged_type\x18\x0f \x01(\tH\x05R\vmanagedType\x88\x01\x01\x12\x1b\n" +
 	"\x06hidden\x18\x10 \x01(\bH\x06R\x06hidden\x88\x01\x01\x12$\n" +
 	"\vtemplate_id\x18\x11 \x01(\tH\aR\n" +
-	"templateId\x88\x01\x01B\x0e\n" +
+	"templateId\x88\x01\x01\x121\n" +
+	"\x13sand_last_run_at_ms\x18\x12 \x01(\x03H\bR\x0fsandLastRunAtMs\x88\x01\x01B\x0e\n" +
 	"\f_descriptionB\x15\n" +
 	"\x13_service_account_idB\r\n" +
 	"\v_deploy_keyB\x19\n" +
@@ -5871,7 +6478,8 @@ const file_aiserver_v1_automations_proto_rawDesc = "" +
 	"\x18_deploy_last_apply_errorB\x0f\n" +
 	"\r_managed_typeB\t\n" +
 	"\a_hiddenB\x0e\n" +
-	"\f_template_idJ\x04\b\x01\x10\x02\"\xa3\x01\n" +
+	"\f_template_idB\x16\n" +
+	"\x14_sand_last_run_at_msJ\x04\b\x01\x10\x02\"\xa3\x01\n" +
 	"\x16AutomationMcpAuthState\x12 \n" +
 	"\tserver_id\x18\x01 \x01(\x03H\x00R\bserverId\x88\x01\x01\x12\x1f\n" +
 	"\vserver_name\x18\x02 \x01(\tR\n" +
@@ -5888,7 +6496,10 @@ const file_aiserver_v1_automations_proto_rawDesc = "" +
 	"\x0fmcp_auth_states\x18\x04 \x03(\v2#.aiserver.v1.AutomationMcpAuthStateR\rmcpAuthStates\x12\x1c\n" +
 	"\ateam_id\x18\x05 \x01(\x05H\x00R\x06teamId\x88\x01\x01B\n" +
 	"\n" +
-	"\b_team_id*\xc7\x01\n" +
+	"\b_team_id*i\n" +
+	"\x15AutomationDefaultTool\x12'\n" +
+	"#AUTOMATION_DEFAULT_TOOL_UNSPECIFIED\x10\x00\x12'\n" +
+	"#AUTOMATION_DEFAULT_TOOL_OPEN_GIT_PR\x10\x01*\xc7\x01\n" +
 	"\x1bSlackCompletionReactionMode\x12.\n" +
 	"*SLACK_COMPLETION_REACTION_MODE_UNSPECIFIED\x10\x00\x12%\n" +
 	"!SLACK_COMPLETION_REACTION_MODE_ON\x10\x01\x12&\n" +
@@ -5920,7 +6531,7 @@ const file_aiserver_v1_automations_proto_rawDesc = "" +
 	"\rPromptRunMode\x12\x1f\n" +
 	"\x1bPROMPT_RUN_MODE_UNSPECIFIED\x10\x00\x12\x1d\n" +
 	"\x19PROMPT_RUN_MODE_SAME_CHAT\x10\x01\x12\x1d\n" +
-	"\x19PROMPT_RUN_MODE_NEW_AGENT\x10\x02*\xc8\x02\n" +
+	"\x19PROMPT_RUN_MODE_NEW_AGENT\x10\x02*\xec\x02\n" +
 	"\x14GitPullRequestAction\x12'\n" +
 	"#GIT_PULL_REQUEST_ACTION_UNSPECIFIED\x10\x00\x12\"\n" +
 	"\x1eGIT_PULL_REQUEST_ACTION_OPENED\x10\x01\x12\"\n" +
@@ -5929,7 +6540,8 @@ const file_aiserver_v1_automations_proto_rawDesc = "" +
 	"!GIT_PULL_REQUEST_ACTION_COMMENTED\x10\x04\x12(\n" +
 	"$GIT_PULL_REQUEST_ACTION_DRAFT_OPENED\x10\x05\x12#\n" +
 	"\x1fGIT_PULL_REQUEST_ACTION_LABELED\x10\x06\x12%\n" +
-	"!GIT_PULL_REQUEST_ACTION_UNLABELED\x10\a*\xbe\x01\n" +
+	"!GIT_PULL_REQUEST_ACTION_UNLABELED\x10\a\x12\"\n" +
+	"\x1eGIT_PULL_REQUEST_ACTION_CLOSED\x10\b*\xbe\x01\n" +
 	"\x18GitCICompletionCondition\x12+\n" +
 	"'GIT_CI_COMPLETION_CONDITION_UNSPECIFIED\x10\x00\x12'\n" +
 	"#GIT_CI_COMPLETION_CONDITION_FAILURE\x10\x01\x12'\n" +
@@ -5964,179 +6576,194 @@ func file_aiserver_v1_automations_proto_rawDescGZIP() []byte {
 	return file_aiserver_v1_automations_proto_rawDescData
 }
 
-var file_aiserver_v1_automations_proto_enumTypes = make([]protoimpl.EnumInfo, 10)
-var file_aiserver_v1_automations_proto_msgTypes = make([]protoimpl.MessageInfo, 67)
+var file_aiserver_v1_automations_proto_enumTypes = make([]protoimpl.EnumInfo, 11)
+var file_aiserver_v1_automations_proto_msgTypes = make([]protoimpl.MessageInfo, 73)
 var file_aiserver_v1_automations_proto_goTypes = []any{
-	(SlackCompletionReactionMode)(0),            // 0: aiserver.v1.SlackCompletionReactionMode
-	(AutomationScope)(0),                        // 1: aiserver.v1.AutomationScope
-	(AutomationCreationSource)(0),               // 2: aiserver.v1.AutomationCreationSource
-	(AutomationManagedBy)(0),                    // 3: aiserver.v1.AutomationManagedBy
-	(PromptEffortLevel)(0),                      // 4: aiserver.v1.PromptEffortLevel
-	(PromptRunMode)(0),                          // 5: aiserver.v1.PromptRunMode
-	(GitPullRequestAction)(0),                   // 6: aiserver.v1.GitPullRequestAction
-	(GitCICompletionCondition)(0),               // 7: aiserver.v1.GitCICompletionCondition
-	(GitWorkflowRunConclusion)(0),               // 8: aiserver.v1.GitWorkflowRunConclusion
-	(McpAuthState)(0),                           // 9: aiserver.v1.McpAuthState
-	(*Trigger)(nil),                             // 10: aiserver.v1.Trigger
-	(*Action)(nil),                              // 11: aiserver.v1.Action
-	(*McpAction)(nil),                           // 12: aiserver.v1.McpAction
-	(*McpServerConfig)(nil),                     // 13: aiserver.v1.McpServerConfig
-	(*AgentPrivateWorkerLabel)(nil),             // 14: aiserver.v1.AgentPrivateWorkerLabel
-	(*AgentPrivateWorkerConfig)(nil),            // 15: aiserver.v1.AgentPrivateWorkerConfig
-	(*AgentOptions)(nil),                        // 16: aiserver.v1.AgentOptions
-	(*Workflow)(nil),                            // 17: aiserver.v1.Workflow
-	(*Prompt)(nil),                              // 18: aiserver.v1.Prompt
-	(*GitConfig)(nil),                           // 19: aiserver.v1.GitConfig
-	(*CronTrigger)(nil),                         // 20: aiserver.v1.CronTrigger
-	(*GitTrigger)(nil),                          // 21: aiserver.v1.GitTrigger
-	(*GitPullRequestEvent)(nil),                 // 22: aiserver.v1.GitPullRequestEvent
-	(*GitPushEvent)(nil),                        // 23: aiserver.v1.GitPushEvent
-	(*GitCICompletedEvent)(nil),                 // 24: aiserver.v1.GitCICompletedEvent
-	(*GitIssueLabeledEvent)(nil),                // 25: aiserver.v1.GitIssueLabeledEvent
-	(*GitIssueCommentEvent)(nil),                // 26: aiserver.v1.GitIssueCommentEvent
-	(*GitPullRequestReviewCommentEvent)(nil),    // 27: aiserver.v1.GitPullRequestReviewCommentEvent
-	(*GitPullRequestReviewEvent)(nil),           // 28: aiserver.v1.GitPullRequestReviewEvent
-	(*GitReviewThreadEvent)(nil),                // 29: aiserver.v1.GitReviewThreadEvent
-	(*GitWorkflowRunEvent)(nil),                 // 30: aiserver.v1.GitWorkflowRunEvent
-	(*GitLabelEvent)(nil),                       // 31: aiserver.v1.GitLabelEvent
-	(*SlackTrigger)(nil),                        // 32: aiserver.v1.SlackTrigger
-	(*SlackChannelCreatedTrigger)(nil),          // 33: aiserver.v1.SlackChannelCreatedTrigger
-	(*SlackReactionAddedTrigger)(nil),           // 34: aiserver.v1.SlackReactionAddedTrigger
-	(*LinearTrigger)(nil),                       // 35: aiserver.v1.LinearTrigger
-	(*LinearIssueCreatedEvent)(nil),             // 36: aiserver.v1.LinearIssueCreatedEvent
-	(*LinearStatusChangedEvent)(nil),            // 37: aiserver.v1.LinearStatusChangedEvent
-	(*LinearEndOfCycleEvent)(nil),               // 38: aiserver.v1.LinearEndOfCycleEvent
-	(*WebhookTrigger)(nil),                      // 39: aiserver.v1.WebhookTrigger
-	(*PagerDutyTrigger)(nil),                    // 40: aiserver.v1.PagerDutyTrigger
-	(*PagerDutyIncidentTriggeredEvent)(nil),     // 41: aiserver.v1.PagerDutyIncidentTriggeredEvent
-	(*PagerDutyIncidentAcknowledgedEvent)(nil),  // 42: aiserver.v1.PagerDutyIncidentAcknowledgedEvent
-	(*PagerDutyIncidentResolvedEvent)(nil),      // 43: aiserver.v1.PagerDutyIncidentResolvedEvent
-	(*PagerDutyIncidentEscalatedEvent)(nil),     // 44: aiserver.v1.PagerDutyIncidentEscalatedEvent
-	(*PagerDutyIncidentAnyEvent)(nil),           // 45: aiserver.v1.PagerDutyIncidentAnyEvent
-	(*SentryTrigger)(nil),                       // 46: aiserver.v1.SentryTrigger
-	(*SentryIssueCreatedEvent)(nil),             // 47: aiserver.v1.SentryIssueCreatedEvent
-	(*SentryIssueResolvedEvent)(nil),            // 48: aiserver.v1.SentryIssueResolvedEvent
-	(*SentryIssueAssignedEvent)(nil),            // 49: aiserver.v1.SentryIssueAssignedEvent
-	(*SentryIssueArchivedEvent)(nil),            // 50: aiserver.v1.SentryIssueArchivedEvent
-	(*SentryIssueUnresolvedEvent)(nil),          // 51: aiserver.v1.SentryIssueUnresolvedEvent
-	(*SentryIssueAnyEvent)(nil),                 // 52: aiserver.v1.SentryIssueAnyEvent
-	(*MicrosoftTeamsTrigger)(nil),               // 53: aiserver.v1.MicrosoftTeamsTrigger
-	(*MicrosoftTeamsChannelCreatedTrigger)(nil), // 54: aiserver.v1.MicrosoftTeamsChannelCreatedTrigger
-	(*GitPrAction)(nil),                         // 55: aiserver.v1.GitPrAction
-	(*PrCommentAction)(nil),                     // 56: aiserver.v1.PrCommentAction
-	(*ManageCheckRunAction)(nil),                // 57: aiserver.v1.ManageCheckRunAction
-	(*RequestReviewersAction)(nil),              // 58: aiserver.v1.RequestReviewersAction
-	(*ApprovePrAction)(nil),                     // 59: aiserver.v1.ApprovePrAction
-	(*ReadSlackAction)(nil),                     // 60: aiserver.v1.ReadSlackAction
-	(*ResolveReviewThreadsAction)(nil),          // 61: aiserver.v1.ResolveReviewThreadsAction
-	(*SlackAction)(nil),                         // 62: aiserver.v1.SlackAction
-	(*MicrosoftTeamsAction)(nil),                // 63: aiserver.v1.MicrosoftTeamsAction
-	(*ReadMicrosoftTeamsAction)(nil),            // 64: aiserver.v1.ReadMicrosoftTeamsAction
-	(*CreateAutomationRequest)(nil),             // 65: aiserver.v1.CreateAutomationRequest
-	(*CreateAutomationResponse)(nil),            // 66: aiserver.v1.CreateAutomationResponse
-	(*GetAutomationRequest)(nil),                // 67: aiserver.v1.GetAutomationRequest
-	(*RestrictedAutomationSummary)(nil),         // 68: aiserver.v1.RestrictedAutomationSummary
-	(*GetAutomationResponse)(nil),               // 69: aiserver.v1.GetAutomationResponse
-	(*UpdateAutomationRequest)(nil),             // 70: aiserver.v1.UpdateAutomationRequest
-	(*UpdateAutomationResponse)(nil),            // 71: aiserver.v1.UpdateAutomationResponse
-	(*DeleteAutomationRequest)(nil),             // 72: aiserver.v1.DeleteAutomationRequest
-	(*DeleteAutomationResponse)(nil),            // 73: aiserver.v1.DeleteAutomationResponse
-	(*Automation)(nil),                          // 74: aiserver.v1.Automation
-	(*AutomationMcpAuthState)(nil),              // 75: aiserver.v1.AutomationMcpAuthState
-	(*AutomationWithOwner)(nil),                 // 76: aiserver.v1.AutomationWithOwner
-	(*structpb.Struct)(nil),                     // 77: google.protobuf.Struct
+	(AutomationDefaultTool)(0),                      // 0: aiserver.v1.AutomationDefaultTool
+	(SlackCompletionReactionMode)(0),                // 1: aiserver.v1.SlackCompletionReactionMode
+	(AutomationScope)(0),                            // 2: aiserver.v1.AutomationScope
+	(AutomationCreationSource)(0),                   // 3: aiserver.v1.AutomationCreationSource
+	(AutomationManagedBy)(0),                        // 4: aiserver.v1.AutomationManagedBy
+	(PromptEffortLevel)(0),                          // 5: aiserver.v1.PromptEffortLevel
+	(PromptRunMode)(0),                              // 6: aiserver.v1.PromptRunMode
+	(GitPullRequestAction)(0),                       // 7: aiserver.v1.GitPullRequestAction
+	(GitCICompletionCondition)(0),                   // 8: aiserver.v1.GitCICompletionCondition
+	(GitWorkflowRunConclusion)(0),                   // 9: aiserver.v1.GitWorkflowRunConclusion
+	(McpAuthState)(0),                               // 10: aiserver.v1.McpAuthState
+	(*Trigger)(nil),                                 // 11: aiserver.v1.Trigger
+	(*Action)(nil),                                  // 12: aiserver.v1.Action
+	(*McpAction)(nil),                               // 13: aiserver.v1.McpAction
+	(*McpServerConfig)(nil),                         // 14: aiserver.v1.McpServerConfig
+	(*AgentPrivateWorkerLabel)(nil),                 // 15: aiserver.v1.AgentPrivateWorkerLabel
+	(*AgentPrivateWorkerConfig)(nil),                // 16: aiserver.v1.AgentPrivateWorkerConfig
+	(*AgentOptions)(nil),                            // 17: aiserver.v1.AgentOptions
+	(*Workflow)(nil),                                // 18: aiserver.v1.Workflow
+	(*Prompt)(nil),                                  // 19: aiserver.v1.Prompt
+	(*AutomationModelSelection)(nil),                // 20: aiserver.v1.AutomationModelSelection
+	(*GitConfig)(nil),                               // 21: aiserver.v1.GitConfig
+	(*CronTrigger)(nil),                             // 22: aiserver.v1.CronTrigger
+	(*GitTrigger)(nil),                              // 23: aiserver.v1.GitTrigger
+	(*GitPullRequestEvent)(nil),                     // 24: aiserver.v1.GitPullRequestEvent
+	(*GitPullRequestReviewRequestedEvent)(nil),      // 25: aiserver.v1.GitPullRequestReviewRequestedEvent
+	(*GitIssueAssignedEvent)(nil),                   // 26: aiserver.v1.GitIssueAssignedEvent
+	(*GitPushEvent)(nil),                            // 27: aiserver.v1.GitPushEvent
+	(*GitCICompletedEvent)(nil),                     // 28: aiserver.v1.GitCICompletedEvent
+	(*GitIssueLabeledEvent)(nil),                    // 29: aiserver.v1.GitIssueLabeledEvent
+	(*GitIssueCommentEvent)(nil),                    // 30: aiserver.v1.GitIssueCommentEvent
+	(*GitPullRequestReviewCommentEvent)(nil),        // 31: aiserver.v1.GitPullRequestReviewCommentEvent
+	(*GitPullRequestReviewEvent)(nil),               // 32: aiserver.v1.GitPullRequestReviewEvent
+	(*GitReviewThreadEvent)(nil),                    // 33: aiserver.v1.GitReviewThreadEvent
+	(*GitWorkflowRunEvent)(nil),                     // 34: aiserver.v1.GitWorkflowRunEvent
+	(*GitLabelEvent)(nil),                           // 35: aiserver.v1.GitLabelEvent
+	(*SlackTrigger)(nil),                            // 36: aiserver.v1.SlackTrigger
+	(*SlackChannelCreatedTrigger)(nil),              // 37: aiserver.v1.SlackChannelCreatedTrigger
+	(*SlackReactionAddedTrigger)(nil),               // 38: aiserver.v1.SlackReactionAddedTrigger
+	(*SlackMentionTrigger)(nil),                     // 39: aiserver.v1.SlackMentionTrigger
+	(*SlackAnyReactionAddedTrigger)(nil),            // 40: aiserver.v1.SlackAnyReactionAddedTrigger
+	(*LinearTrigger)(nil),                           // 41: aiserver.v1.LinearTrigger
+	(*LinearIssueCreatedEvent)(nil),                 // 42: aiserver.v1.LinearIssueCreatedEvent
+	(*LinearStatusChangedEvent)(nil),                // 43: aiserver.v1.LinearStatusChangedEvent
+	(*LinearEndOfCycleEvent)(nil),                   // 44: aiserver.v1.LinearEndOfCycleEvent
+	(*WebhookTrigger)(nil),                          // 45: aiserver.v1.WebhookTrigger
+	(*PagerDutyTrigger)(nil),                        // 46: aiserver.v1.PagerDutyTrigger
+	(*PagerDutyIncidentTriggeredEvent)(nil),         // 47: aiserver.v1.PagerDutyIncidentTriggeredEvent
+	(*PagerDutyIncidentAcknowledgedEvent)(nil),      // 48: aiserver.v1.PagerDutyIncidentAcknowledgedEvent
+	(*PagerDutyIncidentResolvedEvent)(nil),          // 49: aiserver.v1.PagerDutyIncidentResolvedEvent
+	(*PagerDutyIncidentEscalatedEvent)(nil),         // 50: aiserver.v1.PagerDutyIncidentEscalatedEvent
+	(*PagerDutyIncidentAnyEvent)(nil),               // 51: aiserver.v1.PagerDutyIncidentAnyEvent
+	(*SentryTrigger)(nil),                           // 52: aiserver.v1.SentryTrigger
+	(*SentryIssueCreatedEvent)(nil),                 // 53: aiserver.v1.SentryIssueCreatedEvent
+	(*SentryIssueResolvedEvent)(nil),                // 54: aiserver.v1.SentryIssueResolvedEvent
+	(*SentryIssueAssignedEvent)(nil),                // 55: aiserver.v1.SentryIssueAssignedEvent
+	(*SentryIssueArchivedEvent)(nil),                // 56: aiserver.v1.SentryIssueArchivedEvent
+	(*SentryIssueUnresolvedEvent)(nil),              // 57: aiserver.v1.SentryIssueUnresolvedEvent
+	(*SentryIssueAnyEvent)(nil),                     // 58: aiserver.v1.SentryIssueAnyEvent
+	(*MicrosoftTeamsTrigger)(nil),                   // 59: aiserver.v1.MicrosoftTeamsTrigger
+	(*MicrosoftTeamsChannelCreatedTrigger)(nil),     // 60: aiserver.v1.MicrosoftTeamsChannelCreatedTrigger
+	(*GitPrAction)(nil),                             // 61: aiserver.v1.GitPrAction
+	(*PrCommentAction)(nil),                         // 62: aiserver.v1.PrCommentAction
+	(*ManageCheckRunAction)(nil),                    // 63: aiserver.v1.ManageCheckRunAction
+	(*RequestReviewersAction)(nil),                  // 64: aiserver.v1.RequestReviewersAction
+	(*ApprovePrAction)(nil),                         // 65: aiserver.v1.ApprovePrAction
+	(*ReadSlackAction)(nil),                         // 66: aiserver.v1.ReadSlackAction
+	(*ResolveReviewThreadsAction)(nil),              // 67: aiserver.v1.ResolveReviewThreadsAction
+	(*SlackAction)(nil),                             // 68: aiserver.v1.SlackAction
+	(*MicrosoftTeamsAction)(nil),                    // 69: aiserver.v1.MicrosoftTeamsAction
+	(*ReadMicrosoftTeamsAction)(nil),                // 70: aiserver.v1.ReadMicrosoftTeamsAction
+	(*CreateAutomationRequest)(nil),                 // 71: aiserver.v1.CreateAutomationRequest
+	(*CreateAutomationResponse)(nil),                // 72: aiserver.v1.CreateAutomationResponse
+	(*GetAutomationRequest)(nil),                    // 73: aiserver.v1.GetAutomationRequest
+	(*RestrictedAutomationSummary)(nil),             // 74: aiserver.v1.RestrictedAutomationSummary
+	(*GetAutomationResponse)(nil),                   // 75: aiserver.v1.GetAutomationResponse
+	(*UpdateAutomationRequest)(nil),                 // 76: aiserver.v1.UpdateAutomationRequest
+	(*UpdateAutomationResponse)(nil),                // 77: aiserver.v1.UpdateAutomationResponse
+	(*DeleteAutomationRequest)(nil),                 // 78: aiserver.v1.DeleteAutomationRequest
+	(*DeleteAutomationResponse)(nil),                // 79: aiserver.v1.DeleteAutomationResponse
+	(*Automation)(nil),                              // 80: aiserver.v1.Automation
+	(*AutomationMcpAuthState)(nil),                  // 81: aiserver.v1.AutomationMcpAuthState
+	(*AutomationWithOwner)(nil),                     // 82: aiserver.v1.AutomationWithOwner
+	(*AutomationModelSelection_ParameterValue)(nil), // 83: aiserver.v1.AutomationModelSelection.ParameterValue
+	(*structpb.Struct)(nil),                         // 84: google.protobuf.Struct
 }
 var file_aiserver_v1_automations_proto_depIdxs = []int32{
-	20, // 0: aiserver.v1.Trigger.cron:type_name -> aiserver.v1.CronTrigger
-	21, // 1: aiserver.v1.Trigger.git:type_name -> aiserver.v1.GitTrigger
-	32, // 2: aiserver.v1.Trigger.slack_trigger:type_name -> aiserver.v1.SlackTrigger
-	35, // 3: aiserver.v1.Trigger.linear:type_name -> aiserver.v1.LinearTrigger
-	39, // 4: aiserver.v1.Trigger.webhook:type_name -> aiserver.v1.WebhookTrigger
-	33, // 5: aiserver.v1.Trigger.slack_channel_created:type_name -> aiserver.v1.SlackChannelCreatedTrigger
-	40, // 6: aiserver.v1.Trigger.pagerduty:type_name -> aiserver.v1.PagerDutyTrigger
-	46, // 7: aiserver.v1.Trigger.sentry:type_name -> aiserver.v1.SentryTrigger
-	53, // 8: aiserver.v1.Trigger.microsoft_teams_trigger:type_name -> aiserver.v1.MicrosoftTeamsTrigger
-	54, // 9: aiserver.v1.Trigger.microsoft_teams_channel_created:type_name -> aiserver.v1.MicrosoftTeamsChannelCreatedTrigger
-	34, // 10: aiserver.v1.Trigger.slack_reaction_added:type_name -> aiserver.v1.SlackReactionAddedTrigger
-	55, // 11: aiserver.v1.Action.git_pr:type_name -> aiserver.v1.GitPrAction
-	56, // 12: aiserver.v1.Action.pr_comment:type_name -> aiserver.v1.PrCommentAction
-	62, // 13: aiserver.v1.Action.slack:type_name -> aiserver.v1.SlackAction
-	12, // 14: aiserver.v1.Action.mcp:type_name -> aiserver.v1.McpAction
-	57, // 15: aiserver.v1.Action.manage_check_run:type_name -> aiserver.v1.ManageCheckRunAction
-	58, // 16: aiserver.v1.Action.request_reviewers:type_name -> aiserver.v1.RequestReviewersAction
-	60, // 17: aiserver.v1.Action.read_slack:type_name -> aiserver.v1.ReadSlackAction
-	59, // 18: aiserver.v1.Action.approve_pr:type_name -> aiserver.v1.ApprovePrAction
-	61, // 19: aiserver.v1.Action.resolve_review_threads:type_name -> aiserver.v1.ResolveReviewThreadsAction
-	63, // 20: aiserver.v1.Action.microsoft_teams:type_name -> aiserver.v1.MicrosoftTeamsAction
-	64, // 21: aiserver.v1.Action.read_microsoft_teams:type_name -> aiserver.v1.ReadMicrosoftTeamsAction
-	13, // 22: aiserver.v1.McpAction.server:type_name -> aiserver.v1.McpServerConfig
-	14, // 23: aiserver.v1.AgentPrivateWorkerConfig.labels:type_name -> aiserver.v1.AgentPrivateWorkerLabel
-	15, // 24: aiserver.v1.AgentOptions.private_worker:type_name -> aiserver.v1.AgentPrivateWorkerConfig
-	10, // 25: aiserver.v1.Workflow.triggers:type_name -> aiserver.v1.Trigger
-	11, // 26: aiserver.v1.Workflow.actions:type_name -> aiserver.v1.Action
-	18, // 27: aiserver.v1.Workflow.prompts:type_name -> aiserver.v1.Prompt
-	19, // 28: aiserver.v1.Workflow.git_config:type_name -> aiserver.v1.GitConfig
-	16, // 29: aiserver.v1.Workflow.agent_options:type_name -> aiserver.v1.AgentOptions
-	0,  // 30: aiserver.v1.Workflow.slack_completion_reaction_mode:type_name -> aiserver.v1.SlackCompletionReactionMode
-	77, // 31: aiserver.v1.Workflow.managed_config:type_name -> google.protobuf.Struct
-	4,  // 32: aiserver.v1.Prompt.effort_level:type_name -> aiserver.v1.PromptEffortLevel
-	5,  // 33: aiserver.v1.Prompt.run_mode:type_name -> aiserver.v1.PromptRunMode
-	22, // 34: aiserver.v1.GitTrigger.pull_request:type_name -> aiserver.v1.GitPullRequestEvent
-	23, // 35: aiserver.v1.GitTrigger.push:type_name -> aiserver.v1.GitPushEvent
-	24, // 36: aiserver.v1.GitTrigger.ci_completed:type_name -> aiserver.v1.GitCICompletedEvent
-	25, // 37: aiserver.v1.GitTrigger.issue_labeled:type_name -> aiserver.v1.GitIssueLabeledEvent
-	31, // 38: aiserver.v1.GitTrigger.label:type_name -> aiserver.v1.GitLabelEvent
-	26, // 39: aiserver.v1.GitTrigger.issue_comment:type_name -> aiserver.v1.GitIssueCommentEvent
-	27, // 40: aiserver.v1.GitTrigger.pull_request_review_comment:type_name -> aiserver.v1.GitPullRequestReviewCommentEvent
-	28, // 41: aiserver.v1.GitTrigger.pull_request_review:type_name -> aiserver.v1.GitPullRequestReviewEvent
-	29, // 42: aiserver.v1.GitTrigger.review_thread:type_name -> aiserver.v1.GitReviewThreadEvent
-	30, // 43: aiserver.v1.GitTrigger.workflow_run:type_name -> aiserver.v1.GitWorkflowRunEvent
-	6,  // 44: aiserver.v1.GitPullRequestEvent.pr_action:type_name -> aiserver.v1.GitPullRequestAction
-	7,  // 45: aiserver.v1.GitCICompletedEvent.condition:type_name -> aiserver.v1.GitCICompletionCondition
-	8,  // 46: aiserver.v1.GitWorkflowRunEvent.conclusion:type_name -> aiserver.v1.GitWorkflowRunConclusion
-	0,  // 47: aiserver.v1.SlackTrigger.slack_completion_reaction_mode:type_name -> aiserver.v1.SlackCompletionReactionMode
-	36, // 48: aiserver.v1.LinearTrigger.issue_created:type_name -> aiserver.v1.LinearIssueCreatedEvent
-	37, // 49: aiserver.v1.LinearTrigger.status_changed:type_name -> aiserver.v1.LinearStatusChangedEvent
-	38, // 50: aiserver.v1.LinearTrigger.end_of_cycle:type_name -> aiserver.v1.LinearEndOfCycleEvent
-	41, // 51: aiserver.v1.PagerDutyTrigger.incident_triggered:type_name -> aiserver.v1.PagerDutyIncidentTriggeredEvent
-	42, // 52: aiserver.v1.PagerDutyTrigger.incident_acknowledged:type_name -> aiserver.v1.PagerDutyIncidentAcknowledgedEvent
-	43, // 53: aiserver.v1.PagerDutyTrigger.incident_resolved:type_name -> aiserver.v1.PagerDutyIncidentResolvedEvent
-	44, // 54: aiserver.v1.PagerDutyTrigger.incident_escalated:type_name -> aiserver.v1.PagerDutyIncidentEscalatedEvent
-	45, // 55: aiserver.v1.PagerDutyTrigger.incident_any:type_name -> aiserver.v1.PagerDutyIncidentAnyEvent
-	47, // 56: aiserver.v1.SentryTrigger.issue_created:type_name -> aiserver.v1.SentryIssueCreatedEvent
-	48, // 57: aiserver.v1.SentryTrigger.issue_resolved:type_name -> aiserver.v1.SentryIssueResolvedEvent
-	49, // 58: aiserver.v1.SentryTrigger.issue_assigned:type_name -> aiserver.v1.SentryIssueAssignedEvent
-	50, // 59: aiserver.v1.SentryTrigger.issue_archived:type_name -> aiserver.v1.SentryIssueArchivedEvent
-	51, // 60: aiserver.v1.SentryTrigger.issue_unresolved:type_name -> aiserver.v1.SentryIssueUnresolvedEvent
-	52, // 61: aiserver.v1.SentryTrigger.issue_any:type_name -> aiserver.v1.SentryIssueAnyEvent
-	17, // 62: aiserver.v1.CreateAutomationRequest.workflow:type_name -> aiserver.v1.Workflow
-	1,  // 63: aiserver.v1.CreateAutomationRequest.scope:type_name -> aiserver.v1.AutomationScope
-	2,  // 64: aiserver.v1.CreateAutomationRequest.creation_source:type_name -> aiserver.v1.AutomationCreationSource
-	76, // 65: aiserver.v1.CreateAutomationResponse.workflow:type_name -> aiserver.v1.AutomationWithOwner
-	76, // 66: aiserver.v1.GetAutomationResponse.workflow:type_name -> aiserver.v1.AutomationWithOwner
-	68, // 67: aiserver.v1.GetAutomationResponse.restricted_summary:type_name -> aiserver.v1.RestrictedAutomationSummary
-	17, // 68: aiserver.v1.UpdateAutomationRequest.workflow:type_name -> aiserver.v1.Workflow
-	1,  // 69: aiserver.v1.UpdateAutomationRequest.scope:type_name -> aiserver.v1.AutomationScope
-	76, // 70: aiserver.v1.UpdateAutomationResponse.workflow:type_name -> aiserver.v1.AutomationWithOwner
-	17, // 71: aiserver.v1.Automation.workflow:type_name -> aiserver.v1.Workflow
-	1,  // 72: aiserver.v1.Automation.scope:type_name -> aiserver.v1.AutomationScope
-	3,  // 73: aiserver.v1.Automation.managed_by:type_name -> aiserver.v1.AutomationManagedBy
-	9,  // 74: aiserver.v1.AutomationMcpAuthState.auth_state:type_name -> aiserver.v1.McpAuthState
-	74, // 75: aiserver.v1.AutomationWithOwner.workflow:type_name -> aiserver.v1.Automation
-	75, // 76: aiserver.v1.AutomationWithOwner.mcp_auth_states:type_name -> aiserver.v1.AutomationMcpAuthState
-	65, // 77: aiserver.v1.AutomationsService.CreateAutomation:input_type -> aiserver.v1.CreateAutomationRequest
-	67, // 78: aiserver.v1.AutomationsService.GetAutomation:input_type -> aiserver.v1.GetAutomationRequest
-	70, // 79: aiserver.v1.AutomationsService.UpdateAutomation:input_type -> aiserver.v1.UpdateAutomationRequest
-	72, // 80: aiserver.v1.AutomationsService.DeleteAutomation:input_type -> aiserver.v1.DeleteAutomationRequest
-	66, // 81: aiserver.v1.AutomationsService.CreateAutomation:output_type -> aiserver.v1.CreateAutomationResponse
-	69, // 82: aiserver.v1.AutomationsService.GetAutomation:output_type -> aiserver.v1.GetAutomationResponse
-	71, // 83: aiserver.v1.AutomationsService.UpdateAutomation:output_type -> aiserver.v1.UpdateAutomationResponse
-	73, // 84: aiserver.v1.AutomationsService.DeleteAutomation:output_type -> aiserver.v1.DeleteAutomationResponse
-	81, // [81:85] is the sub-list for method output_type
-	77, // [77:81] is the sub-list for method input_type
-	77, // [77:77] is the sub-list for extension type_name
-	77, // [77:77] is the sub-list for extension extendee
-	0,  // [0:77] is the sub-list for field type_name
+	22, // 0: aiserver.v1.Trigger.cron:type_name -> aiserver.v1.CronTrigger
+	23, // 1: aiserver.v1.Trigger.git:type_name -> aiserver.v1.GitTrigger
+	36, // 2: aiserver.v1.Trigger.slack_trigger:type_name -> aiserver.v1.SlackTrigger
+	41, // 3: aiserver.v1.Trigger.linear:type_name -> aiserver.v1.LinearTrigger
+	45, // 4: aiserver.v1.Trigger.webhook:type_name -> aiserver.v1.WebhookTrigger
+	37, // 5: aiserver.v1.Trigger.slack_channel_created:type_name -> aiserver.v1.SlackChannelCreatedTrigger
+	46, // 6: aiserver.v1.Trigger.pagerduty:type_name -> aiserver.v1.PagerDutyTrigger
+	52, // 7: aiserver.v1.Trigger.sentry:type_name -> aiserver.v1.SentryTrigger
+	59, // 8: aiserver.v1.Trigger.microsoft_teams_trigger:type_name -> aiserver.v1.MicrosoftTeamsTrigger
+	60, // 9: aiserver.v1.Trigger.microsoft_teams_channel_created:type_name -> aiserver.v1.MicrosoftTeamsChannelCreatedTrigger
+	38, // 10: aiserver.v1.Trigger.slack_reaction_added:type_name -> aiserver.v1.SlackReactionAddedTrigger
+	39, // 11: aiserver.v1.Trigger.slack_mention:type_name -> aiserver.v1.SlackMentionTrigger
+	40, // 12: aiserver.v1.Trigger.slack_any_reaction_added:type_name -> aiserver.v1.SlackAnyReactionAddedTrigger
+	61, // 13: aiserver.v1.Action.git_pr:type_name -> aiserver.v1.GitPrAction
+	62, // 14: aiserver.v1.Action.pr_comment:type_name -> aiserver.v1.PrCommentAction
+	68, // 15: aiserver.v1.Action.slack:type_name -> aiserver.v1.SlackAction
+	13, // 16: aiserver.v1.Action.mcp:type_name -> aiserver.v1.McpAction
+	63, // 17: aiserver.v1.Action.manage_check_run:type_name -> aiserver.v1.ManageCheckRunAction
+	64, // 18: aiserver.v1.Action.request_reviewers:type_name -> aiserver.v1.RequestReviewersAction
+	66, // 19: aiserver.v1.Action.read_slack:type_name -> aiserver.v1.ReadSlackAction
+	65, // 20: aiserver.v1.Action.approve_pr:type_name -> aiserver.v1.ApprovePrAction
+	67, // 21: aiserver.v1.Action.resolve_review_threads:type_name -> aiserver.v1.ResolveReviewThreadsAction
+	69, // 22: aiserver.v1.Action.microsoft_teams:type_name -> aiserver.v1.MicrosoftTeamsAction
+	70, // 23: aiserver.v1.Action.read_microsoft_teams:type_name -> aiserver.v1.ReadMicrosoftTeamsAction
+	14, // 24: aiserver.v1.McpAction.server:type_name -> aiserver.v1.McpServerConfig
+	15, // 25: aiserver.v1.AgentPrivateWorkerConfig.labels:type_name -> aiserver.v1.AgentPrivateWorkerLabel
+	16, // 26: aiserver.v1.AgentOptions.private_worker:type_name -> aiserver.v1.AgentPrivateWorkerConfig
+	11, // 27: aiserver.v1.Workflow.triggers:type_name -> aiserver.v1.Trigger
+	12, // 28: aiserver.v1.Workflow.actions:type_name -> aiserver.v1.Action
+	19, // 29: aiserver.v1.Workflow.prompts:type_name -> aiserver.v1.Prompt
+	21, // 30: aiserver.v1.Workflow.git_config:type_name -> aiserver.v1.GitConfig
+	17, // 31: aiserver.v1.Workflow.agent_options:type_name -> aiserver.v1.AgentOptions
+	1,  // 32: aiserver.v1.Workflow.slack_completion_reaction_mode:type_name -> aiserver.v1.SlackCompletionReactionMode
+	84, // 33: aiserver.v1.Workflow.managed_config:type_name -> google.protobuf.Struct
+	0,  // 34: aiserver.v1.Workflow.disabled_default_tools:type_name -> aiserver.v1.AutomationDefaultTool
+	20, // 35: aiserver.v1.Workflow.model_selection:type_name -> aiserver.v1.AutomationModelSelection
+	5,  // 36: aiserver.v1.Prompt.effort_level:type_name -> aiserver.v1.PromptEffortLevel
+	6,  // 37: aiserver.v1.Prompt.run_mode:type_name -> aiserver.v1.PromptRunMode
+	20, // 38: aiserver.v1.Prompt.model_selection:type_name -> aiserver.v1.AutomationModelSelection
+	83, // 39: aiserver.v1.AutomationModelSelection.parameters:type_name -> aiserver.v1.AutomationModelSelection.ParameterValue
+	24, // 40: aiserver.v1.GitTrigger.pull_request:type_name -> aiserver.v1.GitPullRequestEvent
+	27, // 41: aiserver.v1.GitTrigger.push:type_name -> aiserver.v1.GitPushEvent
+	28, // 42: aiserver.v1.GitTrigger.ci_completed:type_name -> aiserver.v1.GitCICompletedEvent
+	29, // 43: aiserver.v1.GitTrigger.issue_labeled:type_name -> aiserver.v1.GitIssueLabeledEvent
+	35, // 44: aiserver.v1.GitTrigger.label:type_name -> aiserver.v1.GitLabelEvent
+	30, // 45: aiserver.v1.GitTrigger.issue_comment:type_name -> aiserver.v1.GitIssueCommentEvent
+	31, // 46: aiserver.v1.GitTrigger.pull_request_review_comment:type_name -> aiserver.v1.GitPullRequestReviewCommentEvent
+	32, // 47: aiserver.v1.GitTrigger.pull_request_review:type_name -> aiserver.v1.GitPullRequestReviewEvent
+	33, // 48: aiserver.v1.GitTrigger.review_thread:type_name -> aiserver.v1.GitReviewThreadEvent
+	34, // 49: aiserver.v1.GitTrigger.workflow_run:type_name -> aiserver.v1.GitWorkflowRunEvent
+	25, // 50: aiserver.v1.GitTrigger.pull_request_review_requested:type_name -> aiserver.v1.GitPullRequestReviewRequestedEvent
+	26, // 51: aiserver.v1.GitTrigger.issue_assigned:type_name -> aiserver.v1.GitIssueAssignedEvent
+	7,  // 52: aiserver.v1.GitPullRequestEvent.pr_action:type_name -> aiserver.v1.GitPullRequestAction
+	8,  // 53: aiserver.v1.GitCICompletedEvent.condition:type_name -> aiserver.v1.GitCICompletionCondition
+	9,  // 54: aiserver.v1.GitWorkflowRunEvent.conclusion:type_name -> aiserver.v1.GitWorkflowRunConclusion
+	1,  // 55: aiserver.v1.SlackTrigger.slack_completion_reaction_mode:type_name -> aiserver.v1.SlackCompletionReactionMode
+	42, // 56: aiserver.v1.LinearTrigger.issue_created:type_name -> aiserver.v1.LinearIssueCreatedEvent
+	43, // 57: aiserver.v1.LinearTrigger.status_changed:type_name -> aiserver.v1.LinearStatusChangedEvent
+	44, // 58: aiserver.v1.LinearTrigger.end_of_cycle:type_name -> aiserver.v1.LinearEndOfCycleEvent
+	47, // 59: aiserver.v1.PagerDutyTrigger.incident_triggered:type_name -> aiserver.v1.PagerDutyIncidentTriggeredEvent
+	48, // 60: aiserver.v1.PagerDutyTrigger.incident_acknowledged:type_name -> aiserver.v1.PagerDutyIncidentAcknowledgedEvent
+	49, // 61: aiserver.v1.PagerDutyTrigger.incident_resolved:type_name -> aiserver.v1.PagerDutyIncidentResolvedEvent
+	50, // 62: aiserver.v1.PagerDutyTrigger.incident_escalated:type_name -> aiserver.v1.PagerDutyIncidentEscalatedEvent
+	51, // 63: aiserver.v1.PagerDutyTrigger.incident_any:type_name -> aiserver.v1.PagerDutyIncidentAnyEvent
+	53, // 64: aiserver.v1.SentryTrigger.issue_created:type_name -> aiserver.v1.SentryIssueCreatedEvent
+	54, // 65: aiserver.v1.SentryTrigger.issue_resolved:type_name -> aiserver.v1.SentryIssueResolvedEvent
+	55, // 66: aiserver.v1.SentryTrigger.issue_assigned:type_name -> aiserver.v1.SentryIssueAssignedEvent
+	56, // 67: aiserver.v1.SentryTrigger.issue_archived:type_name -> aiserver.v1.SentryIssueArchivedEvent
+	57, // 68: aiserver.v1.SentryTrigger.issue_unresolved:type_name -> aiserver.v1.SentryIssueUnresolvedEvent
+	58, // 69: aiserver.v1.SentryTrigger.issue_any:type_name -> aiserver.v1.SentryIssueAnyEvent
+	18, // 70: aiserver.v1.CreateAutomationRequest.workflow:type_name -> aiserver.v1.Workflow
+	2,  // 71: aiserver.v1.CreateAutomationRequest.scope:type_name -> aiserver.v1.AutomationScope
+	3,  // 72: aiserver.v1.CreateAutomationRequest.creation_source:type_name -> aiserver.v1.AutomationCreationSource
+	82, // 73: aiserver.v1.CreateAutomationResponse.workflow:type_name -> aiserver.v1.AutomationWithOwner
+	82, // 74: aiserver.v1.GetAutomationResponse.workflow:type_name -> aiserver.v1.AutomationWithOwner
+	74, // 75: aiserver.v1.GetAutomationResponse.restricted_summary:type_name -> aiserver.v1.RestrictedAutomationSummary
+	18, // 76: aiserver.v1.UpdateAutomationRequest.workflow:type_name -> aiserver.v1.Workflow
+	2,  // 77: aiserver.v1.UpdateAutomationRequest.scope:type_name -> aiserver.v1.AutomationScope
+	82, // 78: aiserver.v1.UpdateAutomationResponse.workflow:type_name -> aiserver.v1.AutomationWithOwner
+	18, // 79: aiserver.v1.Automation.workflow:type_name -> aiserver.v1.Workflow
+	2,  // 80: aiserver.v1.Automation.scope:type_name -> aiserver.v1.AutomationScope
+	4,  // 81: aiserver.v1.Automation.managed_by:type_name -> aiserver.v1.AutomationManagedBy
+	10, // 82: aiserver.v1.AutomationMcpAuthState.auth_state:type_name -> aiserver.v1.McpAuthState
+	80, // 83: aiserver.v1.AutomationWithOwner.workflow:type_name -> aiserver.v1.Automation
+	81, // 84: aiserver.v1.AutomationWithOwner.mcp_auth_states:type_name -> aiserver.v1.AutomationMcpAuthState
+	71, // 85: aiserver.v1.AutomationsService.CreateAutomation:input_type -> aiserver.v1.CreateAutomationRequest
+	73, // 86: aiserver.v1.AutomationsService.GetAutomation:input_type -> aiserver.v1.GetAutomationRequest
+	76, // 87: aiserver.v1.AutomationsService.UpdateAutomation:input_type -> aiserver.v1.UpdateAutomationRequest
+	78, // 88: aiserver.v1.AutomationsService.DeleteAutomation:input_type -> aiserver.v1.DeleteAutomationRequest
+	72, // 89: aiserver.v1.AutomationsService.CreateAutomation:output_type -> aiserver.v1.CreateAutomationResponse
+	75, // 90: aiserver.v1.AutomationsService.GetAutomation:output_type -> aiserver.v1.GetAutomationResponse
+	77, // 91: aiserver.v1.AutomationsService.UpdateAutomation:output_type -> aiserver.v1.UpdateAutomationResponse
+	79, // 92: aiserver.v1.AutomationsService.DeleteAutomation:output_type -> aiserver.v1.DeleteAutomationResponse
+	89, // [89:93] is the sub-list for method output_type
+	85, // [85:89] is the sub-list for method input_type
+	85, // [85:85] is the sub-list for extension type_name
+	85, // [85:85] is the sub-list for extension extendee
+	0,  // [0:85] is the sub-list for field type_name
 }
 
 func init() { file_aiserver_v1_automations_proto_init() }
@@ -6156,6 +6783,8 @@ func file_aiserver_v1_automations_proto_init() {
 		(*Trigger_MicrosoftTeamsTrigger)(nil),
 		(*Trigger_MicrosoftTeamsChannelCreated)(nil),
 		(*Trigger_SlackReactionAdded)(nil),
+		(*Trigger_SlackMention)(nil),
+		(*Trigger_SlackAnyReactionAdded)(nil),
 	}
 	file_aiserver_v1_automations_proto_msgTypes[1].OneofWrappers = []any{
 		(*Action_GitPr)(nil),
@@ -6174,7 +6803,8 @@ func file_aiserver_v1_automations_proto_init() {
 	file_aiserver_v1_automations_proto_msgTypes[6].OneofWrappers = []any{}
 	file_aiserver_v1_automations_proto_msgTypes[7].OneofWrappers = []any{}
 	file_aiserver_v1_automations_proto_msgTypes[8].OneofWrappers = []any{}
-	file_aiserver_v1_automations_proto_msgTypes[11].OneofWrappers = []any{
+	file_aiserver_v1_automations_proto_msgTypes[9].OneofWrappers = []any{}
+	file_aiserver_v1_automations_proto_msgTypes[12].OneofWrappers = []any{
 		(*GitTrigger_PullRequest)(nil),
 		(*GitTrigger_Push)(nil),
 		(*GitTrigger_CiCompleted)(nil),
@@ -6185,21 +6815,23 @@ func file_aiserver_v1_automations_proto_init() {
 		(*GitTrigger_PullRequestReview)(nil),
 		(*GitTrigger_ReviewThread)(nil),
 		(*GitTrigger_WorkflowRun)(nil),
+		(*GitTrigger_PullRequestReviewRequested)(nil),
+		(*GitTrigger_IssueAssigned)(nil),
 	}
-	file_aiserver_v1_automations_proto_msgTypes[22].OneofWrappers = []any{}
-	file_aiserver_v1_automations_proto_msgTypes[25].OneofWrappers = []any{
+	file_aiserver_v1_automations_proto_msgTypes[25].OneofWrappers = []any{}
+	file_aiserver_v1_automations_proto_msgTypes[30].OneofWrappers = []any{
 		(*LinearTrigger_IssueCreated)(nil),
 		(*LinearTrigger_StatusChanged)(nil),
 		(*LinearTrigger_EndOfCycle)(nil),
 	}
-	file_aiserver_v1_automations_proto_msgTypes[30].OneofWrappers = []any{
+	file_aiserver_v1_automations_proto_msgTypes[35].OneofWrappers = []any{
 		(*PagerDutyTrigger_IncidentTriggered)(nil),
 		(*PagerDutyTrigger_IncidentAcknowledged)(nil),
 		(*PagerDutyTrigger_IncidentResolved)(nil),
 		(*PagerDutyTrigger_IncidentEscalated)(nil),
 		(*PagerDutyTrigger_IncidentAny)(nil),
 	}
-	file_aiserver_v1_automations_proto_msgTypes[36].OneofWrappers = []any{
+	file_aiserver_v1_automations_proto_msgTypes[41].OneofWrappers = []any{
 		(*SentryTrigger_IssueCreated)(nil),
 		(*SentryTrigger_IssueResolved)(nil),
 		(*SentryTrigger_IssueAssigned)(nil),
@@ -6207,22 +6839,23 @@ func file_aiserver_v1_automations_proto_init() {
 		(*SentryTrigger_IssueUnresolved)(nil),
 		(*SentryTrigger_IssueAny)(nil),
 	}
-	file_aiserver_v1_automations_proto_msgTypes[55].OneofWrappers = []any{}
-	file_aiserver_v1_automations_proto_msgTypes[59].OneofWrappers = []any{
+	file_aiserver_v1_automations_proto_msgTypes[60].OneofWrappers = []any{}
+	file_aiserver_v1_automations_proto_msgTypes[62].OneofWrappers = []any{}
+	file_aiserver_v1_automations_proto_msgTypes[64].OneofWrappers = []any{
 		(*GetAutomationResponse_Workflow)(nil),
 		(*GetAutomationResponse_RestrictedSummary)(nil),
 	}
-	file_aiserver_v1_automations_proto_msgTypes[60].OneofWrappers = []any{}
-	file_aiserver_v1_automations_proto_msgTypes[64].OneofWrappers = []any{}
 	file_aiserver_v1_automations_proto_msgTypes[65].OneofWrappers = []any{}
-	file_aiserver_v1_automations_proto_msgTypes[66].OneofWrappers = []any{}
+	file_aiserver_v1_automations_proto_msgTypes[69].OneofWrappers = []any{}
+	file_aiserver_v1_automations_proto_msgTypes[70].OneofWrappers = []any{}
+	file_aiserver_v1_automations_proto_msgTypes[71].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_aiserver_v1_automations_proto_rawDesc), len(file_aiserver_v1_automations_proto_rawDesc)),
-			NumEnums:      10,
-			NumMessages:   67,
+			NumEnums:      11,
+			NumMessages:   73,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
