@@ -1103,7 +1103,7 @@ func (r *platformWorkflowResource) Create(ctx context.Context, req resource.Crea
 		Scope:    scope,
 		Workflow: workflow,
 	}
-	if !plan.Description.IsNull() && !plan.Description.IsUnknown() {
+	if !plan.Description.IsNull() && !plan.Description.IsUnknown() && plan.Description.ValueString() != "" {
 		description := plan.Description.ValueString()
 		createReq.Description = &description
 	}
@@ -1152,7 +1152,16 @@ func preserveConfiguredValues(ctx context.Context, state *platformWorkflowModel,
 	preserveEquivalentGitCICompletionConditions(state, reference)
 	preserveEquivalentEnvironmentPublicID(state, reference)
 	preserveEquivalentModelSelection(state, reference)
+	preserveEmptyDescription(state, reference)
 	state.TeamID = reference.TeamID
+}
+
+// An explicitly empty description is never sent and reads back as null; keep
+// the configured "" so the state matches the plan.
+func preserveEmptyDescription(state *platformWorkflowModel, reference platformWorkflowModel) {
+	if state.Description.IsNull() && !reference.Description.IsNull() && !reference.Description.IsUnknown() && reference.Description.ValueString() == "" {
+		state.Description = reference.Description
+	}
 }
 
 func optionalTeamID(value types.Int64) *int32 {
@@ -1340,6 +1349,10 @@ func (r *platformWorkflowResource) ValidateConfig(ctx context.Context, req resou
 	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("model"), &model)...)
 	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("model_selection"), &selection)...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+	// Unknown values may still resolve to null; only reject when both are known.
+	if model.IsUnknown() || selection.IsUnknown() {
 		return
 	}
 	if !model.IsNull() && !selection.IsNull() {
@@ -1591,6 +1604,22 @@ func readStringList(ctx context.Context, list types.List, fieldName string) ([]s
 	diags := list.ElementsAs(ctx, &values, false)
 	if diags.HasError() {
 		return nil, fmt.Errorf("failed to read %s", fieldName)
+	}
+	return values, nil
+}
+
+// readNonBlankStringList is readStringList plus a check that no entry is empty
+// or whitespace-only. Entries are rejected rather than trimmed so the value
+// the API echoes back always matches the configured one.
+func readNonBlankStringList(ctx context.Context, list types.List, fieldName string) ([]string, error) {
+	values, err := readStringList(ctx, list, fieldName)
+	if err != nil {
+		return nil, err
+	}
+	for i, value := range values {
+		if strings.TrimSpace(value) == "" {
+			return nil, fmt.Errorf("%s[%d] must not be empty", fieldName, i)
+		}
 	}
 	return values, nil
 }
@@ -2590,7 +2619,7 @@ func triggerModelToProto(ctx context.Context, t *triggerModel) (*v1.Trigger, err
 	// PagerDuty
 	if pd := t.PagerDuty; pd != nil {
 		pt := &v1.PagerDutyTrigger{}
-		serviceIDs, err := readStringList(ctx, pd.ServiceIDs, "pagerduty.service_ids")
+		serviceIDs, err := readNonBlankStringList(ctx, pd.ServiceIDs, "pagerduty.service_ids")
 		if err != nil {
 			return nil, err
 		}
@@ -2626,7 +2655,7 @@ func triggerModelToProto(ctx context.Context, t *triggerModel) (*v1.Trigger, err
 	// Sentry
 	if sentry := t.Sentry; sentry != nil {
 		st := &v1.SentryTrigger{}
-		projectIDs, err := readStringList(ctx, sentry.ProjectIDs, "sentry.project_ids")
+		projectIDs, err := readNonBlankStringList(ctx, sentry.ProjectIDs, "sentry.project_ids")
 		if err != nil {
 			return nil, err
 		}
@@ -2774,7 +2803,7 @@ func triggerModelToProto(ctx context.Context, t *triggerModel) (*v1.Trigger, err
 		mctt := &v1.MicrosoftTeamsChannelCreatedTrigger{
 			TenantId: mtc.TenantID.ValueString(),
 		}
-		teamIDs, err := readStringList(ctx, mtc.TeamIDs, "microsoft_teams_channel_created.team_ids")
+		teamIDs, err := readNonBlankStringList(ctx, mtc.TeamIDs, "microsoft_teams_channel_created.team_ids")
 		if err != nil {
 			return nil, err
 		}
@@ -2837,7 +2866,9 @@ func validateSlackEmojiShortName(value types.String) (string, error) {
 }
 
 func parseAutomationDefaultTool(s string) (v1.AutomationDefaultTool, error) {
-	switch strings.ToLower(strings.TrimSpace(s)) {
+	// Exact match only: the value is read back as the canonical lowercase name,
+	// so accepting other spellings would drift after apply.
+	switch s {
 	case "open_git_pr":
 		return v1.AutomationDefaultTool_AUTOMATION_DEFAULT_TOOL_OPEN_GIT_PR, nil
 	default:

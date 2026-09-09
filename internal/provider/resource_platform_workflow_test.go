@@ -3057,6 +3057,18 @@ func TestDisabledDefaultToolsRoundTrip(t *testing.T) {
 	})
 
 	t.Run("model_to_proto_rejects_unknown_tool", func(t *testing.T) {
+		for _, entry := range []string{"nope", "OPEN_GIT_PR", " open_git_pr"} {
+			m := &platformWorkflowModel{
+				Prompt:               types.StringValue("review code"),
+				DisabledDefaultTools: mustStringList(t, ctx, []string{entry}),
+				Triggers: []triggerModel{
+					{Webhook: &webhookTriggerModel{}, UserAllowlist: types.ListNull(types.StringType)},
+				},
+			}
+			if _, err := modelToWorkflow(ctx, m); err == nil {
+				t.Errorf("expected error for disabled_default_tools entry %q", entry)
+			}
+		}
 		m := &platformWorkflowModel{
 			Prompt:               types.StringValue("review code"),
 			DisabledDefaultTools: mustStringList(t, ctx, []string{"nope"}),
@@ -3635,6 +3647,48 @@ func TestValidateConfigRejectsModelWithModelSelection(t *testing.T) {
 	sel := &modelSelectionModel{ModelID: types.StringValue("auto-smart"), MaxMode: types.BoolNull()}
 	check(t, types.StringValue("auto-smart"), sel, true)
 	check(t, types.StringNull(), sel, false)
+	// An unknown slug (e.g. from a variable) may still resolve to null.
+	check(t, types.StringUnknown(), sel, false)
 	check(t, types.StringValue("gpt-5.5"), nil, false)
 	check(t, types.StringNull(), nil, false)
+}
+
+func TestNonBlankListEntriesRejected(t *testing.T) {
+	ctx := context.Background()
+	blank := mustStringList(t, ctx, []string{"ok", " "})
+
+	cases := map[string]triggerModel{
+		"microsoft_teams_channel_created.team_ids": {MicrosoftTeamsChannelCreated: &microsoftTeamsChannelCreatedTriggerModel{
+			TenantID: types.StringValue("tenant"), TeamIDs: blank,
+		}},
+		"pagerduty.service_ids": {PagerDuty: &pagerDutyTriggerModel{IncidentAny: &emptyEventModel{}, ServiceIDs: blank}},
+		"sentry.project_ids":    {Sentry: &sentryTriggerModel{IssueAny: &emptyEventModel{}, ProjectIDs: blank}},
+	}
+	for field, trigger := range cases {
+		trigger.UserAllowlist = types.ListNull(types.StringType)
+		_, err := triggerModelToProto(ctx, &trigger)
+		if err == nil || !strings.Contains(err.Error(), field+"[1] must not be empty") {
+			t.Errorf("%s: expected blank-entry error, got %v", field, err)
+		}
+	}
+}
+
+func TestPreserveEmptyDescription(t *testing.T) {
+	state := platformWorkflowModel{Description: types.StringNull()}
+	preserveEmptyDescription(&state, platformWorkflowModel{Description: types.StringValue("")})
+	if state.Description.IsNull() || state.Description.ValueString() != "" {
+		t.Fatalf("description = %v, want configured empty string", state.Description)
+	}
+
+	state = platformWorkflowModel{Description: types.StringNull()}
+	preserveEmptyDescription(&state, platformWorkflowModel{Description: types.StringNull()})
+	if !state.Description.IsNull() {
+		t.Fatal("unset description must stay null")
+	}
+
+	state = platformWorkflowModel{Description: types.StringValue("server")}
+	preserveEmptyDescription(&state, platformWorkflowModel{Description: types.StringValue("")})
+	if state.Description.ValueString() != "server" {
+		t.Fatal("a server-provided description must not be overwritten")
+	}
 }
