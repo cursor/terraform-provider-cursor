@@ -16,8 +16,15 @@ import (
 
 const userAgentPrefix = "terraform-provider-cursor/"
 
+// Public Origin API. Independent of the Automations endpoint.
+const defaultOriginAPIBase = "https://api.cursor.com/v1/origin"
+
 type apiClient struct {
 	automations v1connect.AutomationsServiceClient
+	httpClient  *http.Client
+	authHeader  string
+	userAgent   string
+	originBase  string
 }
 
 func newAPIClient(endpoint string, token string, version string) (*apiClient, error) {
@@ -49,6 +56,10 @@ func newAPIClient(endpoint string, token string, version string) (*apiClient, er
 
 	return &apiClient{
 		automations: client,
+		httpClient:  httpClient,
+		authHeader:  authHeader,
+		userAgent:   userAgentPrefix + strings.TrimSpace(version),
+		originBase:  defaultOriginAPIBase,
 	}, nil
 }
 

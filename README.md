@@ -1,8 +1,8 @@
 # Terraform Provider for Cursor Automations
 
-Manage [Cursor Automations](https://cursor.com) with Terraform or OpenTofu.
+Manage [Cursor Automations](https://cursor.com) with Terraform or OpenTofu, and read [Origin](https://cursor.com/docs/origin) repositories from the public Origin API.
 
-This provider exposes Cursor Platform workflows as Terraform resources. It talks to the Cursor Automations API over Connect RPC.
+This provider exposes Cursor Platform workflows as Terraform resources. It talks to the Cursor Automations API over Connect RPC. Origin repositories are a data source: the public Origin API can create and read repositories, but it has no update or delete operation.
 
 Full documentation for the provider, resources, and data sources lives in [`docs/`](./docs) and on the Terraform Registry.
 
@@ -67,6 +67,40 @@ Supported triggers: `git_pull_request`, `git_push`, `git_ci_completed`, `cron`, 
 Supported actions: `pr_comment`, `git_pr`, `request_reviewers`, `mcp`, `slack`, `read_slack`, `microsoft_teams`, and `read_microsoft_teams`.
 
 See [`examples/`](./examples) for more, including the data source and import syntax. The resource and data source docs in [`docs/`](./docs) describe every trigger and action type.
+
+## Origin repositories
+
+Read an existing Origin repository with the same provider token. Look up by owner and name, or by the repository's stable ID:
+
+```hcl
+data "cursor_origin_repo" "rocket" {
+  owner = "acme"
+  name  = "rocket"
+}
+```
+
+`clone_url`, `default_branch`, `visibility`, and mirror metadata come from `GET /v1/origin/repos/{owner}/{name}` on the public Origin API (`https://api.cursor.com/v1/origin`). A raw `key_` or `crsr_` API key is exchanged for a session token first, the same way Automations calls are authenticated.
+
+Manage a repository ruleset with the same token. Update replaces the ruleset, including its rules and bypass actors. `deletion_protection` defaults to true: Terraform will not delete the ruleset, or replace it because `owner` or `repo` changed, until that is set to false and applied. A ruleset with no rules, no included refs, or `enforcement = "disabled"` is rejected unless `allow_unenforced` is true. `origin_role` `repository_write` bypasses every principal with write access and requires `allow_broad_bypass`.
+
+```hcl
+resource "cursor_origin_repo_ruleset" "main" {
+  owner       = "acme"
+  repo        = "rocket"
+  name        = "require-review"
+  enforcement = "active"
+  kind        = "merge_branch"
+
+  included_ref_names = ["refs/heads/main"]
+
+  rule {
+    rule_type = "pull_request"
+    parameters = jsonencode({
+      requiredApprovingReviewCount = 1
+    })
+  }
+}
+```
 
 ## Development
 
