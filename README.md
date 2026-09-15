@@ -81,7 +81,7 @@ data "cursor_origin_repo" "rocket" {
 
 `clone_url`, `default_branch`, `visibility`, and mirror metadata come from `GET /v1/origin/repos/{owner}/{name}` on the public Origin API (`https://api.cursor.com/v1/origin`). A raw `key_` or `crsr_` API key is exchanged for a session token first, the same way Automations calls are authenticated.
 
-Manage a repository ruleset with the same token. Update replaces the ruleset, including its rules and bypass actors. `deletion_protection` defaults to true: Terraform will not delete the ruleset, or replace it because `owner` or `repo` changed, until that is set to false and applied. A ruleset with no rules, no included refs, or `enforcement = "disabled"` is rejected unless `allow_unenforced` is true. `origin_role` `repository_write` bypasses every principal with write access and requires `allow_broad_bypass`.
+Manage a repository ruleset with the same token. Each `rule` block sets exactly one typed block; the block name is the Origin rule type and its snake_case arguments map to the camelCase parameters Origin stores. Update replaces the ruleset, including its rules and bypass actors. `deletion_protection` defaults to true: Terraform will not delete the ruleset, or replace it because `owner` or `repo` changed, until that is set to false and applied. A ruleset with no rules, no included refs, or `enforcement = "disabled"` is rejected unless `allow_unenforced` is true. `origin_role` `repository_write` bypasses every principal with write access and requires `allow_broad_bypass`.
 
 ```hcl
 resource "cursor_origin_repo_ruleset" "main" {
@@ -94,13 +94,22 @@ resource "cursor_origin_repo_ruleset" "main" {
   included_ref_names = ["refs/heads/main"]
 
   rule {
-    rule_type = "pull_request"
-    parameters = jsonencode({
-      requiredApprovingReviewCount = 1
-    })
+    pull_request {
+      required_approving_review_count = 1
+    }
+  }
+
+  rule {
+    require_status_checks {
+      required_check {
+        name = "ci"
+      }
+    }
   }
 }
 ```
+
+Merge rules (`pull_request`, `require_status_checks`, `require_branch_up_to_date`) apply to `kind = "merge_branch"`. Push rules (`deletion`, `non_fast_forward`, `block_direct_updates`, `required_linear_history`) apply to the `push_branch`, `push_tag`, and `push_repository` kinds and take no arguments, for example `rule { deletion {} }`.
 
 ## Development
 

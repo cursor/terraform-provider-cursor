@@ -17,18 +17,29 @@ resource "cursor_origin_repo_ruleset" "main" {
   owner       = "acme"
   repo        = "rocket"
   name        = "require-review"
-  description = "Require an approving review before merging to main."
+  description = "Require an approving review and green CI before merging to main."
   enforcement = "active"
   kind        = "merge_branch"
 
-  included_ref_names = ["refs/heads/main"]
+  included_ref_names  = ["refs/heads/main"]
   deletion_protection = true
 
   rule {
-    rule_type = "pull_request"
-    parameters = jsonencode({
-      requiredApprovingReviewCount = 1
-    })
+    pull_request {
+      required_approving_review_count = 1
+    }
+  }
+
+  rule {
+    require_status_checks {
+      required_check {
+        name = "ci"
+      }
+    }
+  }
+
+  rule {
+    require_branch_up_to_date {}
   }
 
   bypass_actor {
@@ -36,6 +47,28 @@ resource "cursor_origin_repo_ruleset" "main" {
     user {
       id = "act_01k2ja2000e0080000000000u1"
     }
+  }
+}
+
+resource "cursor_origin_repo_ruleset" "protect_main" {
+  owner       = "acme"
+  repo        = "rocket"
+  name        = "protect-main"
+  enforcement = "active"
+  kind        = "push_branch"
+
+  included_ref_names = ["refs/heads/main"]
+
+  rule {
+    deletion {}
+  }
+
+  rule {
+    non_fast_forward {}
+  }
+
+  rule {
+    block_direct_updates {}
   }
 }
 ```
@@ -51,38 +84,22 @@ resource "cursor_origin_repo_ruleset" "main" {
 - `name` (String) Ruleset name.
 - `owner` (String) Owner slug of the repository. Changing this replaces the ruleset, which deletes the existing one. Blocked while deletion_protection is true. Use "_" with the repository ID in repo to address the repository by its stable ID.
 - `repo` (String) Repository name within the owner. Changing this replaces the ruleset, which deletes the existing one. Blocked while deletion_protection is true.
-- `rule` (Attributes List) Protection rules in this ruleset. Must contain at least one rule, unless allow_unenforced is true and this is an explicit empty list. At most 20 entries. Update replaces the full list; a rule omitted from config is removed. (see [below for nested schema](#nestedatt--rule))
 
 ### Optional
 
 - `allow_broad_bypass` (Boolean) Must be true to bypass this ruleset for origin_role repository_write, which applies to every principal with write access. Specific user, team, app, and admin-role bypasses do not require this.
 - `allow_unenforced` (Boolean) Must be true to store a ruleset that does not enforce anything: enforcement disabled, no rules, no included ref names, or excluded_ref_names that remove every included ref (including ~ALL).
-- `bypass_actor` (Attributes List) Principals that may bypass this ruleset. At most 15 entries. Set exactly one of user, team, app, or origin_role. Update replaces the full list. (see [below for nested schema](#nestedatt--bypass_actor))
+- `bypass_actor` (Block List) Principals that may bypass this ruleset. At most 15 entries. Set exactly one of user, team, app, or origin_role. Update replaces the full list. (see [below for nested schema](#nestedblock--bypass_actor))
 - `deletion_protection` (Boolean) When true, Terraform will not delete this ruleset. That includes terraform destroy and replacements caused by changing owner or repo. Set to false and apply before destroying or moving the ruleset. Null is treated as protected.
 - `description` (String) Ruleset description. An empty string clears the description.
 - `excluded_ref_names` (List of String) Ref name patterns this ruleset excludes. Same pattern language and 64-entry cap as included_ref_names.
+- `rule` (Block List) Protection rules in this ruleset. Each rule block sets exactly one typed block: pull_request, require_status_checks, require_branch_up_to_date, deletion, non_fast_forward, block_direct_updates, or required_linear_history. Merge rules require kind merge_branch; push rules require a push_* kind. Must contain at least one rule, unless allow_unenforced is true. At most 20 entries. Update replaces the full list; a rule omitted from config is removed. (see [below for nested schema](#nestedblock--rule))
 
 ### Read-Only
 
 - `id` (String) Stable Origin ruleset ID.
 
-<a id="nestedatt--rule"></a>
-### Nested Schema for `rule`
-
-Required:
-
-- `rule_type` (String) Rule type, for example pull_request, require_status_checks, require_branch_up_to_date, deletion, or non_fast_forward.
-
-Optional:
-
-- `parameters` (String) JSON object of type-specific parameters. Use jsonencode(). Omit it to leave parameters unset.
-
-Read-Only:
-
-- `id` (String) Origin-assigned rule ID.
-
-
-<a id="nestedatt--bypass_actor"></a>
+<a id="nestedblock--bypass_actor"></a>
 ### Nested Schema for `bypass_actor`
 
 Required:
@@ -91,46 +108,112 @@ Required:
 
 Optional:
 
-- `app` (Attributes) Bypass an Origin app principal. (see [below for nested schema](#nestedatt--bypass_actor--app))
-- `origin_role` (Attributes) Bypass holders of a policy-backed Origin role. (see [below for nested schema](#nestedatt--bypass_actor--origin_role))
-- `team` (Attributes) Bypass a team principal, identified by immutable public IDs rather than slugs. (see [below for nested schema](#nestedatt--bypass_actor--team))
-- `user` (Attributes) Bypass a user principal. (see [below for nested schema](#nestedatt--bypass_actor--user))
+- `app` (Block, Optional) Bypass an Origin app principal. (see [below for nested schema](#nestedblock--bypass_actor--app))
+- `origin_role` (Block, Optional) Bypass holders of a policy-backed Origin role. (see [below for nested schema](#nestedblock--bypass_actor--origin_role))
+- `team` (Block, Optional) Bypass a team principal, identified by immutable public IDs rather than slugs. (see [below for nested schema](#nestedblock--bypass_actor--team))
+- `user` (Block, Optional) Bypass a user principal. (see [below for nested schema](#nestedblock--bypass_actor--user))
 
 Read-Only:
 
 - `id` (String) Origin-assigned bypass actor ID.
 
-<a id="nestedatt--bypass_actor--app"></a>
+<a id="nestedblock--bypass_actor--app"></a>
 ### Nested Schema for `bypass_actor.app`
 
-Required:
+Optional:
 
-- `id` (String) App ID (app_...).
+- `id` (String) App ID (app_...). Required when the app block is set.
 
 
-<a id="nestedatt--bypass_actor--origin_role"></a>
+<a id="nestedblock--bypass_actor--origin_role"></a>
 ### Nested Schema for `bypass_actor.origin_role`
 
-Required:
+Optional:
 
-- `role` (String) Role: namespace_admin, repository_admin, or repository_write. repository_write applies to every principal with write access and requires allow_broad_bypass.
+- `role` (String) Required when the origin_role block is set. Role: namespace_admin, repository_admin, or repository_write. repository_write applies to every principal with write access and requires allow_broad_bypass.
 
 
-<a id="nestedatt--bypass_actor--team"></a>
+<a id="nestedblock--bypass_actor--team"></a>
 ### Nested Schema for `bypass_actor.team`
 
-Required:
+Optional:
 
-- `group_public_id` (String) Group public ID.
-- `organization_public_id` (String) Organization public ID.
+- `group_public_id` (String) Group public ID. Required when the team block is set.
+- `organization_public_id` (String) Organization public ID. Required when the team block is set.
 
 
-<a id="nestedatt--bypass_actor--user"></a>
+<a id="nestedblock--bypass_actor--user"></a>
 ### Nested Schema for `bypass_actor.user`
 
+Optional:
+
+- `id` (String) User actor ID (act_...). Required when the user block is set.
+
+
+
+<a id="nestedblock--rule"></a>
+### Nested Schema for `rule`
+
+Optional:
+
+- `block_direct_updates` (Block, Optional) Push rule: require updates to matching refs to go through a pull request. Takes no arguments; write `block_direct_updates {}`. Rulesets of kind push_branch, push_tag, or push_repository only. (see [below for nested schema](#nestedblock--rule--block_direct_updates))
+- `deletion` (Block, Optional) Push rule: block deleting matching refs. Takes no arguments; write `deletion {}`. Rulesets of kind push_branch, push_tag, or push_repository only. (see [below for nested schema](#nestedblock--rule--deletion))
+- `non_fast_forward` (Block, Optional) Push rule: block force pushes to matching refs. Takes no arguments; write `non_fast_forward {}`. Rulesets of kind push_branch, push_tag, or push_repository only. (see [below for nested schema](#nestedblock--rule--non_fast_forward))
+- `pull_request` (Block, Optional) Merge rule: require a pull request before merging. Rulesets of kind merge_branch only. (see [below for nested schema](#nestedblock--rule--pull_request))
+- `require_branch_up_to_date` (Block, Optional) Merge rule: require the pull request head to be up to date with the base branch before merging. Takes no arguments; write `require_branch_up_to_date {}`. Rulesets of kind merge_branch only. (see [below for nested schema](#nestedblock--rule--require_branch_up_to_date))
+- `require_status_checks` (Block, Optional) Merge rule: require the listed check runs to pass on the head commit before merging. Rulesets of kind merge_branch only. (see [below for nested schema](#nestedblock--rule--require_status_checks))
+- `required_linear_history` (Block, Optional) Push rule: block merge commits so matching refs keep a linear history. Takes no arguments; write `required_linear_history {}`. Rulesets of kind push_branch, push_tag, or push_repository only. (see [below for nested schema](#nestedblock--rule--required_linear_history))
+
+Read-Only:
+
+- `id` (String) Origin-assigned rule ID.
+
+<a id="nestedblock--rule--block_direct_updates"></a>
+### Nested Schema for `rule.block_direct_updates`
+
+
+<a id="nestedblock--rule--deletion"></a>
+### Nested Schema for `rule.deletion`
+
+
+<a id="nestedblock--rule--non_fast_forward"></a>
+### Nested Schema for `rule.non_fast_forward`
+
+
+<a id="nestedblock--rule--pull_request"></a>
+### Nested Schema for `rule.pull_request`
+
+Optional:
+
+- `required_approving_review_count` (Number) Number of approving reviews required before the pull request can merge. Omit it to use the Origin default.
+
+
+<a id="nestedblock--rule--require_branch_up_to_date"></a>
+### Nested Schema for `rule.require_branch_up_to_date`
+
+
+<a id="nestedblock--rule--require_status_checks"></a>
+### Nested Schema for `rule.require_status_checks`
+
+Optional:
+
+- `required_check` (Block List) A check run that must pass. Repeat the block for each required check. (see [below for nested schema](#nestedblock--rule--require_status_checks--required_check))
+
+<a id="nestedblock--rule--require_status_checks--required_check"></a>
+### Nested Schema for `rule.require_status_checks.required_check`
+
 Required:
 
-- `id` (String) User actor ID (act_...).
+- `name` (String) Check run name as reported to Origin.
+
+Optional:
+
+- `app_id` (String) Origin app ID (app_...) that must report the check. Omit it to accept the check from any app.
+
+
+
+<a id="nestedblock--rule--required_linear_history"></a>
+### Nested Schema for `rule.required_linear_history`
 
 ## Import
 
