@@ -252,7 +252,7 @@ func TestOriginRepoLookupValidation(t *testing.T) {
 }
 
 func TestNewAPIClientSetsOriginAuth(t *testing.T) {
-	client, err := newAPIClient("https://api2.cursor.sh", "session-token", "1.2.3")
+	client, err := newAPIClient("https://api2.cursor.sh", "session-token", "1.2.3", adminKeys{})
 	if err != nil {
 		t.Fatalf("newAPIClient() error: %v", err)
 	}
