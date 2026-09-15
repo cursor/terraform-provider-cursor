@@ -135,7 +135,9 @@ func TestOriginRulesetEmptyRuleBlocksRoundTripThroughSchema(t *testing.T) {
 		{ID: types.StringValue("rsr_del"), Deletion: &originEmptyRuleModel{}},
 		{ID: types.StringValue("rsr_nff"), NonFastForward: &originEmptyRuleModel{}},
 		{ID: types.StringValue("rsr_bdu"), BlockDirectUpdates: &originEmptyRuleModel{}},
+		{ID: types.StringValue("rsr_bm"), BlockMerges: &originEmptyRuleModel{}},
 		{ID: types.StringValue("rsr_rlh"), RequiredLinearHistory: &originEmptyRuleModel{}},
+		{ID: types.StringValue("rsr_pat"), RefNamePattern: &originRefNamePatternRuleModel{Pattern: types.StringValue("release/*"), Negate: types.BoolNull()}},
 	}
 	state := &tfsdk.State{Schema: schemaResp.Schema}
 	if diags := state.Set(ctx, &model); diags.HasError() {
@@ -145,7 +147,7 @@ func TestOriginRulesetEmptyRuleBlocksRoundTripThroughSchema(t *testing.T) {
 	if diags := state.Get(ctx, &decoded); diags.HasError() {
 		t.Fatalf("state.Get: %v", diags)
 	}
-	want := []string{originRuleTypeDeletion, originRuleTypeNonFastForward, originRuleTypeBlockDirectUpdates, originRuleTypeRequiredLinearHistory}
+	want := []string{originRuleTypeDeletion, originRuleTypeNonFastForward, originRuleTypeBlockDirectUpdates, originRuleTypeBlockMerges, originRuleTypeRequiredLinearHistory, originRuleTypeRefNamePattern}
 	if len(decoded.Rules) != len(want) {
 		t.Fatalf("rules = %#v", decoded.Rules)
 	}
@@ -179,16 +181,51 @@ func TestOriginRuleParametersWire(t *testing.T) {
 		t.Fatalf("pull_request without arguments should omit parameters, got %s", raw)
 	}
 
+	full := originRepoRulesetRuleModel{PullRequest: &originPullRequestRuleModel{
+		RequiredApprovingReviewCount:   types.Int64Value(2),
+		DismissStaleReviewsOnPush:      types.BoolValue(true),
+		RequireCodeOwnerReview:         types.BoolValue(false),
+		RequireLastPushApproval:        types.BoolValue(true),
+		RequiredReviewThreadResolution: types.BoolValue(false),
+	}}
+	raw, err = full.parameters()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(raw) != `{"requiredApprovingReviewCount":2,"dismissStaleReviewsOnPush":true,"requireCodeOwnerReview":false,"requireLastPushApproval":true,"requiredReviewThreadResolution":false}` {
+		t.Fatalf("pull_request parameters = %s", raw)
+	}
+
 	checks := originRepoRulesetRuleModel{RequireStatusChecks: &originRequireStatusChecksRuleModel{RequiredChecks: []originRequiredCheckModel{
-		{Name: types.StringValue("ci"), AppID: types.StringValue("app_01")},
-		{Name: types.StringValue("lint"), AppID: types.StringNull()},
+		{ActorKind: types.StringValue("app"), ActorID: types.StringValue("app_01"), GroupKey: types.StringValue("ci"), RunKey: types.StringValue("test"), Name: types.StringValue("Test")},
+		{ActorKind: types.StringValue("app"), ActorID: types.StringValue("app_02"), GroupKey: types.StringValue("lint"), RunKey: types.StringNull(), Name: types.StringNull()},
 	}}}
 	raw, err = checks.parameters()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if string(raw) != `{"requiredChecks":[{"name":"ci","appId":"app_01"},{"name":"lint"}]}` {
+	if string(raw) != `{"requiredChecks":[{"actorKind":"app","actorId":"app_01","groupKey":"ci","runKey":"test","name":"Test"},{"actorKind":"app","actorId":"app_02","groupKey":"lint"}]}` {
 		t.Fatalf("require_status_checks parameters = %s", raw)
+	}
+	if strings.Contains(string(raw), "appId") {
+		t.Fatalf("require_status_checks must not encode appId: %s", raw)
+	}
+
+	pattern := originRepoRulesetRuleModel{RefNamePattern: &originRefNamePatternRuleModel{Pattern: types.StringValue("release/*"), Negate: types.BoolValue(true)}}
+	raw, err = pattern.parameters()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(raw) != `{"pattern":"release/*","negate":true}` {
+		t.Fatalf("ref_name_pattern parameters = %s", raw)
+	}
+	pattern.RefNamePattern.Negate = types.BoolNull()
+	raw, err = pattern.parameters()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(raw) != `{"pattern":"release/*"}` {
+		t.Fatalf("ref_name_pattern parameters without negate = %s", raw)
 	}
 
 	for _, rule := range []originRepoRulesetRuleModel{
@@ -196,6 +233,7 @@ func TestOriginRuleParametersWire(t *testing.T) {
 		{Deletion: &originEmptyRuleModel{}},
 		{NonFastForward: &originEmptyRuleModel{}},
 		{BlockDirectUpdates: &originEmptyRuleModel{}},
+		{BlockMerges: &originEmptyRuleModel{}},
 		{RequiredLinearHistory: &originEmptyRuleModel{}},
 	} {
 		raw, err := rule.parameters()
@@ -209,15 +247,47 @@ func TestOriginRuleParametersWire(t *testing.T) {
 }
 
 func TestRuleModelFromAPI(t *testing.T) {
-	model, err := ruleModelFromAPI(originRulesetRule{ID: "rsr_01", RuleType: "require_status_checks", Parameters: json.RawMessage(`{"requiredChecks":[{"name":"ci","appId":"app_01"},{"name":"lint"}]}`)})
+	model, err := ruleModelFromAPI(originRulesetRule{ID: "rsr_01", RuleType: "require_status_checks", Parameters: json.RawMessage(`{"requiredChecks":[{"actorKind":"app","actorId":"app_01","groupKey":"ci","runKey":"test","name":"Test"},{"actorKind":"app","actorId":"app_02","groupKey":"lint"}]}`)})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if model.RequireStatusChecks == nil || len(model.RequireStatusChecks.RequiredChecks) != 2 {
 		t.Fatalf("model = %#v", model)
 	}
-	if model.RequireStatusChecks.RequiredChecks[0].AppID.ValueString() != "app_01" || !model.RequireStatusChecks.RequiredChecks[1].AppID.IsNull() {
-		t.Fatalf("checks = %#v", model.RequireStatusChecks.RequiredChecks)
+	first, second := model.RequireStatusChecks.RequiredChecks[0], model.RequireStatusChecks.RequiredChecks[1]
+	if first.ActorKind.ValueString() != "app" || first.ActorID.ValueString() != "app_01" || first.GroupKey.ValueString() != "ci" || first.RunKey.ValueString() != "test" || first.Name.ValueString() != "Test" {
+		t.Fatalf("first check = %#v", first)
+	}
+	if second.GroupKey.ValueString() != "lint" || !second.RunKey.IsNull() || !second.Name.IsNull() {
+		t.Fatalf("second check = %#v", second)
+	}
+
+	model, err = ruleModelFromAPI(originRulesetRule{ID: "rsr_pr", RuleType: "pull_request", Parameters: json.RawMessage(`{"requiredApprovingReviewCount":2,"dismissStaleReviewsOnPush":true,"requiredReviewThreadResolution":false}`)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	pr := model.PullRequest
+	if pr == nil || pr.RequiredApprovingReviewCount.ValueInt64() != 2 || !pr.DismissStaleReviewsOnPush.ValueBool() || pr.RequiredReviewThreadResolution.ValueBool() {
+		t.Fatalf("pull_request = %#v", pr)
+	}
+	if !pr.RequireCodeOwnerReview.IsNull() || !pr.RequireLastPushApproval.IsNull() {
+		t.Fatalf("absent pull_request arguments should be null: %#v", pr)
+	}
+
+	model, err = ruleModelFromAPI(originRulesetRule{ID: "rsr_pat", RuleType: "ref_name_pattern", Parameters: json.RawMessage(`{"pattern":"release/*","negate":true}`)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if model.RefNamePattern == nil || model.RefNamePattern.Pattern.ValueString() != "release/*" || !model.RefNamePattern.Negate.ValueBool() {
+		t.Fatalf("ref_name_pattern = %#v", model.RefNamePattern)
+	}
+
+	model, err = ruleModelFromAPI(originRulesetRule{ID: "rsr_bm", RuleType: "block_merges"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if model.BlockMerges == nil {
+		t.Fatalf("model = %#v", model)
 	}
 
 	model, err = ruleModelFromAPI(originRulesetRule{ID: "rsr_02", RuleType: "deletion"})
@@ -256,6 +326,31 @@ func TestOriginRulesetReadKeepsUnsetRuleArgumentsNull(t *testing.T) {
 	}
 	if state.Rules[0].PullRequest.RequiredApprovingReviewCount.ValueInt64() != 3 {
 		t.Fatalf("managed argument should follow Origin on refresh, got %v", state.Rules[0].PullRequest.RequiredApprovingReviewCount)
+	}
+
+	prior.Rules[0].PullRequest.DismissStaleReviewsOnPush = types.BoolValue(true)
+	api.Rules[0].Parameters = json.RawMessage(`{"requiredApprovingReviewCount":1,"dismissStaleReviewsOnPush":false,"requireCodeOwnerReview":true}`)
+	state, err = originRulesetToModel(context.Background(), prior, api, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pr := state.Rules[0].PullRequest
+	if pr.DismissStaleReviewsOnPush.ValueBool() {
+		t.Fatalf("managed bool should follow Origin on refresh, got %v", pr.DismissStaleReviewsOnPush)
+	}
+	if !pr.RequireCodeOwnerReview.IsNull() {
+		t.Fatalf("unset bool should stay null on refresh, got %v", pr.RequireCodeOwnerReview)
+	}
+
+	prior.Kind = types.StringValue(originRulesetKindPushBranch)
+	prior.Rules = []originRepoRulesetRuleModel{{RefNamePattern: &originRefNamePatternRuleModel{Pattern: types.StringValue("release/*"), Negate: types.BoolNull()}}}
+	api.Rules = []originRulesetRule{{ID: "rsr_pat", RuleType: "ref_name_pattern", Parameters: json.RawMessage(`{"pattern":"hotfix/*","negate":true}`)}}
+	state, err = originRulesetToModel(context.Background(), prior, api, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if state.Rules[0].RefNamePattern.Pattern.ValueString() != "hotfix/*" || !state.Rules[0].RefNamePattern.Negate.IsNull() {
+		t.Fatalf("ref_name_pattern refresh = %#v", state.Rules[0].RefNamePattern)
 	}
 }
 
@@ -366,13 +461,40 @@ func TestValidateOriginRulesetModel(t *testing.T) {
 	if err := validateOriginRulesetModel(context.Background(), negativeCount); err == nil || !strings.Contains(err.Error(), "required_approving_review_count") {
 		t.Fatalf("error = %v, want negative review count rejected", err)
 	}
+	negativeCount.Rules[0].PullRequest.RequiredApprovingReviewCount = types.Int64Value(51)
+	if err := validateOriginRulesetModel(context.Background(), negativeCount); err == nil || !strings.Contains(err.Error(), "between 0 and 50") {
+		t.Fatalf("error = %v, want review count above 50 rejected", err)
+	}
+	negativeCount.Rules[0].PullRequest.RequiredApprovingReviewCount = types.Int64Value(50)
+	if err := validateOriginRulesetModel(context.Background(), negativeCount); err != nil {
+		t.Fatalf("review count 50: %v", err)
+	}
 
-	emptyCheckName := valid
-	emptyCheckName.Rules = []originRepoRulesetRuleModel{{
-		RequireStatusChecks: &originRequireStatusChecksRuleModel{RequiredChecks: []originRequiredCheckModel{{Name: types.StringValue(" ci")}}},
+	missingGroupKey := valid
+	missingGroupKey.Rules = []originRepoRulesetRuleModel{{
+		RequireStatusChecks: &originRequireStatusChecksRuleModel{RequiredChecks: []originRequiredCheckModel{{
+			ActorKind: types.StringValue("app"), ActorID: types.StringValue("app_01"), GroupKey: types.StringNull(),
+		}}},
 	}}
-	if err := validateOriginRulesetModel(context.Background(), emptyCheckName); err == nil || !strings.Contains(err.Error(), "required_check[0].name") {
-		t.Fatalf("error = %v, want padded check name rejected", err)
+	if err := validateOriginRulesetModel(context.Background(), missingGroupKey); err == nil || !strings.Contains(err.Error(), "required_check[0].group_key is required") {
+		t.Fatalf("error = %v, want missing group_key rejected", err)
+	}
+
+	paddedRunKey := valid
+	paddedRunKey.Rules = []originRepoRulesetRuleModel{{
+		RequireStatusChecks: &originRequireStatusChecksRuleModel{RequiredChecks: []originRequiredCheckModel{{
+			ActorKind: types.StringValue("app"), ActorID: types.StringValue("app_01"), GroupKey: types.StringValue("ci"), RunKey: types.StringValue(" test"),
+		}}},
+	}}
+	if err := validateOriginRulesetModel(context.Background(), paddedRunKey); err == nil || !strings.Contains(err.Error(), "required_check[0].run_key") {
+		t.Fatalf("error = %v, want padded run_key rejected", err)
+	}
+
+	missingPattern := valid
+	missingPattern.Kind = types.StringValue(originRulesetKindPushTag)
+	missingPattern.Rules = []originRepoRulesetRuleModel{{RefNamePattern: &originRefNamePatternRuleModel{Pattern: types.StringNull()}}}
+	if err := validateOriginRulesetModel(context.Background(), missingPattern); err == nil || !strings.Contains(err.Error(), "ref_name_pattern.pattern is required") {
+		t.Fatalf("error = %v, want missing pattern rejected", err)
 	}
 
 	pushRuleOnMergeKind := valid
@@ -393,7 +515,9 @@ func TestValidateOriginRulesetModel(t *testing.T) {
 		{Deletion: &originEmptyRuleModel{}},
 		{NonFastForward: &originEmptyRuleModel{}},
 		{BlockDirectUpdates: &originEmptyRuleModel{}},
+		{BlockMerges: &originEmptyRuleModel{}},
 		{RequiredLinearHistory: &originEmptyRuleModel{}},
+		{RefNamePattern: &originRefNamePatternRuleModel{Pattern: types.StringValue("release/*"), Negate: types.BoolValue(false)}},
 	}
 	if err := validateOriginRulesetModel(context.Background(), pushRules); err != nil {
 		t.Fatalf("push rules on push_branch: %v", err)
@@ -762,6 +886,29 @@ func TestOriginRuleSchemaHasOneBlockPerRuleType(t *testing.T) {
 	for _, spec := range originRuleTypeSpecs {
 		if _, ok := rule.NestedObject.Blocks[spec.ruleType].(schema.SingleNestedBlock); !ok {
 			t.Fatalf("rule.%s is not a single nested block", spec.ruleType)
+		}
+	}
+	checks := rule.NestedObject.Blocks[originRuleTypeRequireStatusChecks].(schema.SingleNestedBlock)
+	check := checks.Blocks["required_check"].(schema.ListNestedBlock)
+	if _, ok := check.NestedObject.Attributes["app_id"]; ok {
+		t.Fatal("required_check still exposes app_id")
+	}
+	for _, name := range []string{"actor_kind", "actor_id", "group_key"} {
+		attr, ok := check.NestedObject.Attributes[name].(schema.StringAttribute)
+		if !ok || !attr.Required {
+			t.Fatalf("required_check.%s should be a required string attribute", name)
+		}
+	}
+	for _, name := range []string{"run_key", "name"} {
+		attr, ok := check.NestedObject.Attributes[name].(schema.StringAttribute)
+		if !ok || !attr.Optional {
+			t.Fatalf("required_check.%s should be an optional string attribute", name)
+		}
+	}
+	pullRequest := rule.NestedObject.Blocks[originRuleTypePullRequest].(schema.SingleNestedBlock)
+	for _, name := range []string{"required_approving_review_count", "dismiss_stale_reviews_on_push", "require_code_owner_review", "require_last_push_approval", "required_review_thread_resolution"} {
+		if _, ok := pullRequest.Attributes[name]; !ok {
+			t.Fatalf("pull_request is missing %s", name)
 		}
 	}
 	model := originRepoRulesetRuleModel{}

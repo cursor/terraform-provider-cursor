@@ -22,7 +22,11 @@ const (
 	originRuleTypeDeletion              = "deletion"
 	originRuleTypeNonFastForward        = "non_fast_forward"
 	originRuleTypeBlockDirectUpdates    = "block_direct_updates"
+	originRuleTypeBlockMerges           = "block_merges"
 	originRuleTypeRequiredLinearHistory = "required_linear_history"
+	originRuleTypeRefNamePattern        = "ref_name_pattern"
+
+	maxOriginRequiredApprovingReviews = 50
 )
 
 type originRuleCategory int
@@ -46,7 +50,9 @@ var originRuleTypeSpecs = []originRuleTypeSpec{
 	{ruleType: originRuleTypeDeletion, category: originPushRule},
 	{ruleType: originRuleTypeNonFastForward, category: originPushRule},
 	{ruleType: originRuleTypeBlockDirectUpdates, category: originPushRule},
+	{ruleType: originRuleTypeBlockMerges, category: originPushRule},
 	{ruleType: originRuleTypeRequiredLinearHistory, category: originPushRule},
+	{ruleType: originRuleTypeRefNamePattern, category: originPushRule},
 }
 
 func originRuleTypeNames() []string {
@@ -86,11 +92,17 @@ type originRepoRulesetRuleModel struct {
 	Deletion              *originEmptyRuleModel               `tfsdk:"deletion"`
 	NonFastForward        *originEmptyRuleModel               `tfsdk:"non_fast_forward"`
 	BlockDirectUpdates    *originEmptyRuleModel               `tfsdk:"block_direct_updates"`
+	BlockMerges           *originEmptyRuleModel               `tfsdk:"block_merges"`
 	RequiredLinearHistory *originEmptyRuleModel               `tfsdk:"required_linear_history"`
+	RefNamePattern        *originRefNamePatternRuleModel      `tfsdk:"ref_name_pattern"`
 }
 
 type originPullRequestRuleModel struct {
-	RequiredApprovingReviewCount types.Int64 `tfsdk:"required_approving_review_count"`
+	RequiredApprovingReviewCount   types.Int64 `tfsdk:"required_approving_review_count"`
+	DismissStaleReviewsOnPush      types.Bool  `tfsdk:"dismiss_stale_reviews_on_push"`
+	RequireCodeOwnerReview         types.Bool  `tfsdk:"require_code_owner_review"`
+	RequireLastPushApproval        types.Bool  `tfsdk:"require_last_push_approval"`
+	RequiredReviewThreadResolution types.Bool  `tfsdk:"required_review_thread_resolution"`
 }
 
 type originRequireStatusChecksRuleModel struct {
@@ -98,8 +110,16 @@ type originRequireStatusChecksRuleModel struct {
 }
 
 type originRequiredCheckModel struct {
-	Name  types.String `tfsdk:"name"`
-	AppID types.String `tfsdk:"app_id"`
+	ActorKind types.String `tfsdk:"actor_kind"`
+	ActorID   types.String `tfsdk:"actor_id"`
+	GroupKey  types.String `tfsdk:"group_key"`
+	RunKey    types.String `tfsdk:"run_key"`
+	Name      types.String `tfsdk:"name"`
+}
+
+type originRefNamePatternRuleModel struct {
+	Pattern types.String `tfsdk:"pattern"`
+	Negate  types.Bool   `tfsdk:"negate"`
 }
 
 // originEmptyRuleModel is the body of a rule that takes no parameters, for
@@ -108,7 +128,15 @@ type originEmptyRuleModel struct{}
 
 // Wire shapes for the parameters object, keyed in camelCase.
 type originPullRequestParameters struct {
-	RequiredApprovingReviewCount *int64 `json:"requiredApprovingReviewCount,omitempty"`
+	RequiredApprovingReviewCount   *int64 `json:"requiredApprovingReviewCount,omitempty"`
+	DismissStaleReviewsOnPush      *bool  `json:"dismissStaleReviewsOnPush,omitempty"`
+	RequireCodeOwnerReview         *bool  `json:"requireCodeOwnerReview,omitempty"`
+	RequireLastPushApproval        *bool  `json:"requireLastPushApproval,omitempty"`
+	RequiredReviewThreadResolution *bool  `json:"requiredReviewThreadResolution,omitempty"`
+}
+
+func (p originPullRequestParameters) empty() bool {
+	return p.RequiredApprovingReviewCount == nil && p.DismissStaleReviewsOnPush == nil && p.RequireCodeOwnerReview == nil && p.RequireLastPushApproval == nil && p.RequiredReviewThreadResolution == nil
 }
 
 type originRequireStatusChecksParameters struct {
@@ -116,35 +144,71 @@ type originRequireStatusChecksParameters struct {
 }
 
 type originRequiredCheckParameters struct {
-	Name  string `json:"name"`
-	AppID string `json:"appId,omitempty"`
+	ActorKind string `json:"actorKind"`
+	ActorID   string `json:"actorId"`
+	GroupKey  string `json:"groupKey"`
+	RunKey    string `json:"runKey,omitempty"`
+	Name      string `json:"name,omitempty"`
+}
+
+type originRefNamePatternParameters struct {
+	Pattern string `json:"pattern"`
+	Negate  *bool  `json:"negate,omitempty"`
 }
 
 func originRuleBlocks() map[string]schema.Block {
 	return map[string]schema.Block{
 		originRuleTypePullRequest: schema.SingleNestedBlock{
-			Description: "Merge rule: require a pull request before merging. Rulesets of kind merge_branch only.",
+			Description: "Merge rule: require a pull request before merging. Every argument is optional; omitted arguments use the Origin default. Rulesets of kind merge_branch only.",
 			Attributes: map[string]schema.Attribute{
 				"required_approving_review_count": schema.Int64Attribute{
 					Optional:    true,
-					Description: "Number of approving reviews required before the pull request can merge. Omit it to use the Origin default.",
+					Description: "Number of approving reviews required before the pull request can merge, from 0 to 50.",
+				},
+				"dismiss_stale_reviews_on_push": schema.BoolAttribute{
+					Optional:    true,
+					Description: "Dismiss existing approvals when new commits are pushed to the pull request.",
+				},
+				"require_code_owner_review": schema.BoolAttribute{
+					Optional:    true,
+					Description: "Require an approving review from a code owner of every changed file.",
+				},
+				"require_last_push_approval": schema.BoolAttribute{
+					Optional:    true,
+					Description: "Require the most recent push to be approved by someone other than the person who pushed it.",
+				},
+				"required_review_thread_resolution": schema.BoolAttribute{
+					Optional:    true,
+					Description: "Require every review thread to be resolved before merging.",
 				},
 			},
 		},
 		originRuleTypeRequireStatusChecks: schema.SingleNestedBlock{
-			Description: "Merge rule: require the listed check runs to pass on the head commit before merging. Rulesets of kind merge_branch only.",
+			Description: "Merge rule: require the listed checks to pass on the head commit before merging. Rulesets of kind merge_branch only.",
 			Blocks: map[string]schema.Block{
 				"required_check": schema.ListNestedBlock{
-					Description: "A check run that must pass. Repeat the block for each required check.",
+					Description: "A check that must pass, identified by the actor that reports it and its group key. Repeat the block for each required check.",
 					NestedObject: schema.NestedBlockObject{
 						Attributes: map[string]schema.Attribute{
-							"name": schema.StringAttribute{
+							"actor_kind": schema.StringAttribute{
 								Required:    true,
-								Description: "Check run name as reported to Origin.",
+								Description: "Kind of actor that reports the check, for example app.",
 							},
-							"app_id": schema.StringAttribute{
+							"actor_id": schema.StringAttribute{
+								Required:    true,
+								Description: "ID of the actor that reports the check, for example an Origin app ID (app_...).",
+							},
+							"group_key": schema.StringAttribute{
+								Required:    true,
+								Description: "Check group key the actor reports under.",
+							},
+							"run_key": schema.StringAttribute{
 								Optional:    true,
-								Description: "Origin app ID (app_...) that must report the check. Omit it to accept the check from any app.",
+								Description: "Specific check run key within the group. Omit it to require the group as a whole.",
+							},
+							"name": schema.StringAttribute{
+								Optional:    true,
+								Description: "Display name of the required check.",
 							},
 						},
 					},
@@ -161,10 +225,26 @@ func originRuleBlocks() map[string]schema.Block {
 			Description: "Push rule: block force pushes to matching refs. Takes no arguments; write `non_fast_forward {}`. Rulesets of kind push_branch, push_tag, or push_repository only.",
 		},
 		originRuleTypeBlockDirectUpdates: schema.SingleNestedBlock{
-			Description: "Push rule: require updates to matching refs to go through a pull request. Takes no arguments; write `block_direct_updates {}`. Rulesets of kind push_branch, push_tag, or push_repository only.",
+			Description: "Push rule: require updates to matching refs to go through a pull request. Takes no arguments; write `block_direct_updates {}`, which stores the rule with Origin's default of blocking direct updates. Rulesets of kind push_branch, push_tag, or push_repository only.",
+		},
+		originRuleTypeBlockMerges: schema.SingleNestedBlock{
+			Description: "Push rule: block pull request merges into matching refs. Takes no arguments; write `block_merges {}`. Rulesets of kind push_branch, push_tag, or push_repository only.",
 		},
 		originRuleTypeRequiredLinearHistory: schema.SingleNestedBlock{
 			Description: "Push rule: block merge commits so matching refs keep a linear history. Takes no arguments; write `required_linear_history {}`. Rulesets of kind push_branch, push_tag, or push_repository only.",
+		},
+		originRuleTypeRefNamePattern: schema.SingleNestedBlock{
+			Description: "Push rule: restrict ref names that can be created or updated. Rulesets of kind push_branch, push_tag, or push_repository only.",
+			Attributes: map[string]schema.Attribute{
+				"pattern": schema.StringAttribute{
+					Optional:    true,
+					Description: "Pattern the ref name is matched against. Required when the ref_name_pattern block is set.",
+				},
+				"negate": schema.BoolAttribute{
+					Optional:    true,
+					Description: "When true, ref names that match the pattern are rejected instead of required. Omit it to use the Origin default.",
+				},
+			},
 		},
 	}
 }
@@ -190,8 +270,14 @@ func (m originRepoRulesetRuleModel) typedBlocks() []string {
 	if m.BlockDirectUpdates != nil {
 		set = append(set, originRuleTypeBlockDirectUpdates)
 	}
+	if m.BlockMerges != nil {
+		set = append(set, originRuleTypeBlockMerges)
+	}
 	if m.RequiredLinearHistory != nil {
 		set = append(set, originRuleTypeRequiredLinearHistory)
+	}
+	if m.RefNamePattern != nil {
+		set = append(set, originRuleTypeRefNamePattern)
 	}
 	return set
 }
@@ -225,20 +311,35 @@ func (m originRepoRulesetRuleModel) validate(name string, kind types.String) err
 	switch ruleType {
 	case originRuleTypePullRequest:
 		count := m.PullRequest.RequiredApprovingReviewCount
-		if !count.IsNull() && !count.IsUnknown() && count.ValueInt64() < 0 {
-			return fmt.Errorf("%s.pull_request.required_approving_review_count must not be negative", name)
+		if !count.IsNull() && !count.IsUnknown() && (count.ValueInt64() < 0 || count.ValueInt64() > maxOriginRequiredApprovingReviews) {
+			return fmt.Errorf("%s.pull_request.required_approving_review_count must be between 0 and %d", name, maxOriginRequiredApprovingReviews)
 		}
 	case originRuleTypeRequireStatusChecks:
 		for i, check := range m.RequireStatusChecks.RequiredChecks {
 			prefix := fmt.Sprintf("%s.require_status_checks.required_check[%d]", name, i)
-			if err := requireNonEmptyUnpadded(check.Name, prefix+".name"); err != nil {
+			if err := requireNonEmptyUnpadded(check.ActorKind, prefix+".actor_kind"); err != nil {
 				return err
 			}
-			if !check.AppID.IsNull() {
-				if err := requireNonEmptyUnpadded(check.AppID, prefix+".app_id"); err != nil {
+			if err := requireNonEmptyUnpadded(check.ActorID, prefix+".actor_id"); err != nil {
+				return err
+			}
+			if err := requireNonEmptyUnpadded(check.GroupKey, prefix+".group_key"); err != nil {
+				return err
+			}
+			if !check.RunKey.IsNull() {
+				if err := requireNonEmptyUnpadded(check.RunKey, prefix+".run_key"); err != nil {
 					return err
 				}
 			}
+			if !check.Name.IsNull() {
+				if err := requireNonEmptyUnpadded(check.Name, prefix+".name"); err != nil {
+					return err
+				}
+			}
+		}
+	case originRuleTypeRefNamePattern:
+		if err := requireNonEmptyUnpadded(m.RefNamePattern.Pattern, name+".ref_name_pattern.pattern"); err != nil {
+			return err
 		}
 	}
 	return nil
@@ -254,12 +355,14 @@ func (m originRepoRulesetRuleModel) parameters() (json.RawMessage, error) {
 	var wire any
 	switch ruleType {
 	case originRuleTypePullRequest:
-		params := originPullRequestParameters{}
-		if count := m.PullRequest.RequiredApprovingReviewCount; !count.IsNull() && !count.IsUnknown() {
-			value := count.ValueInt64()
-			params.RequiredApprovingReviewCount = &value
+		params := originPullRequestParameters{
+			RequiredApprovingReviewCount:   int64Pointer(m.PullRequest.RequiredApprovingReviewCount),
+			DismissStaleReviewsOnPush:      boolPointer(m.PullRequest.DismissStaleReviewsOnPush),
+			RequireCodeOwnerReview:         boolPointer(m.PullRequest.RequireCodeOwnerReview),
+			RequireLastPushApproval:        boolPointer(m.PullRequest.RequireLastPushApproval),
+			RequiredReviewThreadResolution: boolPointer(m.PullRequest.RequiredReviewThreadResolution),
 		}
-		if params.RequiredApprovingReviewCount == nil {
+		if params.empty() {
 			return nil, nil
 		}
 		wire = params
@@ -268,15 +371,26 @@ func (m originRepoRulesetRuleModel) parameters() (json.RawMessage, error) {
 			RequiredChecks: make([]originRequiredCheckParameters, 0, len(m.RequireStatusChecks.RequiredChecks)),
 		}
 		for i, check := range m.RequireStatusChecks.RequiredChecks {
-			if check.Name.IsUnknown() || check.AppID.IsUnknown() {
+			if check.ActorKind.IsUnknown() || check.ActorID.IsUnknown() || check.GroupKey.IsUnknown() || check.RunKey.IsUnknown() || check.Name.IsUnknown() {
 				return nil, fmt.Errorf("require_status_checks.required_check[%d] is incomplete", i)
 			}
 			params.RequiredChecks = append(params.RequiredChecks, originRequiredCheckParameters{
-				Name:  check.Name.ValueString(),
-				AppID: check.AppID.ValueString(),
+				ActorKind: check.ActorKind.ValueString(),
+				ActorID:   check.ActorID.ValueString(),
+				GroupKey:  check.GroupKey.ValueString(),
+				RunKey:    check.RunKey.ValueString(),
+				Name:      check.Name.ValueString(),
 			})
 		}
 		wire = params
+	case originRuleTypeRefNamePattern:
+		if m.RefNamePattern.Pattern.IsUnknown() || m.RefNamePattern.Negate.IsUnknown() {
+			return nil, fmt.Errorf("ref_name_pattern is incomplete")
+		}
+		wire = originRefNamePatternParameters{
+			Pattern: m.RefNamePattern.Pattern.ValueString(),
+			Negate:  boolPointer(m.RefNamePattern.Negate),
+		}
 	default:
 		return nil, nil
 	}
@@ -285,6 +399,36 @@ func (m originRepoRulesetRuleModel) parameters() (json.RawMessage, error) {
 		return nil, fmt.Errorf("encoding %s parameters: %w", ruleType, err)
 	}
 	return json.RawMessage(encoded), nil
+}
+
+func int64Pointer(value types.Int64) *int64 {
+	if value.IsNull() || value.IsUnknown() {
+		return nil
+	}
+	v := value.ValueInt64()
+	return &v
+}
+
+func boolPointer(value types.Bool) *bool {
+	if value.IsNull() || value.IsUnknown() {
+		return nil
+	}
+	v := value.ValueBool()
+	return &v
+}
+
+func int64FromPointer(value *int64) types.Int64 {
+	if value == nil {
+		return types.Int64Null()
+	}
+	return types.Int64Value(*value)
+}
+
+func boolFromPointer(value *bool) types.Bool {
+	if value == nil {
+		return types.BoolNull()
+	}
+	return types.BoolValue(*value)
 }
 
 // ruleModelFromAPI decodes an Origin rule into its typed block.
@@ -303,11 +447,13 @@ func ruleModelFromAPI(rule originRulesetRule) (originRepoRulesetRuleModel, error
 		if err := json.Unmarshal(raw, &params); err != nil {
 			return originRepoRulesetRuleModel{}, fmt.Errorf("rule %q parameters: %w", rule.ID, err)
 		}
-		block := &originPullRequestRuleModel{RequiredApprovingReviewCount: types.Int64Null()}
-		if params.RequiredApprovingReviewCount != nil {
-			block.RequiredApprovingReviewCount = types.Int64Value(*params.RequiredApprovingReviewCount)
+		model.PullRequest = &originPullRequestRuleModel{
+			RequiredApprovingReviewCount:   int64FromPointer(params.RequiredApprovingReviewCount),
+			DismissStaleReviewsOnPush:      boolFromPointer(params.DismissStaleReviewsOnPush),
+			RequireCodeOwnerReview:         boolFromPointer(params.RequireCodeOwnerReview),
+			RequireLastPushApproval:        boolFromPointer(params.RequireLastPushApproval),
+			RequiredReviewThreadResolution: boolFromPointer(params.RequiredReviewThreadResolution),
 		}
-		model.PullRequest = block
 	case originRuleTypeRequireStatusChecks:
 		var params originRequireStatusChecksParameters
 		if err := json.Unmarshal(raw, &params); err != nil {
@@ -317,16 +463,24 @@ func ruleModelFromAPI(rule originRulesetRule) (originRepoRulesetRuleModel, error
 			RequiredChecks: make([]originRequiredCheckModel, 0, len(params.RequiredChecks)),
 		}
 		for _, check := range params.RequiredChecks {
-			appID := types.StringNull()
-			if check.AppID != "" {
-				appID = types.StringValue(check.AppID)
-			}
 			block.RequiredChecks = append(block.RequiredChecks, originRequiredCheckModel{
-				Name:  types.StringValue(check.Name),
-				AppID: appID,
+				ActorKind: types.StringValue(check.ActorKind),
+				ActorID:   types.StringValue(check.ActorID),
+				GroupKey:  types.StringValue(check.GroupKey),
+				RunKey:    stringOrNull(check.RunKey),
+				Name:      stringOrNull(check.Name),
 			})
 		}
 		model.RequireStatusChecks = block
+	case originRuleTypeRefNamePattern:
+		var params originRefNamePatternParameters
+		if err := json.Unmarshal(raw, &params); err != nil {
+			return originRepoRulesetRuleModel{}, fmt.Errorf("rule %q parameters: %w", rule.ID, err)
+		}
+		model.RefNamePattern = &originRefNamePatternRuleModel{
+			Pattern: types.StringValue(params.Pattern),
+			Negate:  boolFromPointer(params.Negate),
+		}
 	case originRuleTypeRequireBranchUpToDate:
 		model.RequireBranchUpToDate = &originEmptyRuleModel{}
 	case originRuleTypeDeletion:
@@ -335,6 +489,8 @@ func ruleModelFromAPI(rule originRulesetRule) (originRepoRulesetRuleModel, error
 		model.NonFastForward = &originEmptyRuleModel{}
 	case originRuleTypeBlockDirectUpdates:
 		model.BlockDirectUpdates = &originEmptyRuleModel{}
+	case originRuleTypeBlockMerges:
+		model.BlockMerges = &originEmptyRuleModel{}
 	case originRuleTypeRequiredLinearHistory:
 		model.RequiredLinearHistory = &originEmptyRuleModel{}
 	default:
@@ -360,14 +516,41 @@ func ruleStateFromAPI(want originRepoRulesetRuleModel, rule originRulesetRule, a
 	merged := fromAPI
 	if want.PullRequest != nil && fromAPI.PullRequest != nil {
 		block := *fromAPI.PullRequest
-		if want.PullRequest.RequiredApprovingReviewCount.IsNull() {
-			block.RequiredApprovingReviewCount = types.Int64Null()
-		} else if block.RequiredApprovingReviewCount.IsNull() {
-			block.RequiredApprovingReviewCount = want.PullRequest.RequiredApprovingReviewCount
-		}
+		block.RequiredApprovingReviewCount = mergeInt64(want.PullRequest.RequiredApprovingReviewCount, block.RequiredApprovingReviewCount)
+		block.DismissStaleReviewsOnPush = mergeBool(want.PullRequest.DismissStaleReviewsOnPush, block.DismissStaleReviewsOnPush)
+		block.RequireCodeOwnerReview = mergeBool(want.PullRequest.RequireCodeOwnerReview, block.RequireCodeOwnerReview)
+		block.RequireLastPushApproval = mergeBool(want.PullRequest.RequireLastPushApproval, block.RequireLastPushApproval)
+		block.RequiredReviewThreadResolution = mergeBool(want.PullRequest.RequiredReviewThreadResolution, block.RequiredReviewThreadResolution)
 		merged.PullRequest = &block
 	}
+	if want.RefNamePattern != nil && fromAPI.RefNamePattern != nil {
+		block := *fromAPI.RefNamePattern
+		block.Negate = mergeBool(want.RefNamePattern.Negate, block.Negate)
+		merged.RefNamePattern = &block
+	}
 	return merged, nil
+}
+
+// mergeInt64 applies the refresh rule for one optional attribute: unset in
+// the prior state stays unset; otherwise the Origin value wins when present.
+func mergeInt64(prior, api types.Int64) types.Int64 {
+	if prior.IsNull() {
+		return types.Int64Null()
+	}
+	if api.IsNull() {
+		return prior
+	}
+	return api
+}
+
+func mergeBool(prior, api types.Bool) types.Bool {
+	if prior.IsNull() {
+		return types.BoolNull()
+	}
+	if api.IsNull() {
+		return prior
+	}
+	return api
 }
 
 // ruleMatchesAPI reports whether an Origin rule has the same type as the
