@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -46,12 +45,6 @@ type originRepoRulesetModel struct {
 	DeletionProtection types.Bool                     `tfsdk:"deletion_protection"`
 	AllowUnenforced    types.Bool                     `tfsdk:"allow_unenforced"`
 	AllowBroadBypass   types.Bool                     `tfsdk:"allow_broad_bypass"`
-}
-
-type originRepoRulesetRuleModel struct {
-	ID         types.String    `tfsdk:"id"`
-	RuleType   types.String    `tfsdk:"rule_type"`
-	Parameters jsonObjectValue `tfsdk:"parameters"`
 }
 
 type originRepoRulesetBypassModel struct {
@@ -143,89 +136,6 @@ func (r *originRepoRulesetResource) Schema(_ context.Context, _ resource.SchemaR
 				Default:     listdefault.StaticValue(emptyStringList()),
 				Description: "Ref name patterns this ruleset excludes. Same pattern language and 64-entry cap as included_ref_names.",
 			},
-			"rule": schema.ListNestedAttribute{
-				Required:    true,
-				Description: "Protection rules in this ruleset. Must contain at least one rule, unless allow_unenforced is true and this is an explicit empty list. At most 20 entries. Update replaces the full list; a rule omitted from config is removed.",
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{
-							Computed:    true,
-							Description: "Origin-assigned rule ID.",
-						},
-						"rule_type": schema.StringAttribute{
-							Required:    true,
-							Description: "Rule type, for example pull_request, require_status_checks, require_branch_up_to_date, deletion, or non_fast_forward.",
-						},
-						"parameters": schema.StringAttribute{
-							CustomType:  jsonObjectType{},
-							Optional:    true,
-							Description: "JSON object of type-specific parameters. Use jsonencode(). Omit it to leave parameters unset.",
-						},
-					},
-				},
-			},
-			"bypass_actor": schema.ListNestedAttribute{
-				Optional:    true,
-				Computed:    true,
-				Default:     listdefault.StaticValue(emptyRulesetBypassList()),
-				Description: "Principals that may bypass this ruleset. At most 15 entries. Set exactly one of user, team, app, or origin_role. Update replaces the full list.",
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{
-							Computed:    true,
-							Description: "Origin-assigned bypass actor ID.",
-						},
-						"bypass_mode": schema.StringAttribute{
-							Required:    true,
-							Description: "When the bypass applies: always, or pull_request_only.",
-						},
-						"user": schema.SingleNestedAttribute{
-							Optional:    true,
-							Description: "Bypass a user principal.",
-							Attributes: map[string]schema.Attribute{
-								"id": schema.StringAttribute{
-									Required:    true,
-									Description: "User actor ID (act_...).",
-								},
-							},
-						},
-						"team": schema.SingleNestedAttribute{
-							Optional:    true,
-							Description: "Bypass a team principal, identified by immutable public IDs rather than slugs.",
-							Attributes: map[string]schema.Attribute{
-								"organization_public_id": schema.StringAttribute{
-									Required:    true,
-									Description: "Organization public ID.",
-								},
-								"group_public_id": schema.StringAttribute{
-									Required:    true,
-									Description: "Group public ID.",
-								},
-							},
-						},
-						"app": schema.SingleNestedAttribute{
-							Optional:    true,
-							Description: "Bypass an Origin app principal.",
-							Attributes: map[string]schema.Attribute{
-								"id": schema.StringAttribute{
-									Required:    true,
-									Description: "App ID (app_...).",
-								},
-							},
-						},
-						"origin_role": schema.SingleNestedAttribute{
-							Optional:    true,
-							Description: "Bypass holders of a policy-backed Origin role.",
-							Attributes: map[string]schema.Attribute{
-								"role": schema.StringAttribute{
-									Required:    true,
-									Description: "Role: namespace_admin, repository_admin, or repository_write. repository_write applies to every principal with write access and requires allow_broad_bypass.",
-								},
-							},
-						},
-					},
-				},
-			},
 			"deletion_protection": schema.BoolAttribute{
 				Optional:    true,
 				Computed:    true,
@@ -243,6 +153,77 @@ func (r *originRepoRulesetResource) Schema(_ context.Context, _ resource.SchemaR
 				Computed:    true,
 				Default:     booldefault.StaticBool(false),
 				Description: "Must be true to bypass this ruleset for origin_role repository_write, which applies to every principal with write access. Specific user, team, app, and admin-role bypasses do not require this.",
+			},
+		},
+		Blocks: map[string]schema.Block{
+			"rule": schema.ListNestedBlock{
+				Description: "Protection rules in this ruleset. Each rule block sets exactly one typed block: pull_request, require_status_checks, require_branch_up_to_date, deletion, non_fast_forward, block_direct_updates, or required_linear_history. Merge rules require kind merge_branch; push rules require a push_* kind. Must contain at least one rule, unless allow_unenforced is true. At most 20 entries. Update replaces the full list; a rule omitted from config is removed.",
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"id": schema.StringAttribute{
+							Computed:    true,
+							Description: "Origin-assigned rule ID.",
+						},
+					},
+					Blocks: originRuleBlocks(),
+				},
+			},
+			"bypass_actor": schema.ListNestedBlock{
+				Description: "Principals that may bypass this ruleset. At most 15 entries. Set exactly one of user, team, app, or origin_role. Update replaces the full list.",
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"id": schema.StringAttribute{
+							Computed:    true,
+							Description: "Origin-assigned bypass actor ID.",
+						},
+						"bypass_mode": schema.StringAttribute{
+							Required:    true,
+							Description: "When the bypass applies: always, or pull_request_only.",
+						},
+					},
+					Blocks: map[string]schema.Block{
+						"user": schema.SingleNestedBlock{
+							Description: "Bypass a user principal.",
+							Attributes: map[string]schema.Attribute{
+								"id": schema.StringAttribute{
+									Required:    true,
+									Description: "User actor ID (act_...).",
+								},
+							},
+						},
+						"team": schema.SingleNestedBlock{
+							Description: "Bypass a team principal, identified by immutable public IDs rather than slugs.",
+							Attributes: map[string]schema.Attribute{
+								"organization_public_id": schema.StringAttribute{
+									Required:    true,
+									Description: "Organization public ID.",
+								},
+								"group_public_id": schema.StringAttribute{
+									Required:    true,
+									Description: "Group public ID.",
+								},
+							},
+						},
+						"app": schema.SingleNestedBlock{
+							Description: "Bypass an Origin app principal.",
+							Attributes: map[string]schema.Attribute{
+								"id": schema.StringAttribute{
+									Required:    true,
+									Description: "App ID (app_...).",
+								},
+							},
+						},
+						"origin_role": schema.SingleNestedBlock{
+							Description: "Bypass holders of a policy-backed Origin role.",
+							Attributes: map[string]schema.Attribute{
+								"role": schema.StringAttribute{
+									Required:    true,
+									Description: "Role: namespace_admin, repository_admin, or repository_write. repository_write applies to every principal with write access and requires allow_broad_bypass.",
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 	}
@@ -455,7 +436,7 @@ func validateOriginRulesetModel(ctx context.Context, model originRepoRulesetMode
 		return fmt.Errorf("bypass_actor has %d entries; the Origin API allows at most %d", len(model.BypassActors), maxOriginBypassActors)
 	}
 	for i, rule := range model.Rules {
-		if err := validateOriginRule(i, rule); err != nil {
+		if err := rule.validate(fmt.Sprintf("rule[%d]", i), model.Kind); err != nil {
 			return err
 		}
 	}
@@ -499,7 +480,7 @@ func rulesetUnenforced(model originRepoRulesetModel, includedKnown bool, include
 	if !model.Enforcement.IsNull() && !model.Enforcement.IsUnknown() && model.Enforcement.ValueString() == originRulesetEnforcementDisabled {
 		return "enforcement is disabled", true
 	}
-	if rulesKnown(model.Rules) && len(model.Rules) == 0 {
+	if len(model.Rules) == 0 {
 		return "rule is empty", true
 	}
 	if excludedKnown && containsRefToken(excluded, "~ALL") {
@@ -509,15 +490,6 @@ func rulesetUnenforced(model originRepoRulesetModel, includedKnown bool, include
 		return "included_ref_names matches no refs after excluded_ref_names", true
 	}
 	return "", false
-}
-
-func rulesKnown(rules []originRepoRulesetRuleModel) bool {
-	for _, rule := range rules {
-		if rule.RuleType.IsUnknown() {
-			return false
-		}
-	}
-	return true
 }
 
 func refsStillCovered(included, excluded []string) bool {
@@ -596,22 +568,6 @@ func knownStringChanged(state, plan types.String) bool {
 		return false
 	}
 	return state.ValueString() != plan.ValueString()
-}
-
-func validateOriginRule(index int, rule originRepoRulesetRuleModel) error {
-	name := fmt.Sprintf("rule[%d]", index)
-	if !rule.RuleType.IsUnknown() {
-		if err := requireNonEmptyUnpadded(rule.RuleType, name+".rule_type"); err != nil {
-			return err
-		}
-	}
-	if rule.Parameters.IsUnknown() {
-		return nil
-	}
-	if _, err := jsonObjectRaw(rule.Parameters); err != nil {
-		return fmt.Errorf("%s.parameters: %w", name, err)
-	}
-	return nil
 }
 
 func validateOriginBypassActor(index int, actor originRepoRulesetBypassModel) error {
@@ -732,15 +688,16 @@ func rulesetWriteFromModel(ctx context.Context, model originRepoRulesetModel) (o
 	}
 	rules := make([]originRulesetRuleInput, 0, len(model.Rules))
 	for i, rule := range model.Rules {
-		if rule.RuleType.IsUnknown() {
-			return originRulesetWrite{}, fmt.Errorf("rule[%d].rule_type is incomplete", i)
-		}
-		parameters, err := jsonObjectRaw(rule.Parameters)
+		ruleType, err := rule.ruleType()
 		if err != nil {
-			return originRulesetWrite{}, fmt.Errorf("rule[%d].parameters: %w", i, err)
+			return originRulesetWrite{}, fmt.Errorf("rule[%d] %w", i, err)
+		}
+		parameters, err := rule.parameters()
+		if err != nil {
+			return originRulesetWrite{}, fmt.Errorf("rule[%d].%w", i, err)
 		}
 		rules = append(rules, originRulesetRuleInput{
-			RuleType:   rule.RuleType.ValueString(),
+			RuleType:   ruleType,
 			Parameters: parameters,
 		})
 	}
@@ -843,12 +800,13 @@ func alignRules(prior []originRepoRulesetRuleModel, api []originRulesetRule, app
 		match := findMatchingRule(want, api, used)
 		if match < 0 {
 			if apply {
-				return nil, fmt.Errorf("Origin API omitted requested rule[%d] %s", i, want.RuleType.ValueString())
+				ruleType, _ := want.ruleType()
+				return nil, fmt.Errorf("Origin API omitted requested rule[%d] %s", i, ruleType)
 			}
 			continue
 		}
 		used[match] = true
-		mapped, err := ruleStateFromAPI(want, api[match], true)
+		mapped, err := ruleStateFromAPI(want, api[match], apply)
 		if err != nil {
 			return nil, err
 		}
@@ -861,7 +819,7 @@ func alignRules(prior []originRepoRulesetRuleModel, api []originRulesetRule, app
 		if apply {
 			return nil, fmt.Errorf("Origin API returned unrequested rule %q", rule.ID)
 		}
-		mapped, err := ruleFromAPI(rule)
+		mapped, err := ruleModelFromAPI(rule)
 		if err != nil {
 			return nil, err
 		}
@@ -870,26 +828,20 @@ func alignRules(prior []originRepoRulesetRuleModel, api []originRulesetRule, app
 	return out, nil
 }
 
+// findMatchingRule picks the Origin rule for a configured rule: the first
+// unused rule of the same type whose parameters carry the configured values,
+// falling back to the first unused rule of the same type.
 func findMatchingRule(want originRepoRulesetRuleModel, api []originRulesetRule, used []bool) int {
-	if want.RuleType.IsNull() || want.RuleType.IsUnknown() {
+	wantType, err := want.ruleType()
+	if err != nil {
 		return -1
 	}
-	wantType := want.RuleType.ValueString()
 	fallback := -1
 	for i, rule := range api {
 		if used[i] || rule.RuleType != wantType {
 			continue
 		}
-		if want.Parameters.IsNull() || want.Parameters.IsUnknown() {
-			if apiParametersEmpty(rule.Parameters) {
-				return i
-			}
-			if fallback < 0 {
-				fallback = i
-			}
-			continue
-		}
-		if parametersSemanticallyEqual(want.Parameters, rule.Parameters) {
+		if ruleMatchesAPI(want, rule) {
 			return i
 		}
 		if fallback < 0 {
@@ -897,29 +849,6 @@ func findMatchingRule(want originRepoRulesetRuleModel, api []originRulesetRule, 
 		}
 	}
 	return fallback
-}
-
-func ruleStateFromAPI(want originRepoRulesetRuleModel, rule originRulesetRule, havePrior bool) (originRepoRulesetRuleModel, error) {
-	if strings.TrimSpace(rule.ID) == "" {
-		return originRepoRulesetRuleModel{}, fmt.Errorf("Origin API returned a rule without an id")
-	}
-	parameters, err := jsonObjectFromRaw(rule.Parameters, want.Parameters, havePrior)
-	if err != nil {
-		return originRepoRulesetRuleModel{}, fmt.Errorf("rule %q parameters: %w", rule.ID, err)
-	}
-	ruleType := types.StringValue(rule.RuleType)
-	if havePrior && !want.RuleType.IsNull() && !want.RuleType.IsUnknown() {
-		ruleType = want.RuleType
-	}
-	return originRepoRulesetRuleModel{
-		ID:         types.StringValue(rule.ID),
-		RuleType:   ruleType,
-		Parameters: parameters,
-	}, nil
-}
-
-func ruleFromAPI(rule originRulesetRule) (originRepoRulesetRuleModel, error) {
-	return ruleStateFromAPI(originRepoRulesetRuleModel{}, rule, false)
 }
 
 func alignBypassActors(prior []originRepoRulesetBypassModel, api []originRulesetBypassActor, apply bool) ([]originRepoRulesetBypassModel, error) {
@@ -1087,20 +1016,6 @@ func bypassFromAPI(actor originRulesetBypassActor) (originRepoRulesetBypassModel
 	return mapped, nil
 }
 
-func apiParametersEmpty(raw json.RawMessage) bool {
-	canonical, err := canonicalJSONObject(string(raw))
-	return err == nil && canonical == "{}"
-}
-
-func parametersSemanticallyEqual(prior jsonObjectValue, raw json.RawMessage) bool {
-	canonical, err := canonicalJSONObject(string(raw))
-	if err != nil {
-		return false
-	}
-	priorCanonical, err := canonicalJSONObject(prior.ValueString())
-	return err == nil && priorCanonical == canonical
-}
-
 func stringList(ctx context.Context, value types.List) ([]string, bool, error) {
 	if value.IsNull() || value.IsUnknown() {
 		return []string{}, !value.IsUnknown(), nil
@@ -1129,28 +1044,4 @@ func stringListValue(ctx context.Context, values []string) (types.List, error) {
 
 func emptyStringList() types.List {
 	return types.ListValueMust(types.StringType, []attr.Value{})
-}
-
-func emptyRulesetBypassList() types.List {
-	return types.ListValueMust(types.ObjectType{AttrTypes: originRulesetBypassAttrTypes()}, []attr.Value{})
-}
-
-func originRulesetBypassAttrTypes() map[string]attr.Type {
-	return map[string]attr.Type{
-		"id":          types.StringType,
-		"bypass_mode": types.StringType,
-		"user": types.ObjectType{AttrTypes: map[string]attr.Type{
-			"id": types.StringType,
-		}},
-		"team": types.ObjectType{AttrTypes: map[string]attr.Type{
-			"organization_public_id": types.StringType,
-			"group_public_id":        types.StringType,
-		}},
-		"app": types.ObjectType{AttrTypes: map[string]attr.Type{
-			"id": types.StringType,
-		}},
-		"origin_role": types.ObjectType{AttrTypes: map[string]attr.Type{
-			"role": types.StringType,
-		}},
-	}
 }
