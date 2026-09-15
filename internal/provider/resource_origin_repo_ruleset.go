@@ -186,8 +186,8 @@ func (r *originRepoRulesetResource) Schema(_ context.Context, _ resource.SchemaR
 							Description: "Bypass a user principal.",
 							Attributes: map[string]schema.Attribute{
 								"id": schema.StringAttribute{
-									Required:    true,
-									Description: "User actor ID (act_...).",
+									Optional:    true,
+									Description: "User actor ID (act_...). Required when the user block is set.",
 								},
 							},
 						},
@@ -195,12 +195,12 @@ func (r *originRepoRulesetResource) Schema(_ context.Context, _ resource.SchemaR
 							Description: "Bypass a team principal, identified by immutable public IDs rather than slugs.",
 							Attributes: map[string]schema.Attribute{
 								"organization_public_id": schema.StringAttribute{
-									Required:    true,
-									Description: "Organization public ID.",
+									Optional:    true,
+									Description: "Organization public ID. Required when the team block is set.",
 								},
 								"group_public_id": schema.StringAttribute{
-									Required:    true,
-									Description: "Group public ID.",
+									Optional:    true,
+									Description: "Group public ID. Required when the team block is set.",
 								},
 							},
 						},
@@ -208,8 +208,8 @@ func (r *originRepoRulesetResource) Schema(_ context.Context, _ resource.SchemaR
 							Description: "Bypass an Origin app principal.",
 							Attributes: map[string]schema.Attribute{
 								"id": schema.StringAttribute{
-									Required:    true,
-									Description: "App ID (app_...).",
+									Optional:    true,
+									Description: "App ID (app_...). Required when the app block is set.",
 								},
 							},
 						},
@@ -217,8 +217,8 @@ func (r *originRepoRulesetResource) Schema(_ context.Context, _ resource.SchemaR
 							Description: "Bypass holders of a policy-backed Origin role.",
 							Attributes: map[string]schema.Attribute{
 								"role": schema.StringAttribute{
-									Required:    true,
-									Description: "Role: namespace_admin, repository_admin, or repository_write. repository_write applies to every principal with write access and requires allow_broad_bypass.",
+									Optional:    true,
+									Description: "Required when the origin_role block is set. Role: namespace_admin, repository_admin, or repository_write. repository_write applies to every principal with write access and requires allow_broad_bypass.",
 								},
 							},
 						},
