@@ -11,14 +11,20 @@ resource "cursor_origin_repo_ruleset" "main" {
 
   rule {
     pull_request {
-      required_approving_review_count = 1
+      required_approving_review_count   = 1
+      dismiss_stale_reviews_on_push     = true
+      required_review_thread_resolution = true
     }
   }
 
   rule {
     require_status_checks {
       required_check {
-        name = "ci"
+        actor_kind = "app"
+        actor_id   = "app_01k2ja2000e0080000000000c1"
+        group_key  = "ci"
+        run_key    = "test"
+        name       = "Test"
       }
     }
   }
@@ -54,5 +60,25 @@ resource "cursor_origin_repo_ruleset" "protect_main" {
 
   rule {
     block_direct_updates {}
+  }
+}
+
+resource "cursor_origin_repo_ruleset" "release_tags" {
+  owner       = "acme"
+  repo        = "rocket"
+  name        = "release-tags"
+  enforcement = "active"
+  kind        = "push_tag"
+
+  included_ref_names = ["refs/tags/*"]
+
+  rule {
+    ref_name_pattern {
+      pattern = "refs/tags/v*"
+    }
+  }
+
+  rule {
+    block_merges {}
   }
 }

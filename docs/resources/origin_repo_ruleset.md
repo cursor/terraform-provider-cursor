@@ -26,14 +26,20 @@ resource "cursor_origin_repo_ruleset" "main" {
 
   rule {
     pull_request {
-      required_approving_review_count = 1
+      required_approving_review_count   = 1
+      dismiss_stale_reviews_on_push     = true
+      required_review_thread_resolution = true
     }
   }
 
   rule {
     require_status_checks {
       required_check {
-        name = "ci"
+        actor_kind = "app"
+        actor_id   = "app_01k2ja2000e0080000000000c1"
+        group_key  = "ci"
+        run_key    = "test"
+        name       = "Test"
       }
     }
   }
@@ -69,6 +75,26 @@ resource "cursor_origin_repo_ruleset" "protect_main" {
 
   rule {
     block_direct_updates {}
+  }
+}
+
+resource "cursor_origin_repo_ruleset" "release_tags" {
+  owner       = "acme"
+  repo        = "rocket"
+  name        = "release-tags"
+  enforcement = "active"
+  kind        = "push_tag"
+
+  included_ref_names = ["refs/tags/*"]
+
+  rule {
+    ref_name_pattern {
+      pattern = "refs/tags/v*"
+    }
+  }
+
+  rule {
+    block_merges {}
   }
 }
 ```
@@ -156,12 +182,14 @@ Optional:
 
 Optional:
 
-- `block_direct_updates` (Block, Optional) Push rule: require updates to matching refs to go through a pull request. Takes no arguments; write `block_direct_updates {}`. Rulesets of kind push_branch, push_tag, or push_repository only. (see [below for nested schema](#nestedblock--rule--block_direct_updates))
+- `block_direct_updates` (Block, Optional) Push rule: require updates to matching refs to go through a pull request. Takes no arguments; write `block_direct_updates {}`, which stores the rule with Origin's default of blocking direct updates. Rulesets of kind push_branch, push_tag, or push_repository only. (see [below for nested schema](#nestedblock--rule--block_direct_updates))
+- `block_merges` (Block, Optional) Push rule: block pull request merges into matching refs. Takes no arguments; write `block_merges {}`. Rulesets of kind push_branch, push_tag, or push_repository only. (see [below for nested schema](#nestedblock--rule--block_merges))
 - `deletion` (Block, Optional) Push rule: block deleting matching refs. Takes no arguments; write `deletion {}`. Rulesets of kind push_branch, push_tag, or push_repository only. (see [below for nested schema](#nestedblock--rule--deletion))
 - `non_fast_forward` (Block, Optional) Push rule: block force pushes to matching refs. Takes no arguments; write `non_fast_forward {}`. Rulesets of kind push_branch, push_tag, or push_repository only. (see [below for nested schema](#nestedblock--rule--non_fast_forward))
-- `pull_request` (Block, Optional) Merge rule: require a pull request before merging. Rulesets of kind merge_branch only. (see [below for nested schema](#nestedblock--rule--pull_request))
+- `pull_request` (Block, Optional) Merge rule: require a pull request before merging. Every argument is optional; omitted arguments use the Origin default. Rulesets of kind merge_branch only. (see [below for nested schema](#nestedblock--rule--pull_request))
+- `ref_name_pattern` (Block, Optional) Push rule: restrict ref names that can be created or updated. Rulesets of kind push_branch, push_tag, or push_repository only. (see [below for nested schema](#nestedblock--rule--ref_name_pattern))
 - `require_branch_up_to_date` (Block, Optional) Merge rule: require the pull request head to be up to date with the base branch before merging. Takes no arguments; write `require_branch_up_to_date {}`. Rulesets of kind merge_branch only. (see [below for nested schema](#nestedblock--rule--require_branch_up_to_date))
-- `require_status_checks` (Block, Optional) Merge rule: require the listed check runs to pass on the head commit before merging. Rulesets of kind merge_branch only. (see [below for nested schema](#nestedblock--rule--require_status_checks))
+- `require_status_checks` (Block, Optional) Merge rule: require the listed checks to pass on the head commit before merging. Rulesets of kind merge_branch only. (see [below for nested schema](#nestedblock--rule--require_status_checks))
 - `required_linear_history` (Block, Optional) Push rule: block merge commits so matching refs keep a linear history. Takes no arguments; write `required_linear_history {}`. Rulesets of kind push_branch, push_tag, or push_repository only. (see [below for nested schema](#nestedblock--rule--required_linear_history))
 
 Read-Only:
@@ -170,6 +198,10 @@ Read-Only:
 
 <a id="nestedblock--rule--block_direct_updates"></a>
 ### Nested Schema for `rule.block_direct_updates`
+
+
+<a id="nestedblock--rule--block_merges"></a>
+### Nested Schema for `rule.block_merges`
 
 
 <a id="nestedblock--rule--deletion"></a>
@@ -185,7 +217,20 @@ Read-Only:
 
 Optional:
 
-- `required_approving_review_count` (Number) Number of approving reviews required before the pull request can merge. Omit it to use the Origin default.
+- `dismiss_stale_reviews_on_push` (Boolean) Dismiss existing approvals when new commits are pushed to the pull request.
+- `require_code_owner_review` (Boolean) Require an approving review from a code owner of every changed file.
+- `require_last_push_approval` (Boolean) Require the most recent push to be approved by someone other than the person who pushed it.
+- `required_approving_review_count` (Number) Number of approving reviews required before the pull request can merge, from 0 to 50.
+- `required_review_thread_resolution` (Boolean) Require every review thread to be resolved before merging.
+
+
+<a id="nestedblock--rule--ref_name_pattern"></a>
+### Nested Schema for `rule.ref_name_pattern`
+
+Optional:
+
+- `negate` (Boolean) When true, ref names that match the pattern are rejected instead of required. Omit it to use the Origin default.
+- `pattern` (String) Pattern the ref name is matched against. Required when the ref_name_pattern block is set.
 
 
 <a id="nestedblock--rule--require_branch_up_to_date"></a>
@@ -197,18 +242,21 @@ Optional:
 
 Optional:
 
-- `required_check` (Block List) A check run that must pass. Repeat the block for each required check. (see [below for nested schema](#nestedblock--rule--require_status_checks--required_check))
+- `required_check` (Block List) A check that must pass, identified by the actor that reports it and its group key. Repeat the block for each required check. (see [below for nested schema](#nestedblock--rule--require_status_checks--required_check))
 
 <a id="nestedblock--rule--require_status_checks--required_check"></a>
 ### Nested Schema for `rule.require_status_checks.required_check`
 
 Required:
 
-- `name` (String) Check run name as reported to Origin.
+- `actor_id` (String) ID of the actor that reports the check, for example an Origin app ID (app_...).
+- `actor_kind` (String) Kind of actor that reports the check, for example app.
+- `group_key` (String) Check group key the actor reports under.
 
 Optional:
 
-- `app_id` (String) Origin app ID (app_...) that must report the check. Omit it to accept the check from any app.
+- `name` (String) Display name of the required check.
+- `run_key` (String) Specific check run key within the group. Omit it to require the group as a whole.
 
 
 

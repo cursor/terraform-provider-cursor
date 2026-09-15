@@ -102,14 +102,16 @@ resource "cursor_origin_repo_ruleset" "main" {
   rule {
     require_status_checks {
       required_check {
-        name = "ci"
+        actor_kind = "app"
+        actor_id   = "app_01k2ja2000e0080000000000c1"
+        group_key  = "ci"
       }
     }
   }
 }
 ```
 
-Merge rules (`pull_request`, `require_status_checks`, `require_branch_up_to_date`) apply to `kind = "merge_branch"`. Push rules (`deletion`, `non_fast_forward`, `block_direct_updates`, `required_linear_history`) apply to the `push_branch`, `push_tag`, and `push_repository` kinds and take no arguments, for example `rule { deletion {} }`.
+Merge rules (`pull_request`, `require_status_checks`, `require_branch_up_to_date`) apply to `kind = "merge_branch"`. Push rules apply to the `push_branch`, `push_tag`, and `push_repository` kinds: `deletion`, `non_fast_forward`, `block_direct_updates`, `block_merges`, and `required_linear_history` take no arguments, for example `rule { deletion {} }`, and `ref_name_pattern { pattern = "refs/tags/v*" }` restricts ref names (set `negate = true` to reject matches instead).
 
 ## Development
 
