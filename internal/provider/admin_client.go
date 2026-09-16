@@ -49,6 +49,8 @@ type adminTeamMember struct {
 	PublicID string `json:"publicId"`
 	Email    string `json:"email"`
 	Name     string `json:"name"`
+	// Removed members stay in the list for usage attribution and must not receive grants.
+	IsRemoved bool `json:"isRemoved"`
 }
 
 type adminTeamMembersResponse struct {
@@ -87,23 +89,32 @@ func (c *apiClient) resolveTeamMemberID(ctx context.Context, email string) (stri
 		return "", fmt.Errorf("user_email is required")
 	}
 	var matches []adminTeamMember
-	err := c.eachAdminPage(ctx, "Team Admin API", c.teamAPIKey, adminTeamMembersPath, func(body []byte) (int, *adminPagination, error) {
+	removed := 0
+	err := c.eachAdminPage(ctx, "Team Admin API", c.teamAPIKey, adminTeamMembersPath, func(body []byte) (*adminPagination, error) {
 		var page adminTeamMembersResponse
 		if err := json.Unmarshal(body, &page); err != nil {
-			return 0, nil, fmt.Errorf("decoding team members: %w", err)
+			return nil, fmt.Errorf("decoding team members: %w", err)
 		}
 		for _, member := range page.TeamMembers {
-			if strings.EqualFold(strings.TrimSpace(member.Email), want) {
-				matches = append(matches, member)
+			if !strings.EqualFold(strings.TrimSpace(member.Email), want) {
+				continue
 			}
+			if member.IsRemoved {
+				removed++
+				continue
+			}
+			matches = append(matches, member)
 		}
-		return len(page.TeamMembers), page.Pagination, nil
+		return page.Pagination, nil
 	})
 	if err != nil {
 		return "", err
 	}
 	switch len(matches) {
 	case 0:
+		if removed > 0 {
+			return "", fmt.Errorf("no active team member has email %q; %d member(s) with that email have been removed from the team", email, removed)
+		}
 		return "", fmt.Errorf("no team member has email %q", email)
 	case 1:
 	default:
@@ -155,25 +166,21 @@ func (c *apiClient) resolveOrganizationGroupID(ctx context.Context, name string)
 	return publicID, nil
 }
 
-// Stops at hasNextPage=false when the API reports it, else at the first empty or short page.
-func (c *apiClient) eachAdminPage(ctx context.Context, api, key, path string, visit func(body []byte) (int, *adminPagination, error)) error {
+// The documented Admin list endpoints (GET /teams/members) return the complete list in one
+// unpaginated response, so a response without pagination.hasNextPage=true is final regardless
+// of its length. The page/pageSize parameters are sent so a paginated variant still works.
+func (c *apiClient) eachAdminPage(ctx context.Context, api, key, path string, visit func(body []byte) (*adminPagination, error)) error {
 	for page := 1; page <= maxAdminPages; page++ {
 		query := url.Values{"page": {strconv.Itoa(page)}, "pageSize": {strconv.Itoa(adminPageSize)}}
 		body, err := c.adminGet(ctx, api, key, path+"?"+query.Encode())
 		if err != nil {
 			return err
 		}
-		items, pagination, err := visit(body)
+		pagination, err := visit(body)
 		if err != nil {
 			return err
 		}
-		if pagination != nil && pagination.HasNextPage != nil {
-			if !*pagination.HasNextPage {
-				return nil
-			}
-			continue
-		}
-		if items < adminPageSize {
+		if pagination == nil || pagination.HasNextPage == nil || !*pagination.HasNextPage {
 			return nil
 		}
 	}

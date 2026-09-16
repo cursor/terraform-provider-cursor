@@ -60,7 +60,7 @@ resource "cursor_origin_owner_grant" "team_contributors" {
 - `group_name` (String) Name of a Cursor org group. Resolved to the group's publicId (grp_...) through the Organization Admin API at plan and apply, which needs the provider organization_api_key; the match is exact and must be unique. Set exactly one of user_email, group_name, user, group, or team_group. Changing it replaces the grant.
 - `team_group` (Attributes) Grant to a team floor: every member or every admin of the owning team. Set exactly one of user_email, group_name, user, group, or team_group. Changing it replaces the grant. (see [below for nested schema](#nestedatt--team_group))
 - `user` (Attributes) Grant to one user by ID. Computed from user_email when that is set. Set exactly one of user_email, group_name, user, group, or team_group. Changing the ID, including a changed resolution of user_email, replaces the grant. (see [below for nested schema](#nestedatt--user))
-- `user_email` (String) Email of a team member. Resolved to the member's user ID through the Team Admin API at plan and apply, which needs the provider team_api_key; the match is case-insensitive and must be unique. Set exactly one of user_email, group_name, user, group, or team_group. Changing it replaces the grant.
+- `user_email` (String) Email of a team member. Resolved to the member's user ID through the Team Admin API at plan and apply, which needs the provider team_api_key; the match is case-insensitive, ignores members removed from the team, and must be unique. Set exactly one of user_email, group_name, user, group, or team_group. Changing it replaces the grant.
 
 ### Read-Only
 

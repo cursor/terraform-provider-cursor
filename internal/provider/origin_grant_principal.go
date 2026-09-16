@@ -69,7 +69,7 @@ func originGrantPrincipalSchema() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"user_email": schema.StringAttribute{
 			Optional:      true,
-			Description:   "Email of a team member. Resolved to the member's user ID through the Team Admin API at plan and apply, which needs the provider team_api_key; the match is case-insensitive and must be unique. " + originGrantExactlyOne + " Changing it replaces the grant.",
+			Description:   "Email of a team member. Resolved to the member's user ID through the Team Admin API at plan and apply, which needs the provider team_api_key; the match is case-insensitive, ignores members removed from the team, and must be unique. " + originGrantExactlyOne + " Changing it replaces the grant.",
 			PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 		},
 		"group_name": schema.StringAttribute{

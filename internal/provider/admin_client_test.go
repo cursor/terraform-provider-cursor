@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -55,20 +56,78 @@ func TestResolveTeamMemberIDUsesBasicAuthAndPaginates(t *testing.T) {
 	}
 }
 
-func TestResolveTeamMemberIDStopsAtShortPageWithoutPagination(t *testing.T) {
+// GET /teams/members is documented as unpaginated: the whole team comes back in one response
+// with no pagination object, however large. A single request must be treated as complete.
+func TestResolveTeamMemberIDTreatsUnpaginatedResponseAsComplete(t *testing.T) {
+	for _, size := range []int{1, adminPageSize, 2*adminPageSize + 7} {
+		t.Run(fmt.Sprintf("%d members", size), func(t *testing.T) {
+			requests := 0
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				requests++
+				members := make([]adminTeamMember, 0, size)
+				for i := 0; i < size-1; i++ {
+					members = append(members, adminTeamMember{ID: fmt.Sprintf("user_%d", i), Email: fmt.Sprintf("dev%d@acme.com", i)})
+				}
+				members = append(members, adminTeamMember{ID: "user_bob", Email: "bob@acme.com"})
+				writeJSON(t, w, http.StatusOK, adminTeamMembersResponse{TeamMembers: members})
+			}))
+			defer server.Close()
+
+			id, err := testAdminClient(server, "key_team", "").resolveTeamMemberID(context.Background(), "BOB@acme.com")
+			if err != nil || id != "user_bob" {
+				t.Fatalf("id = %q, err = %v", id, err)
+			}
+			if requests != 1 {
+				t.Fatalf("requests = %d, want 1 (unpaginated response is complete)", requests)
+			}
+		})
+	}
+}
+
+func TestResolveTeamMemberIDStopsWhenHasNextPageFalse(t *testing.T) {
 	requests := 0
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requests++
-		writeJSON(t, w, http.StatusOK, adminTeamMembersResponse{TeamMembers: []adminTeamMember{{ID: "user_bob", Email: "bob@acme.com"}}})
+		hasNext := false
+		members := make([]adminTeamMember, 0, adminPageSize)
+		for i := 0; i < adminPageSize-1; i++ {
+			members = append(members, adminTeamMember{ID: fmt.Sprintf("user_%d", i), Email: fmt.Sprintf("dev%d@acme.com", i)})
+		}
+		members = append(members, adminTeamMember{ID: "user_bob", Email: "bob@acme.com"})
+		writeJSON(t, w, http.StatusOK, adminTeamMembersResponse{TeamMembers: members, Pagination: &adminPagination{HasNextPage: &hasNext}})
 	}))
 	defer server.Close()
 
-	id, err := testAdminClient(server, "key_team", "").resolveTeamMemberID(context.Background(), "BOB@acme.com")
+	id, err := testAdminClient(server, "key_team", "").resolveTeamMemberID(context.Background(), "bob@acme.com")
 	if err != nil || id != "user_bob" {
 		t.Fatalf("id = %q, err = %v", id, err)
 	}
 	if requests != 1 {
 		t.Fatalf("requests = %d, want 1", requests)
+	}
+}
+
+func TestResolveTeamMemberIDSkipsRemovedMembers(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(t, w, http.StatusOK, adminTeamMembersResponse{TeamMembers: []adminTeamMember{
+			{ID: "user_old_alice", Email: "alice@acme.com", IsRemoved: true},
+			{ID: "user_alice", Email: "alice@acme.com"},
+			{ID: "user_gone", Email: "gone@acme.com", IsRemoved: true},
+			{ID: "user_gone_again", Email: "gone@acme.com", IsRemoved: true},
+		}})
+	}))
+	defer server.Close()
+	client := testAdminClient(server, "key_team", "")
+
+	// A re-invited user shares an email with the removed membership; only the active one counts.
+	id, err := client.resolveTeamMemberID(context.Background(), "alice@acme.com")
+	if err != nil || id != "user_alice" {
+		t.Fatalf("id = %q, err = %v, want the active member", id, err)
+	}
+	// An offboarded user never resolves, so no grant can be bound to them.
+	_, err = client.resolveTeamMemberID(context.Background(), "gone@acme.com")
+	if err == nil || !strings.Contains(err.Error(), "no active team member has email") || !strings.Contains(err.Error(), "2 member(s)") || !strings.Contains(err.Error(), "removed") {
+		t.Fatalf("error = %v, want removed-member miss", err)
 	}
 }
 
