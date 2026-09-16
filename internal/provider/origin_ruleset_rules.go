@@ -528,7 +528,66 @@ func ruleStateFromAPI(want originRepoRulesetRuleModel, rule originRulesetRule, a
 		block.Negate = mergeBool(want.RefNamePattern.Negate, block.Negate)
 		merged.RefNamePattern = &block
 	}
+	if want.RequireStatusChecks != nil && fromAPI.RequireStatusChecks != nil {
+		merged.RequireStatusChecks = &originRequireStatusChecksRuleModel{
+			RequiredChecks: mergeRequiredChecks(want.RequireStatusChecks.RequiredChecks, fromAPI.RequireStatusChecks.RequiredChecks),
+		}
+	}
 	return merged, nil
+}
+
+// mergeRequiredChecks refreshes required_check blocks. Each prior check is
+// paired with the Origin check that has the same actor and group key (and the
+// same run key when the prior sets one); the pair keeps prior nulls for
+// run_key and name. Origin checks with no prior counterpart are appended as
+// reported, and prior checks Origin no longer reports are dropped.
+func mergeRequiredChecks(prior, api []originRequiredCheckModel) []originRequiredCheckModel {
+	used := make([]bool, len(api))
+	out := make([]originRequiredCheckModel, 0, len(api))
+	for _, want := range prior {
+		match := -1
+		for i, got := range api {
+			if used[i] || !requiredCheckIdentityEqual(want, got) {
+				continue
+			}
+			match = i
+			break
+		}
+		if match < 0 {
+			continue
+		}
+		used[match] = true
+		got := api[match]
+		got.RunKey = mergeString(want.RunKey, got.RunKey)
+		got.Name = mergeString(want.Name, got.Name)
+		out = append(out, got)
+	}
+	for i, got := range api {
+		if !used[i] {
+			out = append(out, got)
+		}
+	}
+	return out
+}
+
+func requiredCheckIdentityEqual(want, got originRequiredCheckModel) bool {
+	if !want.ActorKind.Equal(got.ActorKind) || !want.ActorID.Equal(got.ActorID) || !want.GroupKey.Equal(got.GroupKey) {
+		return false
+	}
+	if !want.RunKey.IsNull() && !want.RunKey.IsUnknown() && !want.RunKey.Equal(got.RunKey) {
+		return false
+	}
+	return true
+}
+
+func mergeString(prior, api types.String) types.String {
+	if prior.IsNull() {
+		return types.StringNull()
+	}
+	if api.IsNull() {
+		return prior
+	}
+	return api
 }
 
 // mergeInt64 applies the refresh rule for one optional attribute: unset in
@@ -554,24 +613,27 @@ func mergeBool(prior, api types.Bool) types.Bool {
 }
 
 // ruleMatchesAPI reports whether an Origin rule has the same type as the
-// configured rule and carries every parameter the configuration sets.
+// configured rule and carries every parameter the configuration sets. A rule
+// configured without parameters only matches an Origin rule whose parameters
+// are empty; a configuration that cannot be encoded matches nothing.
 func ruleMatchesAPI(want originRepoRulesetRuleModel, rule originRulesetRule) bool {
 	wantType, err := want.ruleType()
 	if err != nil || wantType != rule.RuleType {
 		return false
 	}
 	wantParams, err := want.parameters()
-	if err != nil || wantParams == nil {
-		return true
-	}
-	var wantMap, gotMap map[string]any
-	if err := json.Unmarshal(wantParams, &wantMap); err != nil {
+	if err != nil {
 		return false
 	}
-	if len(rule.Parameters) == 0 {
-		return len(wantMap) == 0
+	gotMap, err := decodeParameterObject(rule.Parameters)
+	if err != nil {
+		return false
 	}
-	if err := json.Unmarshal(rule.Parameters, &gotMap); err != nil {
+	if wantParams == nil {
+		return len(gotMap) == 0
+	}
+	var wantMap map[string]any
+	if err := json.Unmarshal(wantParams, &wantMap); err != nil {
 		return false
 	}
 	for key, value := range wantMap {
@@ -580,4 +642,21 @@ func ruleMatchesAPI(want originRepoRulesetRuleModel, rule originRulesetRule) boo
 		}
 	}
 	return true
+}
+
+// decodeParameterObject decodes an Origin parameters object, treating an
+// absent or null value as empty.
+func decodeParameterObject(raw json.RawMessage) (map[string]any, error) {
+	trimmed := strings.TrimSpace(string(raw))
+	if trimmed == "" || trimmed == "null" {
+		return map[string]any{}, nil
+	}
+	var decoded map[string]any
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		return nil, err
+	}
+	if decoded == nil {
+		decoded = map[string]any{}
+	}
+	return decoded, nil
 }

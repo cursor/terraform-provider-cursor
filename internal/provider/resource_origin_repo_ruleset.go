@@ -352,7 +352,20 @@ func (r *originRepoRulesetResource) Delete(ctx context.Context, req resource.Del
 }
 
 func (r *originRepoRulesetResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
-	if req.Plan.Raw.IsNull() || req.State.Raw.IsNull() {
+	if req.State.Raw.IsNull() {
+		return
+	}
+	if req.Plan.Raw.IsNull() {
+		// Destroy plan. Refuse here so `terraform plan -destroy` and removing
+		// the resource from config fail before apply; Delete keeps its own guard.
+		var state originRepoRulesetModel
+		resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		if err := refuseRulesetDelete(state); err != nil {
+			resp.Diagnostics.AddError("Origin ruleset is protected from deletion", err.Error())
+		}
 		return
 	}
 	var plan originRepoRulesetModel

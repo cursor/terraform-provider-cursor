@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
 func TestOriginRulesetCreateUpdateDelete(t *testing.T) {
@@ -618,6 +619,90 @@ func TestFindMatchingRulePrefersConfiguredParameters(t *testing.T) {
 	}
 }
 
+func TestRuleMatchesAPIOmittedParametersOnlyMatchEmpty(t *testing.T) {
+	withParams := originRulesetRule{ID: "rsr_a", RuleType: "pull_request", Parameters: json.RawMessage(`{"requiredApprovingReviewCount":2}`)}
+	empty := originRulesetRule{ID: "rsr_b", RuleType: "pull_request", Parameters: json.RawMessage(`{}`)}
+	absent := originRulesetRule{ID: "rsr_c", RuleType: "pull_request"}
+	nullParams := originRulesetRule{ID: "rsr_d", RuleType: "pull_request", Parameters: json.RawMessage(`null`)}
+
+	omitted := originRepoRulesetRuleModel{PullRequest: &originPullRequestRuleModel{}}
+	if ruleMatchesAPI(omitted, withParams) {
+		t.Fatal("rule without parameters must not match an Origin rule that has parameters")
+	}
+	for _, rule := range []originRulesetRule{empty, absent, nullParams} {
+		if !ruleMatchesAPI(omitted, rule) {
+			t.Fatalf("rule without parameters should match empty Origin parameters %q", rule.Parameters)
+		}
+	}
+
+	api := []originRulesetRule{withParams, empty}
+	if got := findMatchingRule(omitted, api, make([]bool, len(api))); got != 1 {
+		t.Fatalf("match = %d, want the rule with empty parameters", got)
+	}
+
+	incomplete := originRepoRulesetRuleModel{RequireStatusChecks: &originRequireStatusChecksRuleModel{RequiredChecks: []originRequiredCheckModel{{
+		ActorKind: types.StringUnknown(), ActorID: types.StringValue("app_01"), GroupKey: types.StringValue("ci"),
+	}}}}
+	if ruleMatchesAPI(incomplete, originRulesetRule{ID: "rsr_e", RuleType: "require_status_checks", Parameters: json.RawMessage(`{"requiredChecks":[]}`)}) {
+		t.Fatal("a rule whose parameters cannot be encoded must not match")
+	}
+	if ruleMatchesAPI(incomplete, originRulesetRule{ID: "rsr_f", RuleType: "require_status_checks"}) {
+		t.Fatal("a rule whose parameters cannot be encoded must not match empty parameters either")
+	}
+
+	malformed := originRulesetRule{ID: "rsr_g", RuleType: "pull_request", Parameters: json.RawMessage(`[1]`)}
+	if ruleMatchesAPI(omitted, malformed) {
+		t.Fatal("malformed Origin parameters must not match")
+	}
+}
+
+func TestOriginRulesetRefreshKeepsUnsetRequiredCheckArgumentsNull(t *testing.T) {
+	prior := sampleOriginRulesetModel()
+	prior.Rules = []originRepoRulesetRuleModel{{
+		ID: types.StringValue("rsr_checks"),
+		RequireStatusChecks: &originRequireStatusChecksRuleModel{RequiredChecks: []originRequiredCheckModel{
+			{ActorKind: types.StringValue("app"), ActorID: types.StringValue("app_01"), GroupKey: types.StringValue("ci"), RunKey: types.StringNull(), Name: types.StringNull()},
+			{ActorKind: types.StringValue("app"), ActorID: types.StringValue("app_01"), GroupKey: types.StringValue("lint"), RunKey: types.StringValue("eslint"), Name: types.StringValue("Lint")},
+		}},
+	}}
+	api := sampleOriginRuleset()
+	api.Rules = []originRulesetRule{{
+		ID:       "rsr_checks",
+		RuleType: "require_status_checks",
+		Parameters: json.RawMessage(`{"requiredChecks":[
+			{"actorKind":"app","actorId":"app_01","groupKey":"lint","runKey":"eslint","name":"Lint (renamed)"},
+			{"actorKind":"app","actorId":"app_01","groupKey":"ci","runKey":"test","name":"Test"},
+			{"actorKind":"app","actorId":"app_02","groupKey":"security","name":"Security"}
+		]}`),
+	}}
+
+	state, err := originRulesetToModel(context.Background(), prior, api, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	checks := state.Rules[0].RequireStatusChecks.RequiredChecks
+	if len(checks) != 3 {
+		t.Fatalf("checks = %#v", checks)
+	}
+	if checks[0].GroupKey.ValueString() != "ci" || !checks[0].RunKey.IsNull() || !checks[0].Name.IsNull() {
+		t.Fatalf("unset run_key/name should stay null on refresh: %#v", checks[0])
+	}
+	if checks[1].GroupKey.ValueString() != "lint" || checks[1].RunKey.ValueString() != "eslint" || checks[1].Name.ValueString() != "Lint (renamed)" {
+		t.Fatalf("managed name should follow Origin on refresh: %#v", checks[1])
+	}
+	if checks[2].ActorID.ValueString() != "app_02" || checks[2].Name.ValueString() != "Security" || !checks[2].RunKey.IsNull() {
+		t.Fatalf("unrequested Origin check should be appended as reported: %#v", checks[2])
+	}
+
+	applied, err := originRulesetToModel(context.Background(), prior, api, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := applied.Rules[0].RequireStatusChecks.RequiredChecks; len(got) != 2 || !got[0].RunKey.IsNull() {
+		t.Fatalf("apply should keep planned checks: %#v", got)
+	}
+}
+
 func sampleOriginRulesetWrite() originRulesetWrite {
 	return originRulesetWrite{
 		Name:             "require-review",
@@ -1000,6 +1085,49 @@ func TestOriginRulesetDeleteProtection(t *testing.T) {
 	}
 	if !deleted {
 		t.Fatal("expected delete request when deletion_protection is false")
+	}
+}
+
+func TestOriginRulesetDestroyPlanRespectsDeletionProtection(t *testing.T) {
+	ctx := context.Background()
+	res := &originRepoRulesetResource{}
+	schemaResp := &resource.SchemaResponse{}
+	res.Schema(ctx, resource.SchemaRequest{}, schemaResp)
+	nullPlan := tfsdk.Plan{Schema: schemaResp.Schema, Raw: tftypes.NewValue(schemaResp.Schema.Type().TerraformType(ctx), nil)}
+
+	protected := sampleOriginRulesetModel()
+	protected.ID = types.StringValue("rs_01")
+	protected.DeletionProtection = types.BoolValue(true)
+	state := tfsdk.State{Schema: schemaResp.Schema}
+	if diags := state.Set(ctx, &protected); diags.HasError() {
+		t.Fatal(diags)
+	}
+	resp := &resource.ModifyPlanResponse{Plan: nullPlan}
+	res.ModifyPlan(ctx, resource.ModifyPlanRequest{Plan: nullPlan, State: state}, resp)
+	if !resp.Diagnostics.HasError() {
+		t.Fatal("expected destroy plan to be refused while deletion_protection is true")
+	}
+	if !strings.Contains(resp.Diagnostics.Errors()[0].Detail(), "deletion_protection") {
+		t.Fatalf("diagnostic = %v", resp.Diagnostics)
+	}
+
+	unprotected := protected
+	unprotected.DeletionProtection = types.BoolValue(false)
+	state = tfsdk.State{Schema: schemaResp.Schema}
+	if diags := state.Set(ctx, &unprotected); diags.HasError() {
+		t.Fatal(diags)
+	}
+	resp = &resource.ModifyPlanResponse{Plan: nullPlan}
+	res.ModifyPlan(ctx, resource.ModifyPlanRequest{Plan: nullPlan, State: state}, resp)
+	if resp.Diagnostics.HasError() {
+		t.Fatalf("unprotected destroy plan: %v", resp.Diagnostics)
+	}
+
+	nullState := tfsdk.State{Schema: schemaResp.Schema, Raw: tftypes.NewValue(schemaResp.Schema.Type().TerraformType(ctx), nil)}
+	resp = &resource.ModifyPlanResponse{Plan: nullPlan}
+	res.ModifyPlan(ctx, resource.ModifyPlanRequest{Plan: nullPlan, State: nullState}, resp)
+	if resp.Diagnostics.HasError() {
+		t.Fatalf("plan with no prior state: %v", resp.Diagnostics)
 	}
 }
 
