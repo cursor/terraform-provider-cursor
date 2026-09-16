@@ -14,8 +14,10 @@ import (
 )
 
 const (
-	envToken    = "CURSOR_TOKEN"
-	envEndpoint = "CURSOR_ENDPOINT"
+	envToken      = "CURSOR_TOKEN"
+	envEndpoint   = "CURSOR_ENDPOINT"
+	envTeamAPIKey = "CURSOR_TEAM_API_KEY"
+	envOrgAPIKey  = "CURSOR_ORGANIZATION_API_KEY"
 
 	defaultEndpoint = "https://api2.cursor.sh"
 )
@@ -25,8 +27,10 @@ type cursorProvider struct {
 }
 
 type cursorProviderModel struct {
-	Token    types.String `tfsdk:"token"`
-	Endpoint types.String `tfsdk:"endpoint"`
+	Token              types.String `tfsdk:"token"`
+	Endpoint           types.String `tfsdk:"endpoint"`
+	TeamAPIKey         types.String `tfsdk:"team_api_key"`
+	OrganizationAPIKey types.String `tfsdk:"organization_api_key"`
 }
 
 func New(version string) func() provider.Provider {
@@ -42,7 +46,7 @@ func (p *cursorProvider) Metadata(_ context.Context, _ provider.MetadataRequest,
 
 func (p *cursorProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Manage Cursor Automations and Origin repository rulesets, and read Origin repositories. Automations use the Cursor Automations API over Connect RPC. Origin calls use the public Origin API and the same auth token.",
+		Description: "Manage Cursor Automations, Origin repository rulesets, and Origin repository and owner grants, and read Origin repositories. Automations use the Cursor Automations API over Connect RPC. Origin calls use the public Origin API and the same auth token. Grants keyed by user_email or group_name also need the Team or Organization Admin API key.",
 		Attributes: map[string]schema.Attribute{
 			"token": schema.StringAttribute{
 				Optional:    true,
@@ -52,6 +56,16 @@ func (p *cursorProvider) Schema(_ context.Context, _ provider.SchemaRequest, res
 			"endpoint": schema.StringAttribute{
 				Optional:    true,
 				Description: fmt.Sprintf("Cursor API base URL. Defaults to %s. Can also be set via CURSOR_ENDPOINT.", defaultEndpoint),
+			},
+			"team_api_key": schema.StringAttribute{
+				Optional:    true,
+				Sensitive:   true,
+				Description: fmt.Sprintf("Team Admin API key, sent as HTTP Basic auth (key as username, empty password) to %s%s. Required only to resolve user_email on Origin grants. Can also be set via %s.", defaultAdminAPIBase, adminTeamMembersPath, envTeamAPIKey),
+			},
+			"organization_api_key": schema.StringAttribute{
+				Optional:    true,
+				Sensitive:   true,
+				Description: fmt.Sprintf("Organization Admin API key, sent as HTTP Basic auth (key as username, empty password) to %s%s. Required only to resolve group_name on Origin grants. Can also be set via %s.", defaultAdminAPIBase, adminOrgGroupsPath, envOrgAPIKey),
 			},
 		},
 	}
@@ -79,7 +93,10 @@ func (p *cursorProvider) Configure(ctx context.Context, req provider.ConfigureRe
 	}
 	endpoint = strings.TrimRight(endpoint, "/")
 
-	client, err := newAPIClient(endpoint, token, p.version)
+	client, err := newAPIClient(endpoint, token, p.version, adminKeys{
+		team:         getStringValue(config.TeamAPIKey, envTeamAPIKey),
+		organization: getStringValue(config.OrganizationAPIKey, envOrgAPIKey),
+	})
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to configure Cursor client", err.Error())
 		return
@@ -93,6 +110,8 @@ func (p *cursorProvider) Resources(_ context.Context) []func() resource.Resource
 	return []func() resource.Resource{
 		NewPlatformWorkflowResource,
 		NewOriginRepoRulesetResource,
+		NewOriginRepoGrantResource,
+		NewOriginOwnerGrantResource,
 	}
 }
 
@@ -100,6 +119,8 @@ func (p *cursorProvider) DataSources(_ context.Context) []func() datasource.Data
 	return []func() datasource.DataSource{
 		NewPlatformWorkflowDataSource,
 		NewOriginRepoDataSource,
+		NewOriginRepoGrantsDataSource,
+		NewOriginOwnerGrantsDataSource,
 	}
 }
 

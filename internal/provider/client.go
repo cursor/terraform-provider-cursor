@@ -25,9 +25,18 @@ type apiClient struct {
 	authHeader  string
 	userAgent   string
 	originBase  string
+	adminBase   string
+	teamAPIKey  string
+	orgAPIKey   string
 }
 
-func newAPIClient(endpoint string, token string, version string) (*apiClient, error) {
+// Admin API keys are optional; grants need them only to resolve user_email and group_name.
+type adminKeys struct {
+	team         string
+	organization string
+}
+
+func newAPIClient(endpoint string, token string, version string, admin adminKeys) (*apiClient, error) {
 	if endpoint == "" {
 		return nil, fmt.Errorf("endpoint is required")
 	}
@@ -60,6 +69,9 @@ func newAPIClient(endpoint string, token string, version string) (*apiClient, er
 		authHeader:  authHeader,
 		userAgent:   userAgentPrefix + strings.TrimSpace(version),
 		originBase:  defaultOriginAPIBase,
+		adminBase:   defaultAdminAPIBase,
+		teamAPIKey:  strings.TrimSpace(admin.team),
+		orgAPIKey:   strings.TrimSpace(admin.organization),
 	}, nil
 }
 
