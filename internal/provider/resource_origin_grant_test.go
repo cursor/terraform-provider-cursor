@@ -345,6 +345,118 @@ func TestOriginRepoGrantModifyPlanDefersUnknownEmailAndReportsMissingKey(t *test
 	}
 }
 
+// Replace whose new user_email is only known at apply. UseStateForUnknown has already copied the prior user and id
+// into the plan; ModifyPlan must mark them unknown, or Create would trust the stored ID and grant the previous user.
+func TestOriginRepoGrantModifyPlanUnknownEmailDropsStalePrincipal(t *testing.T) {
+	mock := newGrantMock(t)
+	defer mock.Close()
+
+	ctx := context.Background()
+	res := &originRepoGrantResource{client: mock.client("key_team", "key_org")}
+	sch := repoGrantSchema(t, res)
+
+	prior := sampleRepoGrantModel()
+	prior.ID = types.StringValue("acme/rocket:user:user_alice")
+	prior.UserEmail = types.StringValue("alice@acme.com")
+	prior.User = principalObject(originGrantUserAttrTypes, "id", "user_alice")
+
+	plan := prior
+	plan.UserEmail = types.StringUnknown()
+	planValue := tfsdk.Plan{Schema: sch}
+	if diags := planValue.Set(ctx, &plan); diags.HasError() {
+		t.Fatal(diags)
+	}
+	resp := &resource.ModifyPlanResponse{Plan: planValue}
+	res.ModifyPlan(ctx, resource.ModifyPlanRequest{Plan: planValue, State: repoGrantState(t, res, prior)}, resp)
+	if resp.Diagnostics.HasError() {
+		t.Fatalf("modify plan diagnostics: %v", resp.Diagnostics)
+	}
+	var planned originRepoGrantModel
+	if diags := resp.Plan.Get(ctx, &planned); diags.HasError() {
+		t.Fatal(diags)
+	}
+	if !planned.User.IsUnknown() || !planned.ID.IsUnknown() {
+		t.Fatalf("planned = %#v, want user and id unknown until user_email is known", planned)
+	}
+	if !planned.UserEmail.IsUnknown() || !planned.Group.IsNull() || !planned.TeamGroup.IsNull() {
+		t.Fatalf("planned = %#v", planned)
+	}
+	if mock.count("GET /teams/members") != 0 {
+		t.Fatal("an unknown email cannot be resolved at plan")
+	}
+
+	// Apply sees the email; the user is still unknown, so it is resolved instead of reusing the prior ID.
+	planned.UserEmail = types.StringValue("bob@acme.com")
+	got := createRepoGrant(t, res, planned)
+	if body := mock.lastBody("POST /repos/acme/rocket/grants"); body != `{"user":{"id":"user_bob"},"permission":"write"}` {
+		t.Fatalf("create body = %s, want the newly resolved user", body)
+	}
+	if got.ID.ValueString() != "acme/rocket:user:user_bob" || principalField(got.User, "id").ValueString() != "user_bob" {
+		t.Fatalf("state = %#v", got)
+	}
+}
+
+func TestOriginOwnerGrantModifyPlanUnknownGroupNameDropsStalePrincipal(t *testing.T) {
+	mock := newGrantMock(t)
+	defer mock.Close()
+
+	ctx := context.Background()
+	res := &originOwnerGrantResource{client: mock.client("key_team", "key_org")}
+	sch := ownerGrantSchema(t, res)
+
+	prior := originOwnerGrantModel{
+		ID:         types.StringValue("acme:group:grp_eng"),
+		Owner:      types.StringValue("acme"),
+		Permission: types.StringValue(originPermissionRead),
+		UserEmail:  types.StringNull(),
+		GroupName:  types.StringValue("Engineering"),
+		User:       types.ObjectNull(originGrantUserAttrTypes),
+		Group:      principalObject(originGrantGroupAttrTypes, "id", "grp_eng"),
+		TeamGroup:  types.ObjectNull(originGrantTeamGroupAttrTypes),
+	}
+	state := tfsdk.State{Schema: sch}
+	if diags := state.Set(ctx, &prior); diags.HasError() {
+		t.Fatal(diags)
+	}
+	modifyPlan := func(plan originOwnerGrantModel) originOwnerGrantModel {
+		t.Helper()
+		planValue := tfsdk.Plan{Schema: sch}
+		if diags := planValue.Set(ctx, &plan); diags.HasError() {
+			t.Fatal(diags)
+		}
+		resp := &resource.ModifyPlanResponse{Plan: planValue}
+		res.ModifyPlan(ctx, resource.ModifyPlanRequest{Plan: planValue, State: state}, resp)
+		if resp.Diagnostics.HasError() {
+			t.Fatalf("modify plan diagnostics: %v", resp.Diagnostics)
+		}
+		var planned originOwnerGrantModel
+		if diags := resp.Plan.Get(ctx, &planned); diags.HasError() {
+			t.Fatal(diags)
+		}
+		return planned
+	}
+
+	// Same family: group_name becomes unknown while UseStateForUnknown kept the prior group and id.
+	plan := prior
+	plan.GroupName = types.StringUnknown()
+	planned := modifyPlan(plan)
+	if !planned.Group.IsUnknown() || !planned.ID.IsUnknown() || !planned.User.IsNull() {
+		t.Fatalf("planned = %#v, want group and id unknown until group_name is known", planned)
+	}
+
+	// Family switch: user_email replaces group_name, so the prior group must not survive as a second principal.
+	plan = prior
+	plan.GroupName = types.StringNull()
+	plan.UserEmail = types.StringUnknown()
+	planned = modifyPlan(plan)
+	if !planned.User.IsUnknown() || !planned.Group.IsNull() || !planned.ID.IsUnknown() {
+		t.Fatalf("planned = %#v, want user unknown and the prior group dropped", planned)
+	}
+	if mock.count("GET /organizations/groups")+mock.count("GET /teams/members") != 0 {
+		t.Fatal("unknown names cannot be resolved at plan")
+	}
+}
+
 // Replace whose new repo is only known at apply. The prior composite id UseStateForUnknown copied into the plan
 // cannot match the id written on apply, so ModifyPlan must leave it unknown.
 func TestOriginRepoGrantModifyPlanUnknownRepoLeavesIDUnknown(t *testing.T) {

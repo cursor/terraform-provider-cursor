@@ -339,30 +339,38 @@ func (p originGrantPrincipal) withKey(key originGrantKey) originGrantPrincipal {
 	return p
 }
 
+// withUnknownKey clears the stored principal and marks the object that kind resolves into as unknown until apply.
+func (p originGrantPrincipal) withUnknownKey(kind string) originGrantPrincipal {
+	p.User = types.ObjectNull(originGrantUserAttrTypes)
+	p.Group = types.ObjectNull(originGrantGroupAttrTypes)
+	p.TeamGroup = types.ObjectNull(originGrantTeamGroupAttrTypes)
+	switch kind {
+	case originGrantKindUser:
+		p.User = types.ObjectUnknown(originGrantUserAttrTypes)
+	case originGrantKindGroup:
+		p.Group = types.ObjectUnknown(originGrantGroupAttrTypes)
+	}
+	return p
+}
+
 // storedKey reads the principal already in state or plan without calling any API.
 func (p originGrantPrincipal) storedKey() (originGrantKey, error) {
 	return p.key(context.Background(), nil, false)
 }
 
-// resolvable reports whether the plan can resolve user_email or group_name now.
-func (p originGrantPrincipal) resolvable() bool {
+// plan re-resolves the principal when it can and reports whether the resolved key differs from prior state.
+// While user_email or group_name is unknown, the object it resolves into is unknown as well: UseStateForUnknown
+// has copied the previous principal's ID into the plan, and apply trusts a known stored ID over resolving again.
+func (p originGrantPrincipal) plan(ctx context.Context, client *apiClient, prior *originGrantPrincipal) (originGrantPrincipal, *originGrantKey, bool, error) {
 	family, err := p.family(false)
 	if err != nil {
-		return false
-	}
-	switch family {
-	case principalFamilyUserEmail:
-		return !p.UserEmail.IsUnknown()
-	case principalFamilyGroupName:
-		return !p.GroupName.IsUnknown()
-	}
-	return true
-}
-
-// plan re-resolves the principal when it can and reports whether the resolved key differs from prior state.
-func (p originGrantPrincipal) plan(ctx context.Context, client *apiClient, prior *originGrantPrincipal) (originGrantPrincipal, *originGrantKey, bool, error) {
-	if !p.resolvable() {
 		return p, nil, false, nil
+	}
+	switch {
+	case family == principalFamilyUserEmail && p.UserEmail.IsUnknown():
+		return p.withUnknownKey(originGrantKindUser), nil, false, nil
+	case family == principalFamilyGroupName && p.GroupName.IsUnknown():
+		return p.withUnknownKey(originGrantKindGroup), nil, false, nil
 	}
 	key, err := p.key(ctx, client, true)
 	if err != nil {
