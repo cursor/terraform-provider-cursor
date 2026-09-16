@@ -358,44 +358,48 @@ func (p originGrantPrincipal) storedKey() (originGrantKey, error) {
 	return p.key(context.Background(), nil, false)
 }
 
-// withoutCopiedPrincipal drops the user or group UseStateForUnknown copied from prior so a family
-// switch is not seen as two principals. team_group is not computed and is never copied.
-func (p originGrantPrincipal) withoutCopiedPrincipal(prior originGrantPrincipal) originGrantPrincipal {
-	family, err := prior.family(false)
+// plan re-resolves the principal when it can and reports whether the resolved key differs from prior state.
+//
+// config picks the family. user and group are computed, so when config leaves one null UseStateForUnknown has copied
+// the previous principal into the plan, also after a move to another family; kept, the plan would carry two
+// principals, destroy the old grant, and then fail to create the new one. Only the objects config sets survive.
+//
+// While the configured identifier is unknown (user_email, group_name, user.id, group.id, team_group.kind, or a whole
+// object taken from another resource), the principal stays unresolved and no key is returned, so the composite id
+// stays unknown too. Apply plans again with the known value and resolves then; a known stored ID is trusted over
+// resolving user_email or group_name a second time.
+func (p originGrantPrincipal) plan(ctx context.Context, client *apiClient, config originGrantPrincipal, prior *originGrantPrincipal) (originGrantPrincipal, *originGrantKey, bool, error) {
+	family, err := config.family(true)
 	if err != nil {
-		return p
+		return p, nil, false, err
 	}
-	switch family {
-	case principalFamilyUserEmail, originGrantKindUser:
+	if config.User.IsNull() {
 		p.User = types.ObjectNull(originGrantUserAttrTypes)
-	case principalFamilyGroupName, originGrantKindGroup:
+	}
+	if config.Group.IsNull() {
 		p.Group = types.ObjectNull(originGrantGroupAttrTypes)
 	}
-	return p
-}
-
-// plan re-resolves the principal when it can and reports whether the resolved key differs from prior state.
-// While user_email or group_name is unknown, the object it resolves into is unknown as well: UseStateForUnknown
-// has copied the previous principal's ID into the plan, and apply trusts a known stored ID over resolving again.
-func (p originGrantPrincipal) plan(ctx context.Context, client *apiClient, prior *originGrantPrincipal) (originGrantPrincipal, *originGrantKey, bool, error) {
-	family, err := p.family(false)
-	if err != nil && prior != nil {
-		// UseStateForUnknown copies the prior user/group into a plan that already has another principal.
-		stripped := p.withoutCopiedPrincipal(*prior)
-		family, err = stripped.family(false)
-		if err == nil {
-			p = stripped
+	switch family {
+	case principalFamilyUserEmail:
+		if p.UserEmail.IsUnknown() {
+			return p.withUnknownKey(originGrantKindUser), nil, false, nil
 		}
-	}
-	if err != nil {
-		// Family is still unknown (an unresolved ID object) or invalid; leave the plan unchanged.
-		return p, nil, false, nil
-	}
-	switch {
-	case family == principalFamilyUserEmail && p.UserEmail.IsUnknown():
-		return p.withUnknownKey(originGrantKindUser), nil, false, nil
-	case family == principalFamilyGroupName && p.GroupName.IsUnknown():
-		return p.withUnknownKey(originGrantKindGroup), nil, false, nil
+	case principalFamilyGroupName:
+		if p.GroupName.IsUnknown() {
+			return p.withUnknownKey(originGrantKindGroup), nil, false, nil
+		}
+	case originGrantKindUser:
+		if principalField(p.User, "id").IsUnknown() {
+			return p, nil, false, nil
+		}
+	case originGrantKindGroup:
+		if principalField(p.Group, "id").IsUnknown() {
+			return p, nil, false, nil
+		}
+	default:
+		if principalField(p.TeamGroup, "kind").IsUnknown() {
+			return p, nil, false, nil
+		}
 	}
 	key, err := p.key(ctx, client, true)
 	if err != nil {

@@ -101,8 +101,9 @@ func (r *originOwnerGrantResource) ModifyPlan(ctx context.Context, req resource.
 	if req.Plan.Raw.IsNull() || r.client == nil {
 		return
 	}
-	var plan originOwnerGrantModel
+	var plan, config originOwnerGrantModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -116,7 +117,7 @@ func (r *originOwnerGrantResource) ModifyPlan(ctx context.Context, req resource.
 		statePrincipal := state.principal()
 		prior = &statePrincipal
 	}
-	principal, key, replace, err := plan.principal().plan(ctx, r.client, prior)
+	principal, key, replace, err := plan.principal().plan(ctx, r.client, config.principal(), prior)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to resolve Origin owner grant principal", err.Error())
 		return

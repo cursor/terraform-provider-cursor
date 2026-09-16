@@ -186,8 +186,11 @@ func TestOriginRepoGrantModifyPlanResolvesEmailAndFlagsReplacement(t *testing.T)
 	if diags := planValue.Set(ctx, &plan); diags.HasError() {
 		t.Fatal(diags)
 	}
+	configured := plan
+	configured.User = types.ObjectNull(originGrantUserAttrTypes)
+	config := repoGrantConfig(t, sch, configured)
 	resp := &resource.ModifyPlanResponse{Plan: planValue}
-	res.ModifyPlan(ctx, resource.ModifyPlanRequest{Plan: planValue, State: emptyState(ctx, sch)}, resp)
+	res.ModifyPlan(ctx, resource.ModifyPlanRequest{Config: config, Plan: planValue, State: emptyState(ctx, sch)}, resp)
 	if resp.Diagnostics.HasError() {
 		t.Fatalf("modify plan diagnostics: %v", resp.Diagnostics)
 	}
@@ -207,7 +210,7 @@ func TestOriginRepoGrantModifyPlanResolvesEmailAndFlagsReplacement(t *testing.T)
 	prior.ID = types.StringValue("acme/rocket:user:user_alice_old")
 	state := repoGrantState(t, res, prior)
 	resp = &resource.ModifyPlanResponse{Plan: planValue}
-	res.ModifyPlan(ctx, resource.ModifyPlanRequest{Plan: planValue, State: state}, resp)
+	res.ModifyPlan(ctx, resource.ModifyPlanRequest{Config: config, Plan: planValue, State: state}, resp)
 	if resp.Diagnostics.HasError() {
 		t.Fatalf("modify plan diagnostics: %v", resp.Diagnostics)
 	}
@@ -224,7 +227,7 @@ func TestOriginRepoGrantModifyPlanResolvesEmailAndFlagsReplacement(t *testing.T)
 	prior.User = principalObject(originGrantUserAttrTypes, "id", "user_alice")
 	state = repoGrantState(t, res, prior)
 	resp = &resource.ModifyPlanResponse{Plan: planValue}
-	res.ModifyPlan(ctx, resource.ModifyPlanRequest{Plan: planValue, State: state}, resp)
+	res.ModifyPlan(ctx, resource.ModifyPlanRequest{Config: config, Plan: planValue, State: state}, resp)
 	if resp.Diagnostics.HasError() || len(resp.RequiresReplace) != 0 {
 		t.Fatalf("unchanged resolution must not replace: %v %v", resp.Diagnostics, resp.RequiresReplace)
 	}
@@ -238,7 +241,7 @@ func TestOriginRepoGrantModifyPlanResolvesEmailAndFlagsReplacement(t *testing.T)
 		t.Fatal(diags)
 	}
 	resp = &resource.ModifyPlanResponse{Plan: stalePlan}
-	res.ModifyPlan(ctx, resource.ModifyPlanRequest{Plan: stalePlan, State: repoGrantState(t, res, stale)}, resp)
+	res.ModifyPlan(ctx, resource.ModifyPlanRequest{Config: config, Plan: stalePlan, State: repoGrantState(t, res, stale)}, resp)
 	if resp.Diagnostics.HasError() {
 		t.Fatalf("modify plan diagnostics: %v", resp.Diagnostics)
 	}
@@ -289,8 +292,10 @@ func TestOriginRepoGrantModifyPlanNormalizesComputedObjects(t *testing.T) {
 	if diags := planValue.Set(ctx, &plan); diags.HasError() {
 		t.Fatal(diags)
 	}
+	configured := plan
+	configured.User = types.ObjectNull(originGrantUserAttrTypes)
 	resp := &resource.ModifyPlanResponse{Plan: planValue}
-	res.ModifyPlan(ctx, resource.ModifyPlanRequest{Plan: planValue, State: emptyState(ctx, sch)}, resp)
+	res.ModifyPlan(ctx, resource.ModifyPlanRequest{Config: repoGrantConfig(t, sch, configured), Plan: planValue, State: emptyState(ctx, sch)}, resp)
 	if resp.Diagnostics.HasError() {
 		t.Fatalf("modify plan diagnostics: %v", resp.Diagnostics)
 	}
@@ -321,8 +326,10 @@ func TestOriginRepoGrantModifyPlanDefersUnknownEmailAndReportsMissingKey(t *test
 	if diags := planValue.Set(ctx, &plan); diags.HasError() {
 		t.Fatal(diags)
 	}
+	configured := plan
+	configured.User = types.ObjectNull(originGrantUserAttrTypes)
 	resp := &resource.ModifyPlanResponse{Plan: planValue}
-	res.ModifyPlan(ctx, resource.ModifyPlanRequest{Plan: planValue, State: emptyState(ctx, sch)}, resp)
+	res.ModifyPlan(ctx, resource.ModifyPlanRequest{Config: repoGrantConfig(t, sch, configured), Plan: planValue, State: emptyState(ctx, sch)}, resp)
 	if resp.Diagnostics.HasError() {
 		t.Fatalf("unknown email must defer: %v", resp.Diagnostics)
 	}
@@ -335,11 +342,12 @@ func TestOriginRepoGrantModifyPlanDefersUnknownEmailAndReportsMissingKey(t *test
 	}
 
 	plan.UserEmail = types.StringValue("alice@acme.com")
+	configured.UserEmail = plan.UserEmail
 	if diags := planValue.Set(ctx, &plan); diags.HasError() {
 		t.Fatal(diags)
 	}
 	resp = &resource.ModifyPlanResponse{Plan: planValue}
-	res.ModifyPlan(ctx, resource.ModifyPlanRequest{Plan: planValue, State: emptyState(ctx, sch)}, resp)
+	res.ModifyPlan(ctx, resource.ModifyPlanRequest{Config: repoGrantConfig(t, sch, configured), Plan: planValue, State: emptyState(ctx, sch)}, resp)
 	if !resp.Diagnostics.HasError() || !strings.Contains(resp.Diagnostics.Errors()[0].Detail(), "team_api_key is required") {
 		t.Fatalf("diagnostics = %v, want missing team_api_key", resp.Diagnostics)
 	}
@@ -366,8 +374,10 @@ func TestOriginRepoGrantModifyPlanUnknownEmailDropsStalePrincipal(t *testing.T) 
 	if diags := planValue.Set(ctx, &plan); diags.HasError() {
 		t.Fatal(diags)
 	}
+	configured := plan
+	configured.User = types.ObjectNull(originGrantUserAttrTypes)
 	resp := &resource.ModifyPlanResponse{Plan: planValue}
-	res.ModifyPlan(ctx, resource.ModifyPlanRequest{Plan: planValue, State: repoGrantState(t, res, prior)}, resp)
+	res.ModifyPlan(ctx, resource.ModifyPlanRequest{Config: repoGrantConfig(t, sch, configured), Plan: planValue, State: repoGrantState(t, res, prior)}, resp)
 	if resp.Diagnostics.HasError() {
 		t.Fatalf("modify plan diagnostics: %v", resp.Diagnostics)
 	}
@@ -418,14 +428,17 @@ func TestOriginOwnerGrantModifyPlanUnknownGroupNameDropsStalePrincipal(t *testin
 	if diags := state.Set(ctx, &prior); diags.HasError() {
 		t.Fatal(diags)
 	}
+	// The plan carries the prior group through UseStateForUnknown; the configuration never sets it.
 	modifyPlan := func(plan originOwnerGrantModel) originOwnerGrantModel {
 		t.Helper()
 		planValue := tfsdk.Plan{Schema: sch}
 		if diags := planValue.Set(ctx, &plan); diags.HasError() {
 			t.Fatal(diags)
 		}
+		configured := plan
+		configured.Group = types.ObjectNull(originGrantGroupAttrTypes)
 		resp := &resource.ModifyPlanResponse{Plan: planValue}
-		res.ModifyPlan(ctx, resource.ModifyPlanRequest{Plan: planValue, State: state}, resp)
+		res.ModifyPlan(ctx, resource.ModifyPlanRequest{Config: ownerGrantConfig(t, sch, configured), Plan: planValue, State: state}, resp)
 		if resp.Diagnostics.HasError() {
 			t.Fatalf("modify plan diagnostics: %v", resp.Diagnostics)
 		}
@@ -469,14 +482,17 @@ func TestOriginRepoGrantModifyPlanKnownPrincipalSwitchDropsStaleObject(t *testin
 
 	prior := sampleRepoGrantModel()
 	state := repoGrantState(t, res, prior)
+	// The configuration names only the new principal; the plan also carries the prior user through UseStateForUnknown.
 	modifyPlan := func(plan originRepoGrantModel) originRepoGrantModel {
 		t.Helper()
 		planValue := tfsdk.Plan{Schema: sch}
 		if diags := planValue.Set(ctx, &plan); diags.HasError() {
 			t.Fatal(diags)
 		}
+		configured := plan
+		configured.User = types.ObjectNull(originGrantUserAttrTypes)
 		resp := &resource.ModifyPlanResponse{Plan: planValue}
-		res.ModifyPlan(ctx, resource.ModifyPlanRequest{Plan: planValue, State: state}, resp)
+		res.ModifyPlan(ctx, resource.ModifyPlanRequest{Config: repoGrantConfig(t, sch, configured), Plan: planValue, State: state}, resp)
 		if resp.Diagnostics.HasError() {
 			t.Fatalf("modify plan diagnostics: %v", resp.Diagnostics)
 		}
@@ -541,7 +557,7 @@ func TestOriginRepoGrantModifyPlanUnknownRepoLeavesIDUnknown(t *testing.T) {
 		t.Fatal(diags)
 	}
 	resp := &resource.ModifyPlanResponse{Plan: planValue}
-	res.ModifyPlan(ctx, resource.ModifyPlanRequest{Plan: planValue, State: repoGrantState(t, res, prior)}, resp)
+	res.ModifyPlan(ctx, resource.ModifyPlanRequest{Config: repoGrantConfig(t, sch, plan), Plan: planValue, State: repoGrantState(t, res, prior)}, resp)
 	if resp.Diagnostics.HasError() {
 		t.Fatalf("modify plan diagnostics: %v", resp.Diagnostics)
 	}
@@ -586,7 +602,7 @@ func TestOriginOwnerGrantModifyPlanUnknownOwnerLeavesIDUnknown(t *testing.T) {
 			t.Fatal(diags)
 		}
 		resp := &resource.ModifyPlanResponse{Plan: planValue}
-		res.ModifyPlan(ctx, resource.ModifyPlanRequest{Plan: planValue, State: state}, resp)
+		res.ModifyPlan(ctx, resource.ModifyPlanRequest{Config: ownerGrantConfig(t, sch, plan), Plan: planValue, State: state}, resp)
 		if resp.Diagnostics.HasError() {
 			t.Fatalf("modify plan diagnostics: %v", resp.Diagnostics)
 		}
@@ -937,6 +953,444 @@ func TestOriginGrantSchemaPlanModifiers(t *testing.T) {
 	}
 }
 
+// Every move between principal families, on both grant resources. The framework plan hands ModifyPlan the previous
+// computed user or group next to the newly configured principal (UseStateForUnknown), so without normalisation the
+// plan names two principals: destroy would remove the old grant and the create half would then be rejected.
+func TestOriginGrantModifyPlanFamilySwitchesKeepOnePrincipal(t *testing.T) {
+	ctx := context.Background()
+	for name, newHarness := range grantHarnesses() {
+		for _, prior := range grantPrincipalCases() {
+			for _, next := range grantPrincipalCases() {
+				t.Run(name+"/"+prior.family+"_to_"+next.family, func(t *testing.T) {
+					mock := newGrantMock(t)
+					defer mock.Close()
+					h := newHarness(mock.client("key_team", "key_org"))
+					sch := h.schema(t)
+
+					stored := prior.config.withKey(prior.key)
+					state := tfsdk.State{Schema: sch, Raw: h.raw(t, stored, types.StringValue(originGrantID(h.resource(), prior.key)))}
+					config := tfsdk.Config{Schema: sch, Raw: h.raw(t, next.config, types.StringNull())}
+					proposed := proposedPrincipal(next.config, &stored)
+					plan := tfsdk.Plan{Schema: sch, Raw: h.raw(t, proposed, types.StringUnknown())}
+
+					idFamily := next.family == originGrantKindUser || next.family == originGrantKindGroup || next.family == originGrantKindTeamGroup
+					if carried := prior.key.kind != originGrantKindTeamGroup && next.family != prior.key.kind; carried && idFamily {
+						if _, err := proposed.family(false); err == nil {
+							t.Fatal("test setup: the proposed plan should still carry the previous principal next to the new one")
+						}
+					}
+
+					resp := &resource.ModifyPlanResponse{Plan: plan}
+					h.ModifyPlan(ctx, resource.ModifyPlanRequest{Config: config, Plan: plan, State: state}, resp)
+					if resp.Diagnostics.HasError() {
+						t.Fatalf("modify plan diagnostics: %v", resp.Diagnostics)
+					}
+					planned, id := h.principal(t, resp.Plan.Raw)
+					assertSinglePrincipal(t, planned, next.key)
+					if id.ValueString() != originGrantID(h.resource(), next.key) {
+						t.Fatalf("planned id = %v, want %q", id, originGrantID(h.resource(), next.key))
+					}
+					if !planned.UserEmail.Equal(next.config.UserEmail) || !planned.GroupName.Equal(next.config.GroupName) {
+						t.Fatalf("planned names = %v/%v, want the configured %v/%v", planned.UserEmail, planned.GroupName, next.config.UserEmail, next.config.GroupName)
+					}
+					replace := prior.key != next.key
+					switch {
+					case replace && (len(resp.RequiresReplace) != 1 || !resp.RequiresReplace[0].Equal(path.Root(next.key.kind))):
+						t.Fatalf("RequiresReplace = %v, want %s", resp.RequiresReplace, next.key.kind)
+					case !replace && len(resp.RequiresReplace) != 0:
+						t.Fatalf("RequiresReplace = %v, want none for an unchanged principal", resp.RequiresReplace)
+					}
+
+					// Apply: a replace destroys the prior grant first, then the create half must succeed with one principal.
+					var applied tftypes.Value
+					if replace {
+						deleteResp := &resource.DeleteResponse{}
+						h.Delete(ctx, resource.DeleteRequest{State: state}, deleteResp)
+						if deleteResp.Diagnostics.HasError() {
+							t.Fatalf("delete diagnostics: %v", deleteResp.Diagnostics)
+						}
+						if body, want := mock.lastBody("DELETE "+h.route()), wireJSON(t, prior.key.wire()); body != want {
+							t.Fatalf("delete body = %s, want %s", body, want)
+						}
+						createResp := &resource.CreateResponse{State: tfsdk.State{Schema: sch}}
+						h.Create(ctx, resource.CreateRequest{Plan: resp.Plan}, createResp)
+						if createResp.Diagnostics.HasError() {
+							t.Fatalf("create after destroy failed, access to the prior grant is already gone: %v", createResp.Diagnostics)
+						}
+						applied = createResp.State.Raw
+					} else {
+						updateResp := &resource.UpdateResponse{State: tfsdk.State{Schema: sch}}
+						h.Update(ctx, resource.UpdateRequest{Config: config, Plan: resp.Plan, State: state}, updateResp)
+						if updateResp.Diagnostics.HasError() {
+							t.Fatalf("update diagnostics: %v", updateResp.Diagnostics)
+						}
+						applied = updateResp.State.Raw
+					}
+					grant := next.key.wire()
+					grant.Permission = h.wirePermission()
+					if body, want := mock.lastBody("POST "+h.route()), wireJSON(t, grant); body != want {
+						t.Fatalf("upsert body = %s, want %s", body, want)
+					}
+					final, finalID := h.principal(t, applied)
+					assertSinglePrincipal(t, final, next.key)
+					if finalID.ValueString() != originGrantID(h.resource(), next.key) {
+						t.Fatalf("applied id = %v", finalID)
+					}
+				})
+			}
+		}
+	}
+}
+
+// A principal whose identifier comes from another resource is unknown at plan. ModifyPlan must keep the configured
+// object as written, drop any carried previous principal, and leave the composite id unknown; the apply-time plan
+// then resolves the known value, and the create posts exactly one principal.
+func TestOriginGrantModifyPlanDefersUnknownPrincipalIDs(t *testing.T) {
+	ctx := context.Background()
+	unknownID := func(attrTypes map[string]attr.Type, field string) types.Object {
+		return types.ObjectValueMust(attrTypes, map[string]attr.Value{field: types.StringUnknown()})
+	}
+	byFamily := map[string]grantPrincipalCase{}
+	for _, c := range grantPrincipalCases() {
+		byFamily[c.family] = c
+	}
+	cases := []struct {
+		name   string
+		config originGrantPrincipal
+		known  originGrantPrincipal
+		key    originGrantKey
+		prior  string
+	}{
+		{"user id unknown on create", nullPrincipal().withUser(unknownID(originGrantUserAttrTypes, "id")), nullPrincipal().withUser(principalObject(originGrantUserAttrTypes, "id", "user_02")), originGrantKey{kind: originGrantKindUser, value: "user_02"}, ""},
+		{"group id unknown on create", nullPrincipal().withGroup(unknownID(originGrantGroupAttrTypes, "id")), nullPrincipal().withGroup(principalObject(originGrantGroupAttrTypes, "id", "grp_02")), originGrantKey{kind: originGrantKindGroup, value: "grp_02"}, ""},
+		{"team_group kind unknown on create", nullPrincipal().withTeamGroup(unknownID(originGrantTeamGroupAttrTypes, "kind")), nullPrincipal().withTeamGroup(principalObject(originGrantTeamGroupAttrTypes, "kind", originTeamGroupAdmins)), originGrantKey{kind: originGrantKindTeamGroup, value: originTeamGroupAdmins}, ""},
+		{"user object unknown on create", nullPrincipal().withUser(types.ObjectUnknown(originGrantUserAttrTypes)), nullPrincipal().withUser(principalObject(originGrantUserAttrTypes, "id", "user_02")), originGrantKey{kind: originGrantKindUser, value: "user_02"}, ""},
+		{"group object unknown on create", nullPrincipal().withGroup(types.ObjectUnknown(originGrantGroupAttrTypes)), nullPrincipal().withGroup(principalObject(originGrantGroupAttrTypes, "id", "grp_02")), originGrantKey{kind: originGrantKindGroup, value: "grp_02"}, ""},
+		{"team_group object unknown on create", nullPrincipal().withTeamGroup(types.ObjectUnknown(originGrantTeamGroupAttrTypes)), nullPrincipal().withTeamGroup(principalObject(originGrantTeamGroupAttrTypes, "kind", originTeamGroupMembers)), originGrantKey{kind: originGrantKindTeamGroup, value: originTeamGroupMembers}, ""},
+		{"user id unknown replacing a group_name grant", nullPrincipal().withUser(unknownID(originGrantUserAttrTypes, "id")), nullPrincipal().withUser(principalObject(originGrantUserAttrTypes, "id", "user_02")), originGrantKey{kind: originGrantKindUser, value: "user_02"}, principalFamilyGroupName},
+		{"group id unknown replacing a user_email grant", nullPrincipal().withGroup(unknownID(originGrantGroupAttrTypes, "id")), nullPrincipal().withGroup(principalObject(originGrantGroupAttrTypes, "id", "grp_02")), originGrantKey{kind: originGrantKindGroup, value: "grp_02"}, principalFamilyUserEmail},
+		{"team_group kind unknown replacing a user grant", nullPrincipal().withTeamGroup(unknownID(originGrantTeamGroupAttrTypes, "kind")), nullPrincipal().withTeamGroup(principalObject(originGrantTeamGroupAttrTypes, "kind", originTeamGroupAdmins)), originGrantKey{kind: originGrantKindTeamGroup, value: originTeamGroupAdmins}, originGrantKindUser},
+		{"user id unknown replacing a user grant", nullPrincipal().withUser(unknownID(originGrantUserAttrTypes, "id")), nullPrincipal().withUser(principalObject(originGrantUserAttrTypes, "id", "user_02")), originGrantKey{kind: originGrantKindUser, value: "user_02"}, originGrantKindUser},
+	}
+	for name, newHarness := range grantHarnesses() {
+		for _, c := range cases {
+			t.Run(name+"/"+c.name, func(t *testing.T) {
+				mock := newGrantMock(t)
+				defer mock.Close()
+				h := newHarness(mock.client("", ""))
+				sch := h.schema(t)
+
+				state := emptyState(ctx, sch)
+				var stored *originGrantPrincipal
+				if c.prior != "" {
+					prior := byFamily[c.prior]
+					p := prior.config.withKey(prior.key)
+					stored = &p
+					state = tfsdk.State{Schema: sch, Raw: h.raw(t, p, types.StringValue(originGrantID(h.resource(), prior.key)))}
+				}
+				config := tfsdk.Config{Schema: sch, Raw: h.raw(t, c.config, types.StringNull())}
+				plan := tfsdk.Plan{Schema: sch, Raw: h.raw(t, proposedPrincipal(c.config, stored), types.StringUnknown())}
+				resp := &resource.ModifyPlanResponse{Plan: plan}
+				h.ModifyPlan(ctx, resource.ModifyPlanRequest{Config: config, Plan: plan, State: state}, resp)
+				if resp.Diagnostics.HasError() {
+					t.Fatalf("an unknown identifier must defer, got %v", resp.Diagnostics)
+				}
+				planned, id := h.principal(t, resp.Plan.Raw)
+				if !id.IsUnknown() {
+					t.Fatalf("planned id = %v, want unknown until the principal is known", id)
+				}
+				if !planned.User.Equal(c.config.User) || !planned.Group.Equal(c.config.Group) || !planned.TeamGroup.Equal(c.config.TeamGroup) {
+					t.Fatalf("planned principal = %#v, want exactly the configured objects %#v", planned, c.config)
+				}
+				if mock.count("GET /teams/members")+mock.count("GET /organizations/groups") != 0 {
+					t.Fatal("ID principals must not call the Admin APIs")
+				}
+
+				// Apply plans the create half again with the identifier known and no prior state.
+				knownConfig := tfsdk.Config{Schema: sch, Raw: h.raw(t, c.known, types.StringNull())}
+				knownPlan := tfsdk.Plan{Schema: sch, Raw: h.raw(t, proposedPrincipal(c.known, nil), types.StringUnknown())}
+				applyResp := &resource.ModifyPlanResponse{Plan: knownPlan}
+				h.ModifyPlan(ctx, resource.ModifyPlanRequest{Config: knownConfig, Plan: knownPlan, State: emptyState(ctx, sch)}, applyResp)
+				if applyResp.Diagnostics.HasError() {
+					t.Fatalf("apply-time plan diagnostics: %v", applyResp.Diagnostics)
+				}
+				final, finalID := h.principal(t, applyResp.Plan.Raw)
+				assertSinglePrincipal(t, final, c.key)
+				assertPlanRefinesPrior(t, planned, final)
+				if finalID.ValueString() != originGrantID(h.resource(), c.key) {
+					t.Fatalf("apply-time id = %v", finalID)
+				}
+				createResp := &resource.CreateResponse{State: tfsdk.State{Schema: sch}}
+				h.Create(ctx, resource.CreateRequest{Plan: applyResp.Plan}, createResp)
+				if createResp.Diagnostics.HasError() {
+					t.Fatalf("create diagnostics: %v", createResp.Diagnostics)
+				}
+				grant := c.key.wire()
+				grant.Permission = h.wirePermission()
+				if body, want := mock.lastBody("POST "+h.route()), wireJSON(t, grant); body != want {
+					t.Fatalf("create body = %s, want %s", body, want)
+				}
+			})
+		}
+	}
+}
+
+func TestOriginGrantCreateRejectsStillUnknownPrincipalID(t *testing.T) {
+	mock := newGrantMock(t)
+	defer mock.Close()
+
+	ctx := context.Background()
+	res := &originRepoGrantResource{client: mock.client("", "")}
+	plan := sampleRepoGrantModel()
+	plan.ID = types.StringUnknown()
+	plan.User = types.ObjectValueMust(originGrantUserAttrTypes, map[string]attr.Value{"id": types.StringUnknown()})
+	planValue := tfsdk.Plan{Schema: repoGrantSchema(t, res)}
+	if diags := planValue.Set(ctx, &plan); diags.HasError() {
+		t.Fatal(diags)
+	}
+	resp := &resource.CreateResponse{State: tfsdk.State{Schema: planValue.Schema}}
+	res.Create(ctx, resource.CreateRequest{Plan: planValue}, resp)
+	if !resp.Diagnostics.HasError() || !strings.Contains(resp.Diagnostics.Errors()[0].Detail(), "user.id is incomplete") {
+		t.Fatalf("diagnostics = %v, want incomplete principal error", resp.Diagnostics)
+	}
+	if mock.count("POST /repos/acme/rocket/grants") != 0 {
+		t.Fatal("nothing may be written for an unknown principal")
+	}
+}
+
+// A configuration naming two principals or none is a plan error, never silently accepted.
+func TestOriginGrantModifyPlanRejectsInvalidConfiguredPrincipal(t *testing.T) {
+	ctx := context.Background()
+	for name, newHarness := range grantHarnesses() {
+		for _, c := range []struct {
+			name   string
+			config originGrantPrincipal
+		}{
+			{"two principals", nullPrincipal().withUser(principalObject(originGrantUserAttrTypes, "id", "user_01")).withGroup(principalObject(originGrantGroupAttrTypes, "id", "grp_01"))},
+			{"no principal", nullPrincipal()},
+		} {
+			t.Run(name+"/"+c.name, func(t *testing.T) {
+				mock := newGrantMock(t)
+				defer mock.Close()
+				h := newHarness(mock.client("", ""))
+				sch := h.schema(t)
+				config := tfsdk.Config{Schema: sch, Raw: h.raw(t, c.config, types.StringNull())}
+				plan := tfsdk.Plan{Schema: sch, Raw: h.raw(t, proposedPrincipal(c.config, nil), types.StringUnknown())}
+				resp := &resource.ModifyPlanResponse{Plan: plan}
+				h.ModifyPlan(ctx, resource.ModifyPlanRequest{Config: config, Plan: plan, State: emptyState(ctx, sch)}, resp)
+				if !resp.Diagnostics.HasError() || !strings.Contains(resp.Diagnostics.Errors()[0].Detail(), "exactly one") {
+					t.Fatalf("diagnostics = %v, want exactly-one principal error", resp.Diagnostics)
+				}
+			})
+		}
+	}
+}
+
+type grantPrincipalCase struct {
+	family string
+	config originGrantPrincipal
+	key    originGrantKey
+}
+
+// One configuration per principal family; the mock resolves alice@acme.com to user_alice and Engineering to grp_eng.
+func grantPrincipalCases() []grantPrincipalCase {
+	return []grantPrincipalCase{
+		{principalFamilyUserEmail, nullPrincipal().withUserEmail("alice@acme.com"), originGrantKey{kind: originGrantKindUser, value: "user_alice"}},
+		{principalFamilyGroupName, nullPrincipal().withGroupName("Engineering"), originGrantKey{kind: originGrantKindGroup, value: "grp_eng"}},
+		{originGrantKindUser, nullPrincipal().withUser(principalObject(originGrantUserAttrTypes, "id", "user_01")), originGrantKey{kind: originGrantKindUser, value: "user_01"}},
+		{originGrantKindGroup, nullPrincipal().withGroup(principalObject(originGrantGroupAttrTypes, "id", "grp_01")), originGrantKey{kind: originGrantKindGroup, value: "grp_01"}},
+		{originGrantKindTeamGroup, nullPrincipal().withTeamGroup(principalObject(originGrantTeamGroupAttrTypes, "kind", originTeamGroupMembers)), originGrantKey{kind: originGrantKindTeamGroup, value: originTeamGroupMembers}},
+	}
+}
+
+func nullPrincipal() originGrantPrincipal {
+	return originGrantPrincipal{
+		UserEmail: types.StringNull(),
+		GroupName: types.StringNull(),
+		User:      types.ObjectNull(originGrantUserAttrTypes),
+		Group:     types.ObjectNull(originGrantGroupAttrTypes),
+		TeamGroup: types.ObjectNull(originGrantTeamGroupAttrTypes),
+	}
+}
+
+func (p originGrantPrincipal) withUserEmail(email string) originGrantPrincipal {
+	p.UserEmail = types.StringValue(email)
+	return p
+}
+
+func (p originGrantPrincipal) withGroupName(name string) originGrantPrincipal {
+	p.GroupName = types.StringValue(name)
+	return p
+}
+
+func (p originGrantPrincipal) withUser(user types.Object) originGrantPrincipal {
+	p.User = user
+	return p
+}
+
+func (p originGrantPrincipal) withGroup(group types.Object) originGrantPrincipal {
+	p.Group = group
+	return p
+}
+
+func (p originGrantPrincipal) withTeamGroup(teamGroup types.Object) originGrantPrincipal {
+	p.TeamGroup = teamGroup
+	return p
+}
+
+// proposedPrincipal mirrors the plan the framework hands ModifyPlan: configured attributes as written, and the
+// computed user and group unknown on create or, with prior state, copied from it by UseStateForUnknown whenever the
+// configuration leaves them null, whichever family the configuration now uses.
+func proposedPrincipal(config originGrantPrincipal, prior *originGrantPrincipal) originGrantPrincipal {
+	p := config
+	if p.User.IsNull() {
+		p.User = types.ObjectUnknown(originGrantUserAttrTypes)
+		if prior != nil {
+			p.User = prior.User
+		}
+	}
+	if p.Group.IsNull() {
+		p.Group = types.ObjectUnknown(originGrantGroupAttrTypes)
+		if prior != nil {
+			p.Group = prior.Group
+		}
+	}
+	return p
+}
+
+func assertSinglePrincipal(t *testing.T, p originGrantPrincipal, key originGrantKey) {
+	t.Helper()
+	for kind, value := range map[string]types.String{
+		originGrantKindUser:      principalField(p.User, "id"),
+		originGrantKindGroup:     principalField(p.Group, "id"),
+		originGrantKindTeamGroup: principalField(p.TeamGroup, "kind"),
+	} {
+		if kind == key.kind {
+			if value.IsNull() || value.IsUnknown() || value.ValueString() != key.value {
+				t.Fatalf("%s = %v, want %q", kind, value, key.value)
+			}
+			continue
+		}
+		if !value.IsNull() {
+			t.Fatalf("%s = %v, want null next to %s", kind, value, key)
+		}
+	}
+}
+
+// Terraform only lets an apply-time plan fill in values the initial plan left unknown.
+func assertPlanRefinesPrior(t *testing.T, initial, final originGrantPrincipal) {
+	t.Helper()
+	check := func(name string, before, after types.Object) {
+		if before.IsUnknown() {
+			return
+		}
+		if before.IsNull() != after.IsNull() {
+			t.Fatalf("%s: apply-time plan %v does not refine the initial plan %v", name, after, before)
+		}
+		for field, value := range before.Attributes() {
+			if !value.IsUnknown() && !value.Equal(after.Attributes()[field]) {
+				t.Fatalf("%s.%s: apply-time plan %v does not refine the initial plan %v", name, field, after, before)
+			}
+		}
+	}
+	check("user", initial.User, final.User)
+	check("group", initial.Group, final.Group)
+	check("team_group", initial.TeamGroup, final.TeamGroup)
+}
+
+func wireJSON(t *testing.T, grant originGrant) string {
+	t.Helper()
+	raw, err := json.Marshal(grant)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(raw)
+}
+
+// grantHarness drives one grant resource through plan and apply with values built from a principal.
+type grantHarness interface {
+	resource.ResourceWithModifyPlan
+	schema(t *testing.T) schema.Schema
+	raw(t *testing.T, p originGrantPrincipal, id types.String) tftypes.Value
+	principal(t *testing.T, value tftypes.Value) (originGrantPrincipal, types.String)
+	resource() string
+	route() string
+	wirePermission() string
+}
+
+func grantHarnesses() map[string]func(*apiClient) grantHarness {
+	return map[string]func(*apiClient) grantHarness{
+		"repo": func(client *apiClient) grantHarness {
+			return repoGrantHarness{&originRepoGrantResource{client: client}}
+		},
+		"owner": func(client *apiClient) grantHarness {
+			return ownerGrantHarness{&originOwnerGrantResource{client: client}}
+		},
+	}
+}
+
+type repoGrantHarness struct{ *originRepoGrantResource }
+
+func (h repoGrantHarness) schema(t *testing.T) schema.Schema {
+	return repoGrantSchema(t, h.originRepoGrantResource)
+}
+
+func (h repoGrantHarness) raw(t *testing.T, p originGrantPrincipal, id types.String) tftypes.Value {
+	t.Helper()
+	model := sampleRepoGrantModel().withPrincipal(p)
+	model.ID = id
+	value := tfsdk.Plan{Schema: h.schema(t)}
+	if diags := value.Set(context.Background(), &model); diags.HasError() {
+		t.Fatal(diags)
+	}
+	return value.Raw
+}
+
+func (h repoGrantHarness) principal(t *testing.T, value tftypes.Value) (originGrantPrincipal, types.String) {
+	t.Helper()
+	var model originRepoGrantModel
+	if diags := (tfsdk.State{Schema: h.schema(t), Raw: value}).Get(context.Background(), &model); diags.HasError() {
+		t.Fatal(diags)
+	}
+	return model.principal(), model.ID
+}
+
+func (h repoGrantHarness) resource() string       { return "acme/rocket" }
+func (h repoGrantHarness) route() string          { return "/repos/acme/rocket/grants" }
+func (h repoGrantHarness) wirePermission() string { return repoPermissionToWire(originPermissionWrite) }
+
+type ownerGrantHarness struct{ *originOwnerGrantResource }
+
+func (h ownerGrantHarness) schema(t *testing.T) schema.Schema {
+	return ownerGrantSchema(t, h.originOwnerGrantResource)
+}
+
+func (h ownerGrantHarness) raw(t *testing.T, p originGrantPrincipal, id types.String) tftypes.Value {
+	t.Helper()
+	model := sampleOwnerTeamGrantModel(originTeamGroupMembers, originPermissionRead).withPrincipal(p)
+	model.ID = id
+	value := tfsdk.Plan{Schema: h.schema(t)}
+	if diags := value.Set(context.Background(), &model); diags.HasError() {
+		t.Fatal(diags)
+	}
+	return value.Raw
+}
+
+func (h ownerGrantHarness) principal(t *testing.T, value tftypes.Value) (originGrantPrincipal, types.String) {
+	t.Helper()
+	var model originOwnerGrantModel
+	if diags := (tfsdk.State{Schema: h.schema(t), Raw: value}).Get(context.Background(), &model); diags.HasError() {
+		t.Fatal(diags)
+	}
+	return model.principal(), model.ID
+}
+
+func (h ownerGrantHarness) resource() string { return "acme" }
+func (h ownerGrantHarness) route() string    { return "/owners/acme/grants" }
+func (h ownerGrantHarness) wirePermission() string {
+	return ownerPermissionToWire(originPermissionRead)
+}
+
 type grantMock struct {
 	*httptest.Server
 	t    *testing.T
@@ -1077,6 +1531,27 @@ func ownerGrantSchema(t *testing.T, res *originOwnerGrantResource) schema.Schema
 // Mirrors the null object the framework hands to ImportState.
 func emptyState(ctx context.Context, sch schema.Schema) tfsdk.State {
 	return tfsdk.State{Schema: sch, Raw: tftypes.NewValue(sch.Type().TerraformType(ctx), nil)}
+}
+
+// Configuration behind a plan: only the attributes written in HCL, never the computed id.
+func repoGrantConfig(t *testing.T, sch schema.Schema, model originRepoGrantModel) tfsdk.Config {
+	t.Helper()
+	model.ID = types.StringNull()
+	value := tfsdk.Plan{Schema: sch}
+	if diags := value.Set(context.Background(), &model); diags.HasError() {
+		t.Fatal(diags)
+	}
+	return tfsdk.Config{Schema: sch, Raw: value.Raw}
+}
+
+func ownerGrantConfig(t *testing.T, sch schema.Schema, model originOwnerGrantModel) tfsdk.Config {
+	t.Helper()
+	model.ID = types.StringNull()
+	value := tfsdk.Plan{Schema: sch}
+	if diags := value.Set(context.Background(), &model); diags.HasError() {
+		t.Fatal(diags)
+	}
+	return tfsdk.Config{Schema: sch, Raw: value.Raw}
 }
 
 func repoGrantState(t *testing.T, res *originRepoGrantResource, model originRepoGrantModel) tfsdk.State {
