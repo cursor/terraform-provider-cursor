@@ -1,0 +1,4 @@
+terraform import cursor_origin_repo_grant.alice acme/rocket:user_email:alice@acme.com
+terraform import cursor_origin_repo_grant.eng acme/rocket:group_name:Engineering
+terraform import cursor_origin_repo_grant.release_bot acme/rocket:user:user_01k2ja2000e0080000000000u1
+terraform import cursor_origin_repo_grant.team_readers acme/rocket:team_group:members

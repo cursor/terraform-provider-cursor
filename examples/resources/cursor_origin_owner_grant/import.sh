@@ -1,0 +1,4 @@
+terraform import cursor_origin_owner_grant.security acme:group_name:Security
+terraform import cursor_origin_owner_grant.bob acme:user_email:bob@acme.com
+terraform import cursor_origin_owner_grant.platform acme:group:grp_01k2ja2000e0080000000000g7
+terraform import cursor_origin_owner_grant.team_contributors acme:team_group:members
