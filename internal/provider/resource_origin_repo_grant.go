@@ -67,9 +67,6 @@ func (r *originRepoGrantResource) Schema(_ context.Context, _ resource.SchemaReq
 		"id": schema.StringAttribute{
 			Computed:    true,
 			Description: "Composite ID owner/repo:kind:principal built from the stored principal ID, for example acme/rocket:user:user_01... or acme/rocket:team_group:members.",
-			PlanModifiers: []planmodifier.String{
-				stringplanmodifier.UseStateForUnknown(),
-			},
 		},
 		"owner": schema.StringAttribute{
 			Required:    true,
@@ -136,6 +133,9 @@ func (r *originRepoGrantResource) ModifyPlan(ctx context.Context, req resource.M
 		return
 	}
 	plan = plan.withPrincipal(principal)
+	// The composite id follows the resolved principal and the repository. While either is unknown it stays unknown
+	// rather than the prior id, which the replace that made them unknown is about to invalidate.
+	plan.ID = types.StringUnknown()
 	if key != nil && !plan.Owner.IsUnknown() && !plan.Repo.IsUnknown() {
 		plan.ID = types.StringValue(originGrantID(plan.resource(), *key))
 	}

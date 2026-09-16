@@ -63,9 +63,6 @@ func (r *originOwnerGrantResource) Schema(_ context.Context, _ resource.SchemaRe
 		"id": schema.StringAttribute{
 			Computed:    true,
 			Description: "Composite ID owner:kind:principal built from the stored principal ID, for example acme:group:grp_01... or acme:team_group:admins.",
-			PlanModifiers: []planmodifier.String{
-				stringplanmodifier.UseStateForUnknown(),
-			},
 		},
 		"owner": schema.StringAttribute{
 			Required:    true,
@@ -125,6 +122,9 @@ func (r *originOwnerGrantResource) ModifyPlan(ctx context.Context, req resource.
 		return
 	}
 	plan = plan.withPrincipal(principal)
+	// The composite id follows the resolved principal and the owner. While either is unknown it stays unknown
+	// rather than the prior id, which the replace that made them unknown is about to invalidate.
+	plan.ID = types.StringUnknown()
 	if key != nil && !plan.Owner.IsUnknown() {
 		plan.ID = types.StringValue(originGrantID(plan.Owner.ValueString(), *key))
 	}

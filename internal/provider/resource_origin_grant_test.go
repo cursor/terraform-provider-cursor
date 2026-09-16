@@ -345,6 +345,97 @@ func TestOriginRepoGrantModifyPlanDefersUnknownEmailAndReportsMissingKey(t *test
 	}
 }
 
+// Replace whose new repo is only known at apply. The prior composite id UseStateForUnknown copied into the plan
+// cannot match the id written on apply, so ModifyPlan must leave it unknown.
+func TestOriginRepoGrantModifyPlanUnknownRepoLeavesIDUnknown(t *testing.T) {
+	mock := newGrantMock(t)
+	defer mock.Close()
+
+	ctx := context.Background()
+	res := &originRepoGrantResource{client: mock.client("", "")}
+	sch := repoGrantSchema(t, res)
+
+	prior := sampleRepoGrantModel()
+	plan := prior
+	plan.Repo = types.StringUnknown()
+	planValue := tfsdk.Plan{Schema: sch}
+	if diags := planValue.Set(ctx, &plan); diags.HasError() {
+		t.Fatal(diags)
+	}
+	resp := &resource.ModifyPlanResponse{Plan: planValue}
+	res.ModifyPlan(ctx, resource.ModifyPlanRequest{Plan: planValue, State: repoGrantState(t, res, prior)}, resp)
+	if resp.Diagnostics.HasError() {
+		t.Fatalf("modify plan diagnostics: %v", resp.Diagnostics)
+	}
+	var planned originRepoGrantModel
+	if diags := resp.Plan.Get(ctx, &planned); diags.HasError() {
+		t.Fatal(diags)
+	}
+	if !planned.ID.IsUnknown() {
+		t.Fatalf("planned id = %v, want unknown while repo is unknown", planned.ID)
+	}
+	if principalField(planned.User, "id").ValueString() != "user_01" || len(resp.RequiresReplace) != 0 {
+		t.Fatalf("planned = %#v, replace = %v; the principal did not change", planned, resp.RequiresReplace)
+	}
+
+	planned.Repo = types.StringValue("booster")
+	got := createRepoGrant(t, res, planned)
+	if got.ID.ValueString() != "acme/booster:user:user_01" {
+		t.Fatalf("id = %q", got.ID.ValueString())
+	}
+	if body := mock.lastBody("POST /repos/acme/booster/grants"); body != `{"user":{"id":"user_01"},"permission":"write"}` {
+		t.Fatalf("create body = %s", body)
+	}
+}
+
+func TestOriginOwnerGrantModifyPlanUnknownOwnerLeavesIDUnknown(t *testing.T) {
+	mock := newGrantMock(t)
+	defer mock.Close()
+
+	ctx := context.Background()
+	res := &originOwnerGrantResource{client: mock.client("", "")}
+	sch := ownerGrantSchema(t, res)
+
+	prior := sampleOwnerTeamGrantModel(originTeamGroupAdmins, originPermissionAdmin)
+	state := tfsdk.State{Schema: sch}
+	if diags := state.Set(ctx, &prior); diags.HasError() {
+		t.Fatal(diags)
+	}
+	modifyPlan := func(plan originOwnerGrantModel) originOwnerGrantModel {
+		t.Helper()
+		planValue := tfsdk.Plan{Schema: sch}
+		if diags := planValue.Set(ctx, &plan); diags.HasError() {
+			t.Fatal(diags)
+		}
+		resp := &resource.ModifyPlanResponse{Plan: planValue}
+		res.ModifyPlan(ctx, resource.ModifyPlanRequest{Plan: planValue, State: state}, resp)
+		if resp.Diagnostics.HasError() {
+			t.Fatalf("modify plan diagnostics: %v", resp.Diagnostics)
+		}
+		var planned originOwnerGrantModel
+		if diags := resp.Plan.Get(ctx, &planned); diags.HasError() {
+			t.Fatal(diags)
+		}
+		return planned
+	}
+
+	plan := prior
+	plan.Owner = types.StringUnknown()
+	planned := modifyPlan(plan)
+	if !planned.ID.IsUnknown() {
+		t.Fatalf("planned id = %v, want unknown while owner is unknown", planned.ID)
+	}
+	if principalField(planned.TeamGroup, "kind").ValueString() != originTeamGroupAdmins {
+		t.Fatalf("planned = %#v", planned)
+	}
+
+	// With every input known the id is computed again and matches the prior value.
+	planned = modifyPlan(prior)
+	if planned.ID.ValueString() != "acme:team_group:admins" {
+		t.Fatalf("planned id = %v, want the composite of owner and principal", planned.ID)
+	}
+}
+
 func TestOriginOwnerGrantReadMapsCustomPermission(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/owners/acme/grants" {
@@ -660,6 +751,10 @@ func TestOriginGrantSchemaPlanModifiers(t *testing.T) {
 		}
 		if len(sch.Attributes["permission"].(schema.StringAttribute).PlanModifiers) != 0 {
 			t.Fatalf("%s.permission must update in place", name)
+		}
+		// ModifyPlan derives id from owner, repo, and the resolved principal; a copied prior value would go stale on replace.
+		if len(sch.Attributes["id"].(schema.StringAttribute).PlanModifiers) != 0 {
+			t.Fatalf("%s.id must not carry UseStateForUnknown", name)
 		}
 	}
 }
