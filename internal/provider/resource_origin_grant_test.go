@@ -457,6 +457,72 @@ func TestOriginOwnerGrantModifyPlanUnknownGroupNameDropsStalePrincipal(t *testin
 	}
 }
 
+// Replace whose new principal is a known ID object. UseStateForUnknown has already copied the prior
+// user or group into the plan; ModifyPlan must drop it, or Create would reject two principals.
+func TestOriginRepoGrantModifyPlanKnownPrincipalSwitchDropsStaleObject(t *testing.T) {
+	mock := newGrantMock(t)
+	defer mock.Close()
+
+	ctx := context.Background()
+	res := &originRepoGrantResource{client: mock.client("", "")}
+	sch := repoGrantSchema(t, res)
+
+	prior := sampleRepoGrantModel()
+	state := repoGrantState(t, res, prior)
+	modifyPlan := func(plan originRepoGrantModel) originRepoGrantModel {
+		t.Helper()
+		planValue := tfsdk.Plan{Schema: sch}
+		if diags := planValue.Set(ctx, &plan); diags.HasError() {
+			t.Fatal(diags)
+		}
+		resp := &resource.ModifyPlanResponse{Plan: planValue}
+		res.ModifyPlan(ctx, resource.ModifyPlanRequest{Plan: planValue, State: state}, resp)
+		if resp.Diagnostics.HasError() {
+			t.Fatalf("modify plan diagnostics: %v", resp.Diagnostics)
+		}
+		var planned originRepoGrantModel
+		if diags := resp.Plan.Get(ctx, &planned); diags.HasError() {
+			t.Fatal(diags)
+		}
+		return planned
+	}
+
+	// UseStateForUnknown has copied the prior user into the plan alongside the new principal.
+	plan := prior
+	plan.TeamGroup = principalObject(originGrantTeamGroupAttrTypes, "kind", originTeamGroupMembers)
+	planned := modifyPlan(plan)
+	if !planned.User.IsNull() || !planned.Group.IsNull() || principalField(planned.TeamGroup, "kind").ValueString() != originTeamGroupMembers {
+		t.Fatalf("planned = %#v, want prior user dropped and team_group kept", planned)
+	}
+	if planned.ID.ValueString() != "acme/rocket:team_group:members" {
+		t.Fatalf("id = %q", planned.ID.ValueString())
+	}
+	got := createRepoGrant(t, res, planned)
+	if body := mock.lastBody("POST /repos/acme/rocket/grants"); body != `{"teamGroup":{"kind":"members"},"permission":"write"}` {
+		t.Fatalf("create body = %s, want the new team_group grant", body)
+	}
+	if got.ID.ValueString() != "acme/rocket:team_group:members" {
+		t.Fatalf("state id = %q", got.ID.ValueString())
+	}
+
+	plan = prior
+	plan.Group = principalObject(originGrantGroupAttrTypes, "id", "grp_01")
+	planned = modifyPlan(plan)
+	if !planned.User.IsNull() || principalField(planned.Group, "id").ValueString() != "grp_01" || !planned.TeamGroup.IsNull() {
+		t.Fatalf("planned = %#v, want prior user dropped and group kept", planned)
+	}
+	if planned.ID.ValueString() != "acme/rocket:group:grp_01" {
+		t.Fatalf("id = %q", planned.ID.ValueString())
+	}
+	got = createRepoGrant(t, res, planned)
+	if body := mock.lastBody("POST /repos/acme/rocket/grants"); body != `{"group":{"id":"grp_01"},"permission":"write"}` {
+		t.Fatalf("create body = %s, want the new group grant", body)
+	}
+	if got.ID.ValueString() != "acme/rocket:group:grp_01" {
+		t.Fatalf("state id = %q", got.ID.ValueString())
+	}
+}
+
 // Replace whose new repo is only known at apply. The prior composite id UseStateForUnknown copied into the plan
 // cannot match the id written on apply, so ModifyPlan must leave it unknown.
 func TestOriginRepoGrantModifyPlanUnknownRepoLeavesIDUnknown(t *testing.T) {

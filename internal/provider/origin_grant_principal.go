@@ -358,12 +358,37 @@ func (p originGrantPrincipal) storedKey() (originGrantKey, error) {
 	return p.key(context.Background(), nil, false)
 }
 
+// withoutCopiedPrincipal drops the user or group UseStateForUnknown copied from prior so a family
+// switch is not seen as two principals. team_group is not computed and is never copied.
+func (p originGrantPrincipal) withoutCopiedPrincipal(prior originGrantPrincipal) originGrantPrincipal {
+	family, err := prior.family(false)
+	if err != nil {
+		return p
+	}
+	switch family {
+	case principalFamilyUserEmail, originGrantKindUser:
+		p.User = types.ObjectNull(originGrantUserAttrTypes)
+	case principalFamilyGroupName, originGrantKindGroup:
+		p.Group = types.ObjectNull(originGrantGroupAttrTypes)
+	}
+	return p
+}
+
 // plan re-resolves the principal when it can and reports whether the resolved key differs from prior state.
 // While user_email or group_name is unknown, the object it resolves into is unknown as well: UseStateForUnknown
 // has copied the previous principal's ID into the plan, and apply trusts a known stored ID over resolving again.
 func (p originGrantPrincipal) plan(ctx context.Context, client *apiClient, prior *originGrantPrincipal) (originGrantPrincipal, *originGrantKey, bool, error) {
 	family, err := p.family(false)
+	if err != nil && prior != nil {
+		// UseStateForUnknown copies the prior user/group into a plan that already has another principal.
+		stripped := p.withoutCopiedPrincipal(*prior)
+		family, err = stripped.family(false)
+		if err == nil {
+			p = stripped
+		}
+	}
 	if err != nil {
+		// Family is still unknown (an unresolved ID object) or invalid; leave the plan unchanged.
 		return p, nil, false, nil
 	}
 	switch {
