@@ -1,0 +1,523 @@
+=== go test ./... -count=1 -v ===
+?   	github.com/cursor/terraform-provider-cursor	[no test files]
+?   	github.com/cursor/terraform-provider-cursor/internal/proto/v1	[no test files]
+?   	github.com/cursor/terraform-provider-cursor/internal/proto/v1/v1connect	[no test files]
+=== RUN   TestResolveTeamMemberIDUsesBasicAuthAndPaginates
+--- PASS: TestResolveTeamMemberIDUsesBasicAuthAndPaginates (0.00s)
+=== RUN   TestResolveTeamMemberIDTreatsUnpaginatedResponseAsComplete
+=== RUN   TestResolveTeamMemberIDTreatsUnpaginatedResponseAsComplete/1_members
+=== RUN   TestResolveTeamMemberIDTreatsUnpaginatedResponseAsComplete/100_members
+=== RUN   TestResolveTeamMemberIDTreatsUnpaginatedResponseAsComplete/207_members
+--- PASS: TestResolveTeamMemberIDTreatsUnpaginatedResponseAsComplete (0.00s)
+    --- PASS: TestResolveTeamMemberIDTreatsUnpaginatedResponseAsComplete/1_members (0.00s)
+    --- PASS: TestResolveTeamMemberIDTreatsUnpaginatedResponseAsComplete/100_members (0.00s)
+    --- PASS: TestResolveTeamMemberIDTreatsUnpaginatedResponseAsComplete/207_members (0.00s)
+=== RUN   TestResolveTeamMemberIDStopsWhenHasNextPageFalse
+--- PASS: TestResolveTeamMemberIDStopsWhenHasNextPageFalse (0.00s)
+=== RUN   TestResolveTeamMemberIDSkipsRemovedMembers
+--- PASS: TestResolveTeamMemberIDSkipsRemovedMembers (0.00s)
+=== RUN   TestResolveTeamMemberIDErrors
+--- PASS: TestResolveTeamMemberIDErrors (0.00s)
+=== RUN   TestResolveTeamMemberIDRejectedKey
+--- PASS: TestResolveTeamMemberIDRejectedKey (0.00s)
+=== RUN   TestResolveOrganizationGroupIDUsesNameFilterAndPublicID
+--- PASS: TestResolveOrganizationGroupIDUsesNameFilterAndPublicID (0.00s)
+=== RUN   TestResolveOrganizationGroupIDRejectsUnfilteredResponse
+--- PASS: TestResolveOrganizationGroupIDRejectsUnfilteredResponse (0.00s)
+=== RUN   TestAdminPagingCapsRunawayServers
+--- PASS: TestAdminPagingCapsRunawayServers (0.00s)
+=== RUN   TestResolveToken_ExchangesAPIKey
+--- PASS: TestResolveToken_ExchangesAPIKey (0.00s)
+=== RUN   TestResolveToken_PassthroughNonAPIKey
+--- PASS: TestResolveToken_PassthroughNonAPIKey (0.00s)
+=== RUN   TestResolveToken_EmptyToken
+--- PASS: TestResolveToken_EmptyToken (0.00s)
+=== RUN   TestResolveToken_ExchangeFailsOnHTTPError
+--- PASS: TestResolveToken_ExchangeFailsOnHTTPError (0.00s)
+=== RUN   TestResolveToken_ExchangeFailsOnEmptyAccessToken
+--- PASS: TestResolveToken_ExchangeFailsOnEmptyAccessToken (0.00s)
+=== RUN   TestResolveToken_ExchangeFailsOnWhitespaceAccessToken
+--- PASS: TestResolveToken_ExchangeFailsOnWhitespaceAccessToken (0.00s)
+=== RUN   TestIsAPIKey
+--- PASS: TestIsAPIKey (0.00s)
+=== RUN   TestFormatAuthHeader
+--- PASS: TestFormatAuthHeader (0.00s)
+=== RUN   TestOriginRepoGrantsDataSourceRead
+--- PASS: TestOriginRepoGrantsDataSourceRead (0.00s)
+=== RUN   TestOriginOwnerGrantsDataSourceReadMapsPermissions
+--- PASS: TestOriginOwnerGrantsDataSourceReadMapsPermissions (0.00s)
+=== RUN   TestOriginGrantsDataSourceRejectsBadSlug
+--- PASS: TestOriginGrantsDataSourceRejectsBadSlug (0.00s)
+=== RUN   TestGetOriginRepoByOwnerAndName
+--- PASS: TestGetOriginRepoByOwnerAndName (0.00s)
+=== RUN   TestGetOriginRepoByID
+--- PASS: TestGetOriginRepoByID (0.00s)
+=== RUN   TestGetOriginRepoNotFound
+--- PASS: TestGetOriginRepoNotFound (0.00s)
+=== RUN   TestGetOriginRepoHTTPErrorWithoutJSON
+--- PASS: TestGetOriginRepoHTTPErrorWithoutJSON (0.00s)
+=== RUN   TestOriginRepoDataSourceReadByName
+--- PASS: TestOriginRepoDataSourceReadByName (0.00s)
+=== RUN   TestOriginRepoDataSourceReadByID
+--- PASS: TestOriginRepoDataSourceReadByID (0.00s)
+=== RUN   TestOriginRepoDataSourceReadRejectsMismatchedName
+--- PASS: TestOriginRepoDataSourceReadRejectsMismatchedName (0.00s)
+=== RUN   TestOriginRepoLookupValidation
+=== RUN   TestOriginRepoLookupValidation/missing_lookup
+=== RUN   TestOriginRepoLookupValidation/owner_without_name
+=== RUN   TestOriginRepoLookupValidation/reserved_owner
+=== RUN   TestOriginRepoLookupValidation/blank_strings
+--- PASS: TestOriginRepoLookupValidation (0.00s)
+    --- PASS: TestOriginRepoLookupValidation/missing_lookup (0.00s)
+    --- PASS: TestOriginRepoLookupValidation/owner_without_name (0.00s)
+    --- PASS: TestOriginRepoLookupValidation/reserved_owner (0.00s)
+    --- PASS: TestOriginRepoLookupValidation/blank_strings (0.00s)
+=== RUN   TestNewAPIClientSetsOriginAuth
+--- PASS: TestNewAPIClientSetsOriginAuth (0.00s)
+=== RUN   TestOriginGrantListPagesUntilShortPage
+--- PASS: TestOriginGrantListPagesUntilShortPage (0.00s)
+=== RUN   TestOriginGrantListEmptyCollection
+--- PASS: TestOriginGrantListEmptyCollection (0.00s)
+=== RUN   TestOriginGrantFindStopsAtMatchingPage
+--- PASS: TestOriginGrantFindStopsAtMatchingPage (0.00s)
+=== RUN   TestOriginGrantFindMissingReturnsNil
+--- PASS: TestOriginGrantFindMissingReturnsNil (0.00s)
+=== RUN   TestOriginGrantFindPropagatesNotFound
+--- PASS: TestOriginGrantFindPropagatesNotFound (0.00s)
+=== RUN   TestOriginGrantUpsertAndDeleteBodies
+--- PASS: TestOriginGrantUpsertAndDeleteBodies (0.00s)
+=== RUN   TestOriginGrantUpsertEmptyResponseUsesRequest
+--- PASS: TestOriginGrantUpsertEmptyResponseUsesRequest (0.00s)
+=== RUN   TestOriginGrantUpsertRejectsForeignPrincipal
+--- PASS: TestOriginGrantUpsertRejectsForeignPrincipal (0.00s)
+=== RUN   TestOriginGrantUpsertRequiresPrincipalAndPermission
+--- PASS: TestOriginGrantUpsertRequiresPrincipalAndPermission (0.00s)
+=== RUN   TestOriginGrantDeleteNotFound
+--- PASS: TestOriginGrantDeleteNotFound (0.00s)
+=== RUN   TestOriginGrantKeyFromWire
+--- PASS: TestOriginGrantKeyFromWire (0.00s)
+=== RUN   TestOriginGrantIDRoundTrip
+--- PASS: TestOriginGrantIDRoundTrip (0.00s)
+=== RUN   TestOwnerPermissionWireMapping
+--- PASS: TestOwnerPermissionWireMapping (0.00s)
+=== RUN   TestOriginRepoGrantReadRemovesMissingGrant
+--- PASS: TestOriginRepoGrantReadRemovesMissingGrant (0.00s)
+=== RUN   TestOriginRepoGrantReadRefreshesPermission
+--- PASS: TestOriginRepoGrantReadRefreshesPermission (0.00s)
+=== RUN   TestOriginRepoGrantReadListErrorKeepsState
+--- PASS: TestOriginRepoGrantReadListErrorKeepsState (0.00s)
+=== RUN   TestOriginRepoGrantCreateByID
+--- PASS: TestOriginRepoGrantCreateByID (0.00s)
+=== RUN   TestOriginRepoGrantCreateResolvesUserEmailAtApply
+--- PASS: TestOriginRepoGrantCreateResolvesUserEmailAtApply (0.00s)
+=== RUN   TestOriginOwnerGrantCreateResolvesGroupName
+--- PASS: TestOriginOwnerGrantCreateResolvesGroupName (0.00s)
+=== RUN   TestOriginRepoGrantModifyPlanResolvesEmailAndFlagsReplacement
+--- PASS: TestOriginRepoGrantModifyPlanResolvesEmailAndFlagsReplacement (0.00s)
+=== RUN   TestOriginRepoGrantCreateReusesPlannedResolution
+--- PASS: TestOriginRepoGrantCreateReusesPlannedResolution (0.00s)
+=== RUN   TestOriginRepoGrantModifyPlanNormalizesComputedObjects
+--- PASS: TestOriginRepoGrantModifyPlanNormalizesComputedObjects (0.00s)
+=== RUN   TestOriginRepoGrantModifyPlanDefersUnknownEmailAndReportsMissingKey
+--- PASS: TestOriginRepoGrantModifyPlanDefersUnknownEmailAndReportsMissingKey (0.00s)
+=== RUN   TestOriginRepoGrantModifyPlanUnknownEmailDropsStalePrincipal
+--- PASS: TestOriginRepoGrantModifyPlanUnknownEmailDropsStalePrincipal (0.00s)
+=== RUN   TestOriginOwnerGrantModifyPlanUnknownGroupNameDropsStalePrincipal
+--- PASS: TestOriginOwnerGrantModifyPlanUnknownGroupNameDropsStalePrincipal (0.00s)
+=== RUN   TestOriginRepoGrantModifyPlanUnknownRepoLeavesIDUnknown
+--- PASS: TestOriginRepoGrantModifyPlanUnknownRepoLeavesIDUnknown (0.00s)
+=== RUN   TestOriginOwnerGrantModifyPlanUnknownOwnerLeavesIDUnknown
+--- PASS: TestOriginOwnerGrantModifyPlanUnknownOwnerLeavesIDUnknown (0.00s)
+=== RUN   TestOriginOwnerGrantReadMapsCustomPermission
+--- PASS: TestOriginOwnerGrantReadMapsCustomPermission (0.00s)
+=== RUN   TestOriginRepoGrantDeleteNotFoundIsSuccess
+--- PASS: TestOriginRepoGrantDeleteNotFoundIsSuccess (0.00s)
+=== RUN   TestOriginRepoGrantDeleteSurfacesPreconditionError
+--- PASS: TestOriginRepoGrantDeleteSurfacesPreconditionError (0.00s)
+=== RUN   TestOriginGrantImportState
+--- PASS: TestOriginGrantImportState (0.00s)
+=== RUN   TestValidateOriginGrants
+--- PASS: TestValidateOriginGrants (0.00s)
+=== RUN   TestOriginGrantValidateConfigHandlesUnknownPrincipalObject
+--- PASS: TestOriginGrantValidateConfigHandlesUnknownPrincipalObject (0.00s)
+=== RUN   TestOriginGrantSchemaPlanModifiers
+--- PASS: TestOriginGrantSchemaPlanModifiers (0.00s)
+=== RUN   TestOriginRulesetCreateUpdateDelete
+--- PASS: TestOriginRulesetCreateUpdateDelete (0.00s)
+=== RUN   TestOriginRulesetModelMatchesSchema
+--- PASS: TestOriginRulesetModelMatchesSchema (0.00s)
+=== RUN   TestOriginRulesetEmptyRuleBlocksRoundTripThroughSchema
+--- PASS: TestOriginRulesetEmptyRuleBlocksRoundTripThroughSchema (0.00s)
+=== RUN   TestOriginRuleParametersWire
+--- PASS: TestOriginRuleParametersWire (0.00s)
+=== RUN   TestRuleModelFromAPI
+--- PASS: TestRuleModelFromAPI (0.00s)
+=== RUN   TestOriginRulesetReadKeepsUnsetRuleArgumentsNull
+--- PASS: TestOriginRulesetReadKeepsUnsetRuleArgumentsNull (0.00s)
+=== RUN   TestOriginRulesetReadNotFound
+--- PASS: TestOriginRulesetReadNotFound (0.00s)
+=== RUN   TestOriginRulesetToModelPreservesConfiguredIdentity
+--- PASS: TestOriginRulesetToModelPreservesConfiguredIdentity (0.00s)
+=== RUN   TestValidateOriginRulesetModel
+--- PASS: TestValidateOriginRulesetModel (0.00s)
+=== RUN   TestParseOriginRulesetImportID
+--- PASS: TestParseOriginRulesetImportID (0.00s)
+=== RUN   TestFindMatchingRulePrefersConfiguredParameters
+--- PASS: TestFindMatchingRulePrefersConfiguredParameters (0.00s)
+=== RUN   TestRuleMatchesAPIOmittedParametersOnlyMatchEmpty
+--- PASS: TestRuleMatchesAPIOmittedParametersOnlyMatchEmpty (0.00s)
+=== RUN   TestOriginRulesetRefreshKeepsUnsetRequiredCheckArgumentsNull
+--- PASS: TestOriginRulesetRefreshKeepsUnsetRequiredCheckArgumentsNull (0.00s)
+=== RUN   TestOriginRulesetApplyUsesResponseIDs
+--- PASS: TestOriginRulesetApplyUsesResponseIDs (0.00s)
+=== RUN   TestOriginRulesetApplyKeepsUnsetRuleArgumentsNull
+--- PASS: TestOriginRulesetApplyKeepsUnsetRuleArgumentsNull (0.00s)
+=== RUN   TestOriginRulesetReadImportsRulesFromAPI
+--- PASS: TestOriginRulesetReadImportsRulesFromAPI (0.00s)
+=== RUN   TestOriginRulesetReadRejectsUnsupportedRuleType
+--- PASS: TestOriginRulesetReadRejectsUnsupportedRuleType (0.00s)
+=== RUN   TestOriginRulesetOmittedBypassActorErrors
+--- PASS: TestOriginRulesetOmittedBypassActorErrors (0.00s)
+=== RUN   TestOriginRulesetWriteOmitsNestedIDsAndSendsEmptySlices
+--- PASS: TestOriginRulesetWriteOmitsNestedIDsAndSendsEmptySlices (0.00s)
+=== RUN   TestOriginRulesetMatchesBypassActorsByPrincipal
+--- PASS: TestOriginRulesetMatchesBypassActorsByPrincipal (0.00s)
+=== RUN   TestNestedRulesetIDsHaveNoPlanModifiers
+--- PASS: TestNestedRulesetIDsHaveNoPlanModifiers (0.00s)
+=== RUN   TestOriginRuleSchemaHasOneBlockPerRuleType
+--- PASS: TestOriginRuleSchemaHasOneBlockPerRuleType (0.00s)
+=== RUN   TestOriginRulesetReadNotFoundKeepsState
+--- PASS: TestOriginRulesetReadNotFoundKeepsState (0.00s)
+=== RUN   TestOriginRulesetDeleteProtection
+--- PASS: TestOriginRulesetDeleteProtection (0.00s)
+=== RUN   TestOriginRulesetDestroyPlanRespectsDeletionProtection
+--- PASS: TestOriginRulesetDestroyPlanRespectsDeletionProtection (0.00s)
+=== RUN   TestRulesetReplacementGuard
+--- PASS: TestRulesetReplacementGuard (0.00s)
+=== RUN   TestOriginRulesetDeleteNotFoundIsSuccess
+--- PASS: TestOriginRulesetDeleteNotFoundIsSuccess (0.00s)
+=== RUN   TestUpdatedAtHasNoPlanModifiers
+--- PASS: TestUpdatedAtHasNoPlanModifiers (0.00s)
+=== RUN   TestCreatedAtUsesUseStateForUnknown
+--- PASS: TestCreatedAtUsesUseStateForUnknown (0.00s)
+=== RUN   TestWorkflowLevelActionsRoundTrip
+=== RUN   TestWorkflowLevelActionsRoundTrip/model_to_proto
+=== RUN   TestWorkflowLevelActionsRoundTrip/proto_to_model
+=== RUN   TestWorkflowLevelActionsRoundTrip/proto_to_model_pr_comment_allow_inline_comments_false
+--- PASS: TestWorkflowLevelActionsRoundTrip (0.00s)
+    --- PASS: TestWorkflowLevelActionsRoundTrip/model_to_proto (0.00s)
+    --- PASS: TestWorkflowLevelActionsRoundTrip/proto_to_model (0.00s)
+    --- PASS: TestWorkflowLevelActionsRoundTrip/proto_to_model_pr_comment_allow_inline_comments_false (0.00s)
+=== RUN   TestWebhookTriggerRoundTrip
+=== RUN   TestWebhookTriggerRoundTrip/model_to_proto
+=== RUN   TestWebhookTriggerRoundTrip/proto_to_model
+--- PASS: TestWebhookTriggerRoundTrip (0.00s)
+    --- PASS: TestWebhookTriggerRoundTrip/model_to_proto (0.00s)
+    --- PASS: TestWebhookTriggerRoundTrip/proto_to_model (0.00s)
+=== RUN   TestGitPullRequestTargetsRoundTrip
+=== RUN   TestGitPullRequestTargetsRoundTrip/model_to_proto
+=== RUN   TestGitPullRequestTargetsRoundTrip/proto_to_model_preserves_legacy_mixed_targets
+=== RUN   TestGitPullRequestTargetsRoundTrip/proto_to_model_org_only_keeps_repos_null
+=== RUN   TestGitPullRequestTargetsRoundTrip/proto_to_model_falls_back_to_singular_repo
+--- PASS: TestGitPullRequestTargetsRoundTrip (0.00s)
+    --- PASS: TestGitPullRequestTargetsRoundTrip/model_to_proto (0.00s)
+    --- PASS: TestGitPullRequestTargetsRoundTrip/proto_to_model_preserves_legacy_mixed_targets (0.00s)
+    --- PASS: TestGitPullRequestTargetsRoundTrip/proto_to_model_org_only_keeps_repos_null (0.00s)
+    --- PASS: TestGitPullRequestTargetsRoundTrip/proto_to_model_falls_back_to_singular_repo (0.00s)
+=== RUN   TestGitCICompletedTriggerRoundTrip
+=== RUN   TestGitCICompletedTriggerRoundTrip/model_to_proto
+=== RUN   TestGitCICompletedTriggerRoundTrip/model_to_proto_branch_mode
+=== RUN   TestGitCICompletedTriggerRoundTrip/model_to_proto_false_round_trip
+=== RUN   TestGitCICompletedTriggerRoundTrip/model_to_proto_requires_repos
+=== RUN   TestGitCICompletedTriggerRoundTrip/model_to_proto_rejects_blank_repos
+=== RUN   TestGitCICompletedTriggerRoundTrip/model_to_proto_invalid_condition
+=== RUN   TestGitCICompletedTriggerRoundTrip/proto_to_model
+=== RUN   TestGitCICompletedTriggerRoundTrip/proto_to_model_defaults
+--- PASS: TestGitCICompletedTriggerRoundTrip (0.00s)
+    --- PASS: TestGitCICompletedTriggerRoundTrip/model_to_proto (0.00s)
+    --- PASS: TestGitCICompletedTriggerRoundTrip/model_to_proto_branch_mode (0.00s)
+    --- PASS: TestGitCICompletedTriggerRoundTrip/model_to_proto_false_round_trip (0.00s)
+    --- PASS: TestGitCICompletedTriggerRoundTrip/model_to_proto_requires_repos (0.00s)
+    --- PASS: TestGitCICompletedTriggerRoundTrip/model_to_proto_rejects_blank_repos (0.00s)
+    --- PASS: TestGitCICompletedTriggerRoundTrip/model_to_proto_invalid_condition (0.00s)
+    --- PASS: TestGitCICompletedTriggerRoundTrip/proto_to_model (0.00s)
+    --- PASS: TestGitCICompletedTriggerRoundTrip/proto_to_model_defaults (0.00s)
+=== RUN   TestPreserveEquivalentGitCICompletionConditions
+--- PASS: TestPreserveEquivalentGitCICompletionConditions (0.00s)
+=== RUN   TestTriggerModelToProtoRejectsMultipleTriggerTypes
+--- PASS: TestTriggerModelToProtoRejectsMultipleTriggerTypes (0.00s)
+=== RUN   TestGitPullRequestCommentContainsIsRegexRoundTrip
+=== RUN   TestGitPullRequestCommentContainsIsRegexRoundTrip/model_to_proto_true
+=== RUN   TestGitPullRequestCommentContainsIsRegexRoundTrip/model_to_proto_false_round_trip
+=== RUN   TestGitPullRequestCommentContainsIsRegexRoundTrip/proto_to_model_round_trip
+=== RUN   TestGitPullRequestCommentContainsIsRegexRoundTrip/proto_to_model_default_false
+--- PASS: TestGitPullRequestCommentContainsIsRegexRoundTrip (0.00s)
+    --- PASS: TestGitPullRequestCommentContainsIsRegexRoundTrip/model_to_proto_true (0.00s)
+    --- PASS: TestGitPullRequestCommentContainsIsRegexRoundTrip/model_to_proto_false_round_trip (0.00s)
+    --- PASS: TestGitPullRequestCommentContainsIsRegexRoundTrip/proto_to_model_round_trip (0.00s)
+    --- PASS: TestGitPullRequestCommentContainsIsRegexRoundTrip/proto_to_model_default_false (0.00s)
+=== RUN   TestMcpActionServerIDRoundTrip
+=== RUN   TestMcpActionServerIDRoundTrip/model_to_proto
+=== RUN   TestMcpActionServerIDRoundTrip/model_to_proto_null_id_is_omitted
+=== RUN   TestMcpActionServerIDRoundTrip/proto_to_model_round_trip
+=== RUN   TestMcpActionServerIDRoundTrip/proto_to_model_unset_id_is_null
+--- PASS: TestMcpActionServerIDRoundTrip (0.00s)
+    --- PASS: TestMcpActionServerIDRoundTrip/model_to_proto (0.00s)
+    --- PASS: TestMcpActionServerIDRoundTrip/model_to_proto_null_id_is_omitted (0.00s)
+    --- PASS: TestMcpActionServerIDRoundTrip/proto_to_model_round_trip (0.00s)
+    --- PASS: TestMcpActionServerIDRoundTrip/proto_to_model_unset_id_is_null (0.00s)
+=== RUN   TestMcpActionServerIDIsOptionalComputed
+--- PASS: TestMcpActionServerIDIsOptionalComputed (0.00s)
+=== RUN   TestPreserveEquivalentGitPullRequestOrgs
+=== RUN   TestPreserveEquivalentGitPullRequestOrgs/preserves_reference_casing_for_equivalent_orgs
+=== RUN   TestPreserveEquivalentGitPullRequestOrgs/leaves_state_unchanged_for_non_equivalent_orgs
+--- PASS: TestPreserveEquivalentGitPullRequestOrgs (0.00s)
+    --- PASS: TestPreserveEquivalentGitPullRequestOrgs/preserves_reference_casing_for_equivalent_orgs (0.00s)
+    --- PASS: TestPreserveEquivalentGitPullRequestOrgs/leaves_state_unchanged_for_non_equivalent_orgs (0.00s)
+=== RUN   TestModelToWorkflowRejectsMixedGitPullRequestTargets
+--- PASS: TestModelToWorkflowRejectsMixedGitPullRequestTargets (0.00s)
+=== RUN   TestModelToWorkflowRejectsEmptyGitPullRequestTargets
+--- PASS: TestModelToWorkflowRejectsEmptyGitPullRequestTargets (0.00s)
+=== RUN   TestModelToWorkflowAllowsGitLabRepoOnly
+--- PASS: TestModelToWorkflowAllowsGitLabRepoOnly (0.00s)
+=== RUN   TestModelToWorkflowAllowsSchemelessGitLabRepoOnly
+--- PASS: TestModelToWorkflowAllowsSchemelessGitLabRepoOnly (0.00s)
+=== RUN   TestGitRepoTargetProvider
+=== RUN   TestGitRepoTargetProvider/legacy_bare_owner_repo_defaults_to_github
+=== RUN   TestGitRepoTargetProvider/schemeless_gitlab_host_returns_gitlab
+=== RUN   TestGitRepoTargetProvider/https_gitlab_host_returns_gitlab
+=== RUN   TestGitRepoTargetProvider/github_enterprise_host_returns_github
+=== RUN   TestGitRepoTargetProvider/schemeless_bitbucket_host_returns_other
+--- PASS: TestGitRepoTargetProvider (0.00s)
+    --- PASS: TestGitRepoTargetProvider/legacy_bare_owner_repo_defaults_to_github (0.00s)
+    --- PASS: TestGitRepoTargetProvider/schemeless_gitlab_host_returns_gitlab (0.00s)
+    --- PASS: TestGitRepoTargetProvider/https_gitlab_host_returns_gitlab (0.00s)
+    --- PASS: TestGitRepoTargetProvider/github_enterprise_host_returns_github (0.00s)
+    --- PASS: TestGitRepoTargetProvider/schemeless_bitbucket_host_returns_other (0.00s)
+=== RUN   TestGitRepoProviderFromHostname
+=== RUN   TestGitRepoProviderFromHostname/github.com_returns_github
+=== RUN   TestGitRepoProviderFromHostname/github_enterprise_subdomain_returns_github
+=== RUN   TestGitRepoProviderFromHostname/hostname_containing_github_returns_other
+--- PASS: TestGitRepoProviderFromHostname (0.00s)
+    --- PASS: TestGitRepoProviderFromHostname/github.com_returns_github (0.00s)
+    --- PASS: TestGitRepoProviderFromHostname/github_enterprise_subdomain_returns_github (0.00s)
+    --- PASS: TestGitRepoProviderFromHostname/hostname_containing_github_returns_other (0.00s)
+=== RUN   TestGitRepoTargetMetadata
+=== RUN   TestGitRepoTargetMetadata/legacy_bare_owner_repo
+=== RUN   TestGitRepoTargetMetadata/schemeless_gitlab_host
+=== RUN   TestGitRepoTargetMetadata/https_github_enterprise
+=== RUN   TestGitRepoTargetMetadata/known_non_github_host
+=== RUN   TestGitRepoTargetMetadata/invalid_target
+--- PASS: TestGitRepoTargetMetadata (0.00s)
+    --- PASS: TestGitRepoTargetMetadata/legacy_bare_owner_repo (0.00s)
+    --- PASS: TestGitRepoTargetMetadata/schemeless_gitlab_host (0.00s)
+    --- PASS: TestGitRepoTargetMetadata/https_github_enterprise (0.00s)
+    --- PASS: TestGitRepoTargetMetadata/known_non_github_host (0.00s)
+    --- PASS: TestGitRepoTargetMetadata/invalid_target (0.00s)
+=== RUN   TestSlackTriggerCompletionReactionRoundTrip
+=== RUN   TestSlackTriggerCompletionReactionRoundTrip/model_to_proto_on
+=== RUN   TestSlackTriggerCompletionReactionRoundTrip/model_to_proto_custom
+=== RUN   TestSlackTriggerCompletionReactionRoundTrip/model_to_proto_custom_requires_emoji
+=== RUN   TestSlackTriggerCompletionReactionRoundTrip/model_to_proto_emoji_requires_custom_mode
+=== RUN   TestSlackTriggerCompletionReactionRoundTrip/model_to_proto_invalid_mode
+=== RUN   TestSlackTriggerCompletionReactionRoundTrip/proto_to_model_custom
+=== RUN   TestSlackTriggerCompletionReactionRoundTrip/proto_to_model_unset_is_null
+--- PASS: TestSlackTriggerCompletionReactionRoundTrip (0.00s)
+    --- PASS: TestSlackTriggerCompletionReactionRoundTrip/model_to_proto_on (0.00s)
+    --- PASS: TestSlackTriggerCompletionReactionRoundTrip/model_to_proto_custom (0.00s)
+    --- PASS: TestSlackTriggerCompletionReactionRoundTrip/model_to_proto_custom_requires_emoji (0.00s)
+    --- PASS: TestSlackTriggerCompletionReactionRoundTrip/model_to_proto_emoji_requires_custom_mode (0.00s)
+    --- PASS: TestSlackTriggerCompletionReactionRoundTrip/model_to_proto_invalid_mode (0.00s)
+    --- PASS: TestSlackTriggerCompletionReactionRoundTrip/proto_to_model_custom (0.00s)
+    --- PASS: TestSlackTriggerCompletionReactionRoundTrip/proto_to_model_unset_is_null (0.00s)
+=== RUN   TestLinearTriggerRoundTrip
+=== RUN   TestLinearTriggerRoundTrip/model_to_proto
+=== RUN   TestLinearTriggerRoundTrip/proto_to_model
+--- PASS: TestLinearTriggerRoundTrip (0.00s)
+    --- PASS: TestLinearTriggerRoundTrip/model_to_proto (0.00s)
+    --- PASS: TestLinearTriggerRoundTrip/proto_to_model (0.00s)
+=== RUN   TestProtoToModelSetsUpdatedAt
+--- PASS: TestProtoToModelSetsUpdatedAt (0.00s)
+=== RUN   TestParseAutomationScope
+=== RUN   TestParseAutomationScope/null_or_unknown
+=== RUN   TestParseAutomationScope/user
+=== RUN   TestParseAutomationScope/team_case_insensitive
+=== RUN   TestParseAutomationScope/team_editable
+=== RUN   TestParseAutomationScope/team_editable_user
+=== RUN   TestParseAutomationScope/invalid
+--- PASS: TestParseAutomationScope (0.00s)
+    --- PASS: TestParseAutomationScope/null_or_unknown (0.00s)
+    --- PASS: TestParseAutomationScope/user (0.00s)
+    --- PASS: TestParseAutomationScope/team_case_insensitive (0.00s)
+    --- PASS: TestParseAutomationScope/team_editable (0.00s)
+    --- PASS: TestParseAutomationScope/team_editable_user (0.00s)
+    --- PASS: TestParseAutomationScope/invalid (0.00s)
+=== RUN   TestProtoToModelSetsScope
+--- PASS: TestProtoToModelSetsScope (0.00s)
+=== RUN   TestAutomationScopeToModelTeamEditable
+--- PASS: TestAutomationScopeToModelTeamEditable (0.00s)
+=== RUN   TestAutomationScopeToModelTeamEditableUser
+--- PASS: TestAutomationScopeToModelTeamEditableUser (0.00s)
+=== RUN   TestModelIsOptionalComputed
+--- PASS: TestModelIsOptionalComputed (0.00s)
+=== RUN   TestSlackCompletionReactionModeIsOptionalComputed
+--- PASS: TestSlackCompletionReactionModeIsOptionalComputed (0.00s)
+=== RUN   TestSlackCompletionReactionUnknownModeSkipped
+--- PASS: TestSlackCompletionReactionUnknownModeSkipped (0.00s)
+=== RUN   TestModelUnsetAcceptsServerDefault
+--- PASS: TestModelUnsetAcceptsServerDefault (0.00s)
+=== RUN   TestGitConfigReposPopulatedFromTriggers
+=== RUN   TestGitConfigReposPopulatedFromTriggers/trigger_repos_without_git_repo
+=== RUN   TestGitConfigReposPopulatedFromTriggers/git_repo_included_first_and_deduplicated
+=== RUN   TestGitConfigReposPopulatedFromTriggers/org_only_trigger_sets_no_git_config
+=== RUN   TestGitConfigReposPopulatedFromTriggers/duplicate_repos_across_triggers_deduplicated
+=== RUN   TestGitConfigReposPopulatedFromTriggers/same_owner_repo_on_different_hosts_preserved
+--- PASS: TestGitConfigReposPopulatedFromTriggers (0.00s)
+    --- PASS: TestGitConfigReposPopulatedFromTriggers/trigger_repos_without_git_repo (0.00s)
+    --- PASS: TestGitConfigReposPopulatedFromTriggers/git_repo_included_first_and_deduplicated (0.00s)
+    --- PASS: TestGitConfigReposPopulatedFromTriggers/org_only_trigger_sets_no_git_config (0.00s)
+    --- PASS: TestGitConfigReposPopulatedFromTriggers/duplicate_repos_across_triggers_deduplicated (0.00s)
+    --- PASS: TestGitConfigReposPopulatedFromTriggers/same_owner_repo_on_different_hosts_preserved (0.00s)
+=== RUN   TestGitConfigReposRoundTripStable
+--- PASS: TestGitConfigReposRoundTripStable (0.00s)
+=== RUN   TestEnvironmentPublicIDRoundTrip
+=== RUN   TestEnvironmentPublicIDRoundTrip/set_value_round_trips
+=== RUN   TestEnvironmentPublicIDRoundTrip/unset_value_stays_null
+--- PASS: TestEnvironmentPublicIDRoundTrip (0.00s)
+    --- PASS: TestEnvironmentPublicIDRoundTrip/set_value_round_trips (0.00s)
+    --- PASS: TestEnvironmentPublicIDRoundTrip/unset_value_stays_null (0.00s)
+=== RUN   TestPreserveEquivalentEnvironmentPublicID
+=== RUN   TestPreserveEquivalentEnvironmentPublicID/preserves_reference_formatting_for_equivalent_value
+=== RUN   TestPreserveEquivalentEnvironmentPublicID/empty_configured_value_does_not_drift_to_null
+=== RUN   TestPreserveEquivalentEnvironmentPublicID/null_state_with_real_reference_value_stays_null
+=== RUN   TestPreserveEquivalentEnvironmentPublicID/leaves_state_unchanged_for_non_equivalent_value
+--- PASS: TestPreserveEquivalentEnvironmentPublicID (0.00s)
+    --- PASS: TestPreserveEquivalentEnvironmentPublicID/preserves_reference_formatting_for_equivalent_value (0.00s)
+    --- PASS: TestPreserveEquivalentEnvironmentPublicID/empty_configured_value_does_not_drift_to_null (0.00s)
+    --- PASS: TestPreserveEquivalentEnvironmentPublicID/null_state_with_real_reference_value_stays_null (0.00s)
+    --- PASS: TestPreserveEquivalentEnvironmentPublicID/leaves_state_unchanged_for_non_equivalent_value (0.00s)
+=== RUN   TestPrivateWorkerSchemaParity
+--- PASS: TestPrivateWorkerSchemaParity (0.00s)
+=== RUN   TestPrivateWorkerRoundTrip
+--- PASS: TestPrivateWorkerRoundTrip (0.00s)
+=== RUN   TestPrivateWorkerPresenceSemantics
+=== RUN   TestPrivateWorkerPresenceSemantics/absent_uses_default_worker_routing
+=== RUN   TestPrivateWorkerPresenceSemantics/removal_preserves_other_agent_options
+=== RUN   TestPrivateWorkerPresenceSemantics/present_empty_targets_any_private_worker
+--- PASS: TestPrivateWorkerPresenceSemantics (0.00s)
+    --- PASS: TestPrivateWorkerPresenceSemantics/absent_uses_default_worker_routing (0.00s)
+    --- PASS: TestPrivateWorkerPresenceSemantics/removal_preserves_other_agent_options (0.00s)
+    --- PASS: TestPrivateWorkerPresenceSemantics/present_empty_targets_any_private_worker (0.00s)
+=== RUN   TestPrivateWorkerAPILabelOrderDoesNotDrift
+--- PASS: TestPrivateWorkerAPILabelOrderDoesNotDrift (0.00s)
+=== RUN   TestSlackChannelCreatedTriggerRoundTrip
+=== RUN   TestSlackChannelCreatedTriggerRoundTrip/model_to_proto
+=== RUN   TestSlackChannelCreatedTriggerRoundTrip/proto_to_model_empty_filter_is_null
+--- PASS: TestSlackChannelCreatedTriggerRoundTrip (0.00s)
+    --- PASS: TestSlackChannelCreatedTriggerRoundTrip/model_to_proto (0.00s)
+    --- PASS: TestSlackChannelCreatedTriggerRoundTrip/proto_to_model_empty_filter_is_null (0.00s)
+=== RUN   TestSlackReactionAddedTriggerRoundTrip
+=== RUN   TestSlackReactionAddedTriggerRoundTrip/model_to_proto
+=== RUN   TestSlackReactionAddedTriggerRoundTrip/model_to_proto_rejects_non_canonical_emoji
+=== RUN   TestSlackReactionAddedTriggerRoundTrip/model_to_proto_requires_channel
+=== RUN   TestSlackReactionAddedTriggerRoundTrip/proto_to_model_prefers_channels_and_nulls_false_bools
+--- PASS: TestSlackReactionAddedTriggerRoundTrip (0.00s)
+    --- PASS: TestSlackReactionAddedTriggerRoundTrip/model_to_proto (0.00s)
+    --- PASS: TestSlackReactionAddedTriggerRoundTrip/model_to_proto_rejects_non_canonical_emoji (0.00s)
+    --- PASS: TestSlackReactionAddedTriggerRoundTrip/model_to_proto_requires_channel (0.00s)
+    --- PASS: TestSlackReactionAddedTriggerRoundTrip/proto_to_model_prefers_channels_and_nulls_false_bools (0.00s)
+=== RUN   TestSlackMentionAndAnyReactionTriggerRoundTrip
+=== RUN   TestSlackMentionAndAnyReactionTriggerRoundTrip/model_to_proto
+=== RUN   TestSlackMentionAndAnyReactionTriggerRoundTrip/proto_to_model
+--- PASS: TestSlackMentionAndAnyReactionTriggerRoundTrip (0.00s)
+    --- PASS: TestSlackMentionAndAnyReactionTriggerRoundTrip/model_to_proto (0.00s)
+    --- PASS: TestSlackMentionAndAnyReactionTriggerRoundTrip/proto_to_model (0.00s)
+=== RUN   TestPagerDutyTriggerRoundTrip
+=== RUN   TestPagerDutyTriggerRoundTrip/model_to_proto
+=== RUN   TestPagerDutyTriggerRoundTrip/model_to_proto_requires_exactly_one_event
+=== RUN   TestPagerDutyTriggerRoundTrip/proto_to_model
+--- PASS: TestPagerDutyTriggerRoundTrip (0.00s)
+    --- PASS: TestPagerDutyTriggerRoundTrip/model_to_proto (0.00s)
+    --- PASS: TestPagerDutyTriggerRoundTrip/model_to_proto_requires_exactly_one_event (0.00s)
+    --- PASS: TestPagerDutyTriggerRoundTrip/proto_to_model (0.00s)
+=== RUN   TestSentryTriggerRoundTrip
+=== RUN   TestSentryTriggerRoundTrip/model_to_proto
+=== RUN   TestSentryTriggerRoundTrip/model_to_proto_requires_exactly_one_event
+=== RUN   TestSentryTriggerRoundTrip/proto_to_model
+--- PASS: TestSentryTriggerRoundTrip (0.00s)
+    --- PASS: TestSentryTriggerRoundTrip/model_to_proto (0.00s)
+    --- PASS: TestSentryTriggerRoundTrip/model_to_proto_requires_exactly_one_event (0.00s)
+    --- PASS: TestSentryTriggerRoundTrip/proto_to_model (0.00s)
+=== RUN   TestEmptyActionsRoundTrip
+=== RUN   TestEmptyActionsRoundTrip/model_to_proto
+=== RUN   TestEmptyActionsRoundTrip/model_to_proto_rejects_multiple_action_types
+=== RUN   TestEmptyActionsRoundTrip/proto_to_model
+--- PASS: TestEmptyActionsRoundTrip (0.00s)
+    --- PASS: TestEmptyActionsRoundTrip/model_to_proto (0.00s)
+    --- PASS: TestEmptyActionsRoundTrip/model_to_proto_rejects_multiple_action_types (0.00s)
+    --- PASS: TestEmptyActionsRoundTrip/proto_to_model (0.00s)
+=== RUN   TestMicrosoftTeamsActionRejectsRespondAndPostAsThread
+--- PASS: TestMicrosoftTeamsActionRejectsRespondAndPostAsThread (0.00s)
+=== RUN   TestMicrosoftTeamsChannelCreatedRequiresTeamIDs
+--- PASS: TestMicrosoftTeamsChannelCreatedRequiresTeamIDs (0.00s)
+=== RUN   TestSlackActionRespondInThreadIsDeprecated
+--- PASS: TestSlackActionRespondInThreadIsDeprecated (0.00s)
+=== RUN   TestDisabledDefaultToolsRoundTrip
+=== RUN   TestDisabledDefaultToolsRoundTrip/model_to_proto
+=== RUN   TestDisabledDefaultToolsRoundTrip/model_to_proto_rejects_unknown_tool
+=== RUN   TestDisabledDefaultToolsRoundTrip/proto_to_model
+--- PASS: TestDisabledDefaultToolsRoundTrip (0.00s)
+    --- PASS: TestDisabledDefaultToolsRoundTrip/model_to_proto (0.00s)
+    --- PASS: TestDisabledDefaultToolsRoundTrip/model_to_proto_rejects_unknown_tool (0.00s)
+    --- PASS: TestDisabledDefaultToolsRoundTrip/proto_to_model (0.00s)
+=== RUN   TestDescriptionRoundTrip
+--- PASS: TestDescriptionRoundTrip (0.00s)
+=== RUN   TestTeamIDIsCarriedOverNotReadBack
+--- PASS: TestTeamIDIsCarriedOverNotReadBack (0.00s)
+=== RUN   TestAutomationFromGetResponseRestrictedSummary
+--- PASS: TestAutomationFromGetResponseRestrictedSummary (0.00s)
+=== RUN   TestDataSourceSchemaMirrorsResourceSchema
+--- PASS: TestDataSourceSchemaMirrorsResourceSchema (0.00s)
+=== RUN   TestModelSelectionRoundTrip
+=== RUN   TestModelSelectionRoundTrip/model_to_proto_auto_cost
+=== RUN   TestModelSelectionRoundTrip/model_to_proto_without_selection_sends_slug
+=== RUN   TestModelSelectionRoundTrip/model_to_proto_validation
+=== RUN   TestModelSelectionRoundTrip/proto_to_model_set
+=== RUN   TestModelSelectionRoundTrip/proto_to_model_null_when_absent_or_blank
+--- PASS: TestModelSelectionRoundTrip (0.00s)
+    --- PASS: TestModelSelectionRoundTrip/model_to_proto_auto_cost (0.00s)
+    --- PASS: TestModelSelectionRoundTrip/model_to_proto_without_selection_sends_slug (0.00s)
+    --- PASS: TestModelSelectionRoundTrip/model_to_proto_validation (0.00s)
+    --- PASS: TestModelSelectionRoundTrip/proto_to_model_set (0.00s)
+    --- PASS: TestModelSelectionRoundTrip/proto_to_model_null_when_absent_or_blank (0.00s)
+=== RUN   TestPreserveEquivalentModelSelection
+=== RUN   TestPreserveEquivalentModelSelection/keeps_configured_order_and_whitespace
+=== RUN   TestPreserveEquivalentModelSelection/keeps_server_values_when_different
+=== RUN   TestPreserveEquivalentModelSelection/noop_without_selection
+--- PASS: TestPreserveEquivalentModelSelection (0.00s)
+    --- PASS: TestPreserveEquivalentModelSelection/keeps_configured_order_and_whitespace (0.00s)
+    --- PASS: TestPreserveEquivalentModelSelection/keeps_server_values_when_different (0.00s)
+    --- PASS: TestPreserveEquivalentModelSelection/noop_without_selection (0.00s)
+=== RUN   TestModelSelectionSchema
+--- PASS: TestModelSelectionSchema (0.00s)
+=== RUN   TestModelPlanModifiersFollowSelectionChanges
+=== RUN   TestModelPlanModifiersFollowSelectionChanges/unchanged_selection_keeps_state
+=== RUN   TestModelPlanModifiersFollowSelectionChanges/unconfigured_parameters_keep_state
+=== RUN   TestModelPlanModifiersFollowSelectionChanges/changed_parameters_reset_model
+=== RUN   TestModelPlanModifiersFollowSelectionChanges/changed_model_id_resets_both
+=== RUN   TestModelPlanModifiersFollowSelectionChanges/removed_selection_resets_model
+--- PASS: TestModelPlanModifiersFollowSelectionChanges (0.00s)
+    --- PASS: TestModelPlanModifiersFollowSelectionChanges/unchanged_selection_keeps_state (0.00s)
+    --- PASS: TestModelPlanModifiersFollowSelectionChanges/unconfigured_parameters_keep_state (0.00s)
+    --- PASS: TestModelPlanModifiersFollowSelectionChanges/changed_parameters_reset_model (0.00s)
+    --- PASS: TestModelPlanModifiersFollowSelectionChanges/changed_model_id_resets_both (0.00s)
+    --- PASS: TestModelPlanModifiersFollowSelectionChanges/removed_selection_resets_model (0.00s)
+=== RUN   TestValidateConfigRejectsModelWithModelSelection
+--- PASS: TestValidateConfigRejectsModelWithModelSelection (0.00s)
+=== RUN   TestNonBlankListEntriesRejected
+--- PASS: TestNonBlankListEntriesRejected (0.00s)
+=== RUN   TestPreserveEmptyDescription
+--- PASS: TestPreserveEmptyDescription (0.00s)
+PASS
+ok  	github.com/cursor/terraform-provider-cursor/internal/provider	0.050s
+go test exit=0

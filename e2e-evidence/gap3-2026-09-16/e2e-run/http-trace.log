@@ -1,0 +1,1566 @@
+mockcursor started 2026-09-16T02:49:42Z; TLS listener 127.0.0.1:35655 presents a cert for api.cursor.com signed by the test CA
+
+==== STAGE 0: tofu version / validate ====
+
+==== STAGE A: initial plan (user_email/group_name resolved at plan; late email unknown until apply) ====
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+#001 02:49:43.140 GET https://api.cursor.com/organizations/groups?name=Engineering
+     auth: Basic(organization_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"groups":[{"id":"g_1001","publicId":"grp_01k2ja2000e0080000000000g1","name":"Engineering"}],"pagination":{"hasNextPage":false}}
+
+#002 02:49:43.141 GET https://api.cursor.com/v1/origin/repos/acme/rocket
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"cloneUrl":"https://origin.cursor.com/acme/rocket.git","createdAt":"2026-01-01T00:00:00Z","defaultBranch":"main","fullName":"acme/rocket","id":"repo_01k2ja2000e0080000000000r1","name":"rocket","owner":{"id":"team_01k2ja2000e0080000000000t1","slug":"acme","type":"team"},"updatedAt":"2026-01-02T00:00:00Z","visibility":"private"}
+
+#003 02:49:43.141 GET https://api.cursor.com/organizations/groups?name=Engineering
+     auth: Basic(organization_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"groups":[{"id":"g_1001","publicId":"grp_01k2ja2000e0080000000000g1","name":"Engineering"}],"pagination":{"hasNextPage":false}}
+
+#004 02:49:43.141 GET https://api.cursor.com/teams/members?page=1&pageSize=100
+     auth: Basic(team_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"teamMembers":[{"id":"1","publicId":"user_01k2ja2000e0080000000000a1","email":"alice@acme.com","name":"Alice","isRemoved":false},{"id":"2","publicId":"user_01k2ja2000e0080000000000b2","email":"bob@acme.com","name":"Bob","isRemoved":false},{"id":"3","publicId":"user_01k2ja2000e0080000000000b9","email":"bob@acme.com","name":"Bob (old seat)","isRemoved":true},{"id":"4","publicId":"user_01k2ja2000e0080000000000c3","email":"carol@acme.com","name":"Carol","isRemoved":false},{"id":"5","publicId":"user_01k2ja2000e0080000000000d4","email":"dave@acme.com","name":"Dave","isRemoved":false},{"id":"6","publicId":"user_01k2ja2000e0080000000000e5","email":"erin@acme.com","name":"Erin","isRemoved":false},{"id":"7","publicId":"user_01k2ja2000e0080000000000f6","email":"frank@acme.com","name":"Frank","isRemoved":false}]}
+
+#005 02:49:43.141 GET https://api.cursor.com/organizations/groups?name=Security
+     auth: Basic(organization_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"groups":[{"id":"g_1002","publicId":"grp_01k2ja2000e0080000000000g2","name":"Security"}],"pagination":{"hasNextPage":false}}
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+#007 02:49:43.234 GET https://api.cursor.com/organizations/groups?name=Security
+     auth: Basic(organization_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"groups":[{"id":"g_1002","publicId":"grp_01k2ja2000e0080000000000g2","name":"Security"}],"pagination":{"hasNextPage":false}}
+
+#006 02:49:43.234 GET https://api.cursor.com/organizations/groups?name=Engineering
+     auth: Basic(organization_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"groups":[{"id":"g_1001","publicId":"grp_01k2ja2000e0080000000000g1","name":"Engineering"}],"pagination":{"hasNextPage":false}}
+
+#008 02:49:43.234 GET https://api.cursor.com/organizations/groups?name=Engineering
+     auth: Basic(organization_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"groups":[{"id":"g_1001","publicId":"grp_01k2ja2000e0080000000000g1","name":"Engineering"}],"pagination":{"hasNextPage":false}}
+
+#009 02:49:43.235 GET https://api.cursor.com/teams/members?page=1&pageSize=100
+     auth: Basic(team_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"teamMembers":[{"id":"1","publicId":"user_01k2ja2000e0080000000000a1","email":"alice@acme.com","name":"Alice","isRemoved":false},{"id":"2","publicId":"user_01k2ja2000e0080000000000b2","email":"bob@acme.com","name":"Bob","isRemoved":false},{"id":"3","publicId":"user_01k2ja2000e0080000000000b9","email":"bob@acme.com","name":"Bob (old seat)","isRemoved":true},{"id":"4","publicId":"user_01k2ja2000e0080000000000c3","email":"carol@acme.com","name":"Carol","isRemoved":false},{"id":"5","publicId":"user_01k2ja2000e0080000000000d4","email":"dave@acme.com","name":"Dave","isRemoved":false},{"id":"6","publicId":"user_01k2ja2000e0080000000000e5","email":"erin@acme.com","name":"Erin","isRemoved":false},{"id":"7","publicId":"user_01k2ja2000e0080000000000f6","email":"frank@acme.com","name":"Frank","isRemoved":false}]}
+
+#010 02:49:43.235 GET https://api.cursor.com/teams/members?page=1&pageSize=100
+     auth: Basic(team_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"teamMembers":[{"id":"1","publicId":"user_01k2ja2000e0080000000000a1","email":"alice@acme.com","name":"Alice","isRemoved":false},{"id":"2","publicId":"user_01k2ja2000e0080000000000b2","email":"bob@acme.com","name":"Bob","isRemoved":false},{"id":"3","publicId":"user_01k2ja2000e0080000000000b9","email":"bob@acme.com","name":"Bob (old seat)","isRemoved":true},{"id":"4","publicId":"user_01k2ja2000e0080000000000c3","email":"carol@acme.com","name":"Carol","isRemoved":false},{"id":"5","publicId":"user_01k2ja2000e0080000000000d4","email":"dave@acme.com","name":"Dave","isRemoved":false},{"id":"6","publicId":"user_01k2ja2000e0080000000000e5","email":"erin@acme.com","name":"Erin","isRemoved":false},{"id":"7","publicId":"user_01k2ja2000e0080000000000f6","email":"frank@acme.com","name":"Frank","isRemoved":false}]}
+
+#011 02:49:43.235 POST https://api.cursor.com/v1/origin/owners/acme/grants
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  {"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"}
+     response: 200 {"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"}
+
+#012 02:49:43.236 POST https://api.cursor.com/v1/origin/repos/acme/rocket/grants
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  {"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"}
+     response: 200 {"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"}
+
+#013 02:49:43.237 POST https://api.cursor.com/v1/origin/repos/acme/rocket/grants
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  {"user":{"id":"user_01k2ja2000e0080000000000b2"},"permission":"read"}
+     response: 200 {"user":{"id":"user_01k2ja2000e0080000000000b2"},"permission":"read"}
+
+#014 02:49:43.237 POST https://api.cursor.com/v1/origin/repos/acme/rocket/grants
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  {"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"}
+     response: 200 {"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"}
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+#015 02:49:43.237 POST https://api.cursor.com/v1/origin/owners/acme/grants
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  {"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"}
+     response: 200 {"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"}
+
+#016 02:49:43.237 POST https://api.cursor.com/v1/origin/repos/acme/rocket/grants
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  {"user":{"id":"user_01k2ja2000e0080000000000a1"},"permission":"write"}
+     response: 200 {"user":{"id":"user_01k2ja2000e0080000000000a1"},"permission":"write"}
+
+#017 02:49:43.238 POST https://api.cursor.com/v1/origin/owners/acme/grants
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  {"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}
+     response: 200 {"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}
+
+#018 02:49:43.240 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+#019 02:49:43.240 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"user":{"id":"user_01k2ja2000e0080000000000b2"},"permission":"read"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000a1"},"permission":"write"}]}
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+#020 02:49:43.240 POST https://api.cursor.com/v1/origin/repos/acme/rocket/rulesets
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  {"name":"require-review","description":"e2e: review + CI before merge","enforcement":"active","kind":"merge_branch","includedRefNames":["refs/heads/main"],"excludedRefNames":[],"rules":[{"ruleType":"pull_request","parameters":{"requiredApprovingReviewCount":1,"dismissStaleReviewsOnPush":true}},{"ruleType":"require_status_checks","parameters":{"requiredChecks":[{"actorKind":"app","actorId":"app_01k2ja2000e0080000000000c1","groupKey":"ci"}]}}],"bypassActors":[{"bypassMode":"always","originRole":{"role":"repository_admin"}}]}
+     response: 201 {"id":"rs_01k2ja2000e008000000000001","name":"require-review","description":"e2e: review + CI before merge","enforcement":"active","kind":"merge_branch","includedRefNames":["refs/heads/main"],"excludedRefNames":[],"rules":[{"id":"rule_01k2ja2000e008000000000002","ruleType":"pull_request","parameters":{"requiredApprovingReviewCount":1,"dismissStaleReviewsOnPush":true}},{"id":"rule_01k2ja2000e008000000000003","ruleType":"require_status_checks","parameters":{"requiredChecks":[{"actorKind":"app","actorId":"app_01k2ja2000e0080000000000c1","groupKey":"ci"}]}}],"bypassActors":[{"id":"ba_01k2ja2000e008000000000004","bypassMode":"always","originRole":{"role":"repository_admin"}}]}
+
+==== STAGE B: re-plan with no config change must be a no-op (refresh + re-resolution idempotent) ====
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+#021 02:49:43.390 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"user":{"id":"user_01k2ja2000e0080000000000b2"},"permission":"read"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000a1"},"permission":"write"}]}
+
+#022 02:49:43.390 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"user":{"id":"user_01k2ja2000e0080000000000b2"},"permission":"read"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000a1"},"permission":"write"}]}
+
+#023 02:49:43.390 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+#024 02:49:43.390 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+#025 02:49:43.390 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"user":{"id":"user_01k2ja2000e0080000000000b2"},"permission":"read"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000a1"},"permission":"write"}]}
+
+#026 02:49:43.390 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"user":{"id":"user_01k2ja2000e0080000000000b2"},"permission":"read"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000a1"},"permission":"write"}]}
+
+#027 02:49:43.391 GET https://api.cursor.com/v1/origin/repos/acme/rocket
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"cloneUrl":"https://origin.cursor.com/acme/rocket.git","createdAt":"2026-01-01T00:00:00Z","defaultBranch":"main","fullName":"acme/rocket","id":"repo_01k2ja2000e0080000000000r1","name":"rocket","owner":{"id":"team_01k2ja2000e0080000000000t1","slug":"acme","type":"team"},"updatedAt":"2026-01-02T00:00:00Z","visibility":"private"}
+
+#028 02:49:43.391 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+#029 02:49:43.393 GET https://api.cursor.com/organizations/groups?name=Security
+     auth: Basic(organization_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"groups":[{"id":"g_1002","publicId":"grp_01k2ja2000e0080000000000g2","name":"Security"}],"pagination":{"hasNextPage":false}}
+
+#030 02:49:43.394 GET https://api.cursor.com/organizations/groups?name=Engineering
+     auth: Basic(organization_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"groups":[{"id":"g_1001","publicId":"grp_01k2ja2000e0080000000000g1","name":"Engineering"}],"pagination":{"hasNextPage":false}}
+
+#031 02:49:43.396 GET https://api.cursor.com/teams/members?page=1&pageSize=100
+     auth: Basic(team_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"teamMembers":[{"id":"1","publicId":"user_01k2ja2000e0080000000000a1","email":"alice@acme.com","name":"Alice","isRemoved":false},{"id":"2","publicId":"user_01k2ja2000e0080000000000b2","email":"bob@acme.com","name":"Bob","isRemoved":false},{"id":"3","publicId":"user_01k2ja2000e0080000000000b9","email":"bob@acme.com","name":"Bob (old seat)","isRemoved":true},{"id":"4","publicId":"user_01k2ja2000e0080000000000c3","email":"carol@acme.com","name":"Carol","isRemoved":false},{"id":"5","publicId":"user_01k2ja2000e0080000000000d4","email":"dave@acme.com","name":"Dave","isRemoved":false},{"id":"6","publicId":"user_01k2ja2000e0080000000000e5","email":"erin@acme.com","name":"Erin","isRemoved":false},{"id":"7","publicId":"user_01k2ja2000e0080000000000f6","email":"frank@acme.com","name":"Frank","isRemoved":false}]}
+
+#032 02:49:43.396 GET https://api.cursor.com/organizations/groups?name=Engineering
+     auth: Basic(organization_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"groups":[{"id":"g_1001","publicId":"grp_01k2ja2000e0080000000000g1","name":"Engineering"}],"pagination":{"hasNextPage":false}}
+
+#033 02:49:43.396 GET https://api.cursor.com/teams/members?page=1&pageSize=100
+     auth: Basic(team_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"teamMembers":[{"id":"1","publicId":"user_01k2ja2000e0080000000000a1","email":"alice@acme.com","name":"Alice","isRemoved":false},{"id":"2","publicId":"user_01k2ja2000e0080000000000b2","email":"bob@acme.com","name":"Bob","isRemoved":false},{"id":"3","publicId":"user_01k2ja2000e0080000000000b9","email":"bob@acme.com","name":"Bob (old seat)","isRemoved":true},{"id":"4","publicId":"user_01k2ja2000e0080000000000c3","email":"carol@acme.com","name":"Carol","isRemoved":false},{"id":"5","publicId":"user_01k2ja2000e0080000000000d4","email":"dave@acme.com","name":"Dave","isRemoved":false},{"id":"6","publicId":"user_01k2ja2000e0080000000000e5","email":"erin@acme.com","name":"Erin","isRemoved":false},{"id":"7","publicId":"user_01k2ja2000e0080000000000f6","email":"frank@acme.com","name":"Frank","isRemoved":false}]}
+
+#034 02:49:43.398 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+#035 02:49:43.398 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"user":{"id":"user_01k2ja2000e0080000000000b2"},"permission":"read"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000a1"},"permission":"write"}]}
+
+#036 02:49:43.399 GET https://api.cursor.com/v1/origin/repos/acme/rocket/rulesets/rs_01k2ja2000e008000000000001
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"id":"rs_01k2ja2000e008000000000001","name":"require-review","description":"e2e: review + CI before merge","enforcement":"active","kind":"merge_branch","includedRefNames":["refs/heads/main"],"excludedRefNames":[],"rules":[{"id":"rule_01k2ja2000e008000000000002","ruleType":"pull_request","parameters":{"requiredApprovingReviewCount":1,"dismissStaleReviewsOnPush":true}},{"id":"rule_01k2ja2000e008000000000003","ruleType":"require_status_checks","parameters":{"requiredChecks":[{"actorKind":"app","actorId":"app_01k2ja2000e0080000000000c1","groupKey":"ci"}]}}],"bypassActors":[{"id":"ba_01k2ja2000e008000000000004","bypassMode":"always","originRole":{"role":"repository_admin"}}]}
+
+==== STAGE C: permission change is an in-place update (upsert), no replace ====
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+#037 02:49:43.518 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+#038 02:49:43.519 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+#039 02:49:43.519 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"user":{"id":"user_01k2ja2000e0080000000000b2"},"permission":"read"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000a1"},"permission":"write"}]}
+
+#040 02:49:43.519 GET https://api.cursor.com/v1/origin/repos/acme/rocket
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"cloneUrl":"https://origin.cursor.com/acme/rocket.git","createdAt":"2026-01-01T00:00:00Z","defaultBranch":"main","fullName":"acme/rocket","id":"repo_01k2ja2000e0080000000000r1","name":"rocket","owner":{"id":"team_01k2ja2000e0080000000000t1","slug":"acme","type":"team"},"updatedAt":"2026-01-02T00:00:00Z","visibility":"private"}
+
+#041 02:49:43.519 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+#042 02:49:43.519 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"user":{"id":"user_01k2ja2000e0080000000000b2"},"permission":"read"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000a1"},"permission":"write"}]}
+
+#043 02:49:43.519 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"user":{"id":"user_01k2ja2000e0080000000000b2"},"permission":"read"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000a1"},"permission":"write"}]}
+
+#044 02:49:43.519 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"user":{"id":"user_01k2ja2000e0080000000000b2"},"permission":"read"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000a1"},"permission":"write"}]}
+
+#045 02:49:43.525 GET https://api.cursor.com/organizations/groups?name=Engineering
+     auth: Basic(organization_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"groups":[{"id":"g_1001","publicId":"grp_01k2ja2000e0080000000000g1","name":"Engineering"}],"pagination":{"hasNextPage":false}}
+
+#046 02:49:43.525 GET https://api.cursor.com/organizations/groups?name=Security
+     auth: Basic(organization_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"groups":[{"id":"g_1002","publicId":"grp_01k2ja2000e0080000000000g2","name":"Security"}],"pagination":{"hasNextPage":false}}
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+#047 02:49:43.525 GET https://api.cursor.com/organizations/groups?name=Engineering
+     auth: Basic(organization_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"groups":[{"id":"g_1001","publicId":"grp_01k2ja2000e0080000000000g1","name":"Engineering"}],"pagination":{"hasNextPage":false}}
+
+#048 02:49:43.526 GET https://api.cursor.com/teams/members?page=1&pageSize=100
+     auth: Basic(team_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"teamMembers":[{"id":"1","publicId":"user_01k2ja2000e0080000000000a1","email":"alice@acme.com","name":"Alice","isRemoved":false},{"id":"2","publicId":"user_01k2ja2000e0080000000000b2","email":"bob@acme.com","name":"Bob","isRemoved":false},{"id":"3","publicId":"user_01k2ja2000e0080000000000b9","email":"bob@acme.com","name":"Bob (old seat)","isRemoved":true},{"id":"4","publicId":"user_01k2ja2000e0080000000000c3","email":"carol@acme.com","name":"Carol","isRemoved":false},{"id":"5","publicId":"user_01k2ja2000e0080000000000d4","email":"dave@acme.com","name":"Dave","isRemoved":false},{"id":"6","publicId":"user_01k2ja2000e0080000000000e5","email":"erin@acme.com","name":"Erin","isRemoved":false},{"id":"7","publicId":"user_01k2ja2000e0080000000000f6","email":"frank@acme.com","name":"Frank","isRemoved":false}]}
+
+#049 02:49:43.526 GET https://api.cursor.com/teams/members?page=1&pageSize=100
+     auth: Basic(team_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"teamMembers":[{"id":"1","publicId":"user_01k2ja2000e0080000000000a1","email":"alice@acme.com","name":"Alice","isRemoved":false},{"id":"2","publicId":"user_01k2ja2000e0080000000000b2","email":"bob@acme.com","name":"Bob","isRemoved":false},{"id":"3","publicId":"user_01k2ja2000e0080000000000b9","email":"bob@acme.com","name":"Bob (old seat)","isRemoved":true},{"id":"4","publicId":"user_01k2ja2000e0080000000000c3","email":"carol@acme.com","name":"Carol","isRemoved":false},{"id":"5","publicId":"user_01k2ja2000e0080000000000d4","email":"dave@acme.com","name":"Dave","isRemoved":false},{"id":"6","publicId":"user_01k2ja2000e0080000000000e5","email":"erin@acme.com","name":"Erin","isRemoved":false},{"id":"7","publicId":"user_01k2ja2000e0080000000000f6","email":"frank@acme.com","name":"Frank","isRemoved":false}]}
+
+#050 02:49:43.527 GET https://api.cursor.com/v1/origin/repos/acme/rocket/rulesets/rs_01k2ja2000e008000000000001
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"id":"rs_01k2ja2000e008000000000001","name":"require-review","description":"e2e: review + CI before merge","enforcement":"active","kind":"merge_branch","includedRefNames":["refs/heads/main"],"excludedRefNames":[],"rules":[{"id":"rule_01k2ja2000e008000000000002","ruleType":"pull_request","parameters":{"requiredApprovingReviewCount":1,"dismissStaleReviewsOnPush":true}},{"id":"rule_01k2ja2000e008000000000003","ruleType":"require_status_checks","parameters":{"requiredChecks":[{"actorKind":"app","actorId":"app_01k2ja2000e0080000000000c1","groupKey":"ci"}]}}],"bypassActors":[{"id":"ba_01k2ja2000e008000000000004","bypassMode":"always","originRole":{"role":"repository_admin"}}]}
+
+#051 02:49:43.528 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+#052 02:49:43.624 GET https://api.cursor.com/teams/members?page=1&pageSize=100
+     auth: Basic(team_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"teamMembers":[{"id":"1","publicId":"user_01k2ja2000e0080000000000a1","email":"alice@acme.com","name":"Alice","isRemoved":false},{"id":"2","publicId":"user_01k2ja2000e0080000000000b2","email":"bob@acme.com","name":"Bob","isRemoved":false},{"id":"3","publicId":"user_01k2ja2000e0080000000000b9","email":"bob@acme.com","name":"Bob (old seat)","isRemoved":true},{"id":"4","publicId":"user_01k2ja2000e0080000000000c3","email":"carol@acme.com","name":"Carol","isRemoved":false},{"id":"5","publicId":"user_01k2ja2000e0080000000000d4","email":"dave@acme.com","name":"Dave","isRemoved":false},{"id":"6","publicId":"user_01k2ja2000e0080000000000e5","email":"erin@acme.com","name":"Erin","isRemoved":false},{"id":"7","publicId":"user_01k2ja2000e0080000000000f6","email":"frank@acme.com","name":"Frank","isRemoved":false}]}
+
+#053 02:49:43.625 POST https://api.cursor.com/v1/origin/repos/acme/rocket/grants
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  {"user":{"id":"user_01k2ja2000e0080000000000a1"},"permission":"admin"}
+     response: 200 {"user":{"id":"user_01k2ja2000e0080000000000a1"},"permission":"admin"}
+
+#054 02:49:43.627 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"user":{"id":"user_01k2ja2000e0080000000000b2"},"permission":"read"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000a1"},"permission":"admin"}]}
+
+==== STAGE D: user_email change forces replacement; new user_ id resolved at plan ====
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+#055 02:49:43.733 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"user":{"id":"user_01k2ja2000e0080000000000b2"},"permission":"read"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000a1"},"permission":"admin"}]}
+
+#056 02:49:43.733 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+#057 02:49:43.733 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+#058 02:49:43.733 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"user":{"id":"user_01k2ja2000e0080000000000b2"},"permission":"read"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000a1"},"permission":"admin"}]}
+
+#059 02:49:43.733 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"user":{"id":"user_01k2ja2000e0080000000000b2"},"permission":"read"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000a1"},"permission":"admin"}]}
+
+#060 02:49:43.733 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+#061 02:49:43.734 GET https://api.cursor.com/v1/origin/repos/acme/rocket
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"cloneUrl":"https://origin.cursor.com/acme/rocket.git","createdAt":"2026-01-01T00:00:00Z","defaultBranch":"main","fullName":"acme/rocket","id":"repo_01k2ja2000e0080000000000r1","name":"rocket","owner":{"id":"team_01k2ja2000e0080000000000t1","slug":"acme","type":"team"},"updatedAt":"2026-01-02T00:00:00Z","visibility":"private"}
+
+#062 02:49:43.734 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"user":{"id":"user_01k2ja2000e0080000000000b2"},"permission":"read"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000a1"},"permission":"admin"}]}
+
+#063 02:49:43.739 GET https://api.cursor.com/organizations/groups?name=Security
+     auth: Basic(organization_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"groups":[{"id":"g_1002","publicId":"grp_01k2ja2000e0080000000000g2","name":"Security"}],"pagination":{"hasNextPage":false}}
+
+#064 02:49:43.739 GET https://api.cursor.com/teams/members?page=1&pageSize=100
+     auth: Basic(team_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"teamMembers":[{"id":"1","publicId":"user_01k2ja2000e0080000000000a1","email":"alice@acme.com","name":"Alice","isRemoved":false},{"id":"2","publicId":"user_01k2ja2000e0080000000000b2","email":"bob@acme.com","name":"Bob","isRemoved":false},{"id":"3","publicId":"user_01k2ja2000e0080000000000b9","email":"bob@acme.com","name":"Bob (old seat)","isRemoved":true},{"id":"4","publicId":"user_01k2ja2000e0080000000000c3","email":"carol@acme.com","name":"Carol","isRemoved":false},{"id":"5","publicId":"user_01k2ja2000e0080000000000d4","email":"dave@acme.com","name":"Dave","isRemoved":false},{"id":"6","publicId":"user_01k2ja2000e0080000000000e5","email":"erin@acme.com","name":"Erin","isRemoved":false},{"id":"7","publicId":"user_01k2ja2000e0080000000000f6","email":"frank@acme.com","name":"Frank","isRemoved":false}]}
+
+#065 02:49:43.740 GET https://api.cursor.com/organizations/groups?name=Engineering
+     auth: Basic(organization_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"groups":[{"id":"g_1001","publicId":"grp_01k2ja2000e0080000000000g1","name":"Engineering"}],"pagination":{"hasNextPage":false}}
+
+#066 02:49:43.740 GET https://api.cursor.com/teams/members?page=1&pageSize=100
+     auth: Basic(team_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"teamMembers":[{"id":"1","publicId":"user_01k2ja2000e0080000000000a1","email":"alice@acme.com","name":"Alice","isRemoved":false},{"id":"2","publicId":"user_01k2ja2000e0080000000000b2","email":"bob@acme.com","name":"Bob","isRemoved":false},{"id":"3","publicId":"user_01k2ja2000e0080000000000b9","email":"bob@acme.com","name":"Bob (old seat)","isRemoved":true},{"id":"4","publicId":"user_01k2ja2000e0080000000000c3","email":"carol@acme.com","name":"Carol","isRemoved":false},{"id":"5","publicId":"user_01k2ja2000e0080000000000d4","email":"dave@acme.com","name":"Dave","isRemoved":false},{"id":"6","publicId":"user_01k2ja2000e0080000000000e5","email":"erin@acme.com","name":"Erin","isRemoved":false},{"id":"7","publicId":"user_01k2ja2000e0080000000000f6","email":"frank@acme.com","name":"Frank","isRemoved":false}]}
+
+#067 02:49:43.740 GET https://api.cursor.com/organizations/groups?name=Engineering
+     auth: Basic(organization_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"groups":[{"id":"g_1001","publicId":"grp_01k2ja2000e0080000000000g1","name":"Engineering"}],"pagination":{"hasNextPage":false}}
+
+#068 02:49:43.741 GET https://api.cursor.com/teams/members?page=1&pageSize=100
+     auth: Basic(team_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"teamMembers":[{"id":"1","publicId":"user_01k2ja2000e0080000000000a1","email":"alice@acme.com","name":"Alice","isRemoved":false},{"id":"2","publicId":"user_01k2ja2000e0080000000000b2","email":"bob@acme.com","name":"Bob","isRemoved":false},{"id":"3","publicId":"user_01k2ja2000e0080000000000b9","email":"bob@acme.com","name":"Bob (old seat)","isRemoved":true},{"id":"4","publicId":"user_01k2ja2000e0080000000000c3","email":"carol@acme.com","name":"Carol","isRemoved":false},{"id":"5","publicId":"user_01k2ja2000e0080000000000d4","email":"dave@acme.com","name":"Dave","isRemoved":false},{"id":"6","publicId":"user_01k2ja2000e0080000000000e5","email":"erin@acme.com","name":"Erin","isRemoved":false},{"id":"7","publicId":"user_01k2ja2000e0080000000000f6","email":"frank@acme.com","name":"Frank","isRemoved":false}]}
+
+#069 02:49:43.742 GET https://api.cursor.com/v1/origin/repos/acme/rocket/rulesets/rs_01k2ja2000e008000000000001
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"id":"rs_01k2ja2000e008000000000001","name":"require-review","description":"e2e: review + CI before merge","enforcement":"active","kind":"merge_branch","includedRefNames":["refs/heads/main"],"excludedRefNames":[],"rules":[{"id":"rule_01k2ja2000e008000000000002","ruleType":"pull_request","parameters":{"requiredApprovingReviewCount":1,"dismissStaleReviewsOnPush":true}},{"id":"rule_01k2ja2000e008000000000003","ruleType":"require_status_checks","parameters":{"requiredChecks":[{"actorKind":"app","actorId":"app_01k2ja2000e0080000000000c1","groupKey":"ci"}]}}],"bypassActors":[{"id":"ba_01k2ja2000e008000000000004","bypassMode":"always","originRole":{"role":"repository_admin"}}]}
+
+#070 02:49:43.742 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+#071 02:49:43.837 DELETE https://api.cursor.com/v1/origin/repos/acme/rocket/grants
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  {"user":{"id":"user_01k2ja2000e0080000000000a1"}}
+     response: 204 <empty>
+
+#072 02:49:43.839 GET https://api.cursor.com/teams/members?page=1&pageSize=100
+     auth: Basic(team_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"teamMembers":[{"id":"1","publicId":"user_01k2ja2000e0080000000000a1","email":"alice@acme.com","name":"Alice","isRemoved":false},{"id":"2","publicId":"user_01k2ja2000e0080000000000b2","email":"bob@acme.com","name":"Bob","isRemoved":false},{"id":"3","publicId":"user_01k2ja2000e0080000000000b9","email":"bob@acme.com","name":"Bob (old seat)","isRemoved":true},{"id":"4","publicId":"user_01k2ja2000e0080000000000c3","email":"carol@acme.com","name":"Carol","isRemoved":false},{"id":"5","publicId":"user_01k2ja2000e0080000000000d4","email":"dave@acme.com","name":"Dave","isRemoved":false},{"id":"6","publicId":"user_01k2ja2000e0080000000000e5","email":"erin@acme.com","name":"Erin","isRemoved":false},{"id":"7","publicId":"user_01k2ja2000e0080000000000f6","email":"frank@acme.com","name":"Frank","isRemoved":false}]}
+
+#073 02:49:43.840 POST https://api.cursor.com/v1/origin/repos/acme/rocket/grants
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  {"user":{"id":"user_01k2ja2000e0080000000000e5"},"permission":"admin"}
+     response: 200 {"user":{"id":"user_01k2ja2000e0080000000000e5"},"permission":"admin"}
+
+#074 02:49:43.842 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"user":{"id":"user_01k2ja2000e0080000000000b2"},"permission":"read"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e5"},"permission":"admin"}]}
+
+==== STAGE E: unknown-at-plan replace: late_email changes, terraform_data.output unknown until apply -> user/id unknown, stale id dropped ====
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+#075 02:49:43.949 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"user":{"id":"user_01k2ja2000e0080000000000b2"},"permission":"read"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e5"},"permission":"admin"}]}
+
+#076 02:49:43.950 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+#077 02:49:43.950 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+#078 02:49:43.950 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+#079 02:49:43.950 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"user":{"id":"user_01k2ja2000e0080000000000b2"},"permission":"read"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e5"},"permission":"admin"}]}
+
+#080 02:49:43.950 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"user":{"id":"user_01k2ja2000e0080000000000b2"},"permission":"read"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e5"},"permission":"admin"}]}
+
+#081 02:49:43.951 GET https://api.cursor.com/v1/origin/repos/acme/rocket
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"cloneUrl":"https://origin.cursor.com/acme/rocket.git","createdAt":"2026-01-01T00:00:00Z","defaultBranch":"main","fullName":"acme/rocket","id":"repo_01k2ja2000e0080000000000r1","name":"rocket","owner":{"id":"team_01k2ja2000e0080000000000t1","slug":"acme","type":"team"},"updatedAt":"2026-01-02T00:00:00Z","visibility":"private"}
+
+#082 02:49:43.951 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"user":{"id":"user_01k2ja2000e0080000000000b2"},"permission":"read"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e5"},"permission":"admin"}]}
+
+#083 02:49:43.956 GET https://api.cursor.com/organizations/groups?name=Engineering
+     auth: Basic(organization_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"groups":[{"id":"g_1001","publicId":"grp_01k2ja2000e0080000000000g1","name":"Engineering"}],"pagination":{"hasNextPage":false}}
+
+#084 02:49:43.956 GET https://api.cursor.com/organizations/groups?name=Security
+     auth: Basic(organization_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"groups":[{"id":"g_1002","publicId":"grp_01k2ja2000e0080000000000g2","name":"Security"}],"pagination":{"hasNextPage":false}}
+
+#085 02:49:43.956 GET https://api.cursor.com/organizations/groups?name=Engineering
+     auth: Basic(organization_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"groups":[{"id":"g_1001","publicId":"grp_01k2ja2000e0080000000000g1","name":"Engineering"}],"pagination":{"hasNextPage":false}}
+
+#086 02:49:43.957 GET https://api.cursor.com/teams/members?page=1&pageSize=100
+     auth: Basic(team_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"teamMembers":[{"id":"1","publicId":"user_01k2ja2000e0080000000000a1","email":"alice@acme.com","name":"Alice","isRemoved":false},{"id":"2","publicId":"user_01k2ja2000e0080000000000b2","email":"bob@acme.com","name":"Bob","isRemoved":false},{"id":"3","publicId":"user_01k2ja2000e0080000000000b9","email":"bob@acme.com","name":"Bob (old seat)","isRemoved":true},{"id":"4","publicId":"user_01k2ja2000e0080000000000c3","email":"carol@acme.com","name":"Carol","isRemoved":false},{"id":"5","publicId":"user_01k2ja2000e0080000000000d4","email":"dave@acme.com","name":"Dave","isRemoved":false},{"id":"6","publicId":"user_01k2ja2000e0080000000000e5","email":"erin@acme.com","name":"Erin","isRemoved":false},{"id":"7","publicId":"user_01k2ja2000e0080000000000f6","email":"frank@acme.com","name":"Frank","isRemoved":false}]}
+
+#087 02:49:43.958 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+#088 02:49:43.959 GET https://api.cursor.com/v1/origin/repos/acme/rocket/rulesets/rs_01k2ja2000e008000000000001
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"id":"rs_01k2ja2000e008000000000001","name":"require-review","description":"e2e: review + CI before merge","enforcement":"active","kind":"merge_branch","includedRefNames":["refs/heads/main"],"excludedRefNames":[],"rules":[{"id":"rule_01k2ja2000e008000000000002","ruleType":"pull_request","parameters":{"requiredApprovingReviewCount":1,"dismissStaleReviewsOnPush":true}},{"id":"rule_01k2ja2000e008000000000003","ruleType":"require_status_checks","parameters":{"requiredChecks":[{"actorKind":"app","actorId":"app_01k2ja2000e0080000000000c1","groupKey":"ci"}]}}],"bypassActors":[{"id":"ba_01k2ja2000e008000000000004","bypassMode":"always","originRole":{"role":"repository_admin"}}]}
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+#089 02:49:44.052 DELETE https://api.cursor.com/v1/origin/repos/acme/rocket/grants
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  {"user":{"id":"user_01k2ja2000e0080000000000b2"}}
+     response: 204 <empty>
+
+#090 02:49:44.055 GET https://api.cursor.com/teams/members?page=1&pageSize=100
+     auth: Basic(team_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"teamMembers":[{"id":"1","publicId":"user_01k2ja2000e0080000000000a1","email":"alice@acme.com","name":"Alice","isRemoved":false},{"id":"2","publicId":"user_01k2ja2000e0080000000000b2","email":"bob@acme.com","name":"Bob","isRemoved":false},{"id":"3","publicId":"user_01k2ja2000e0080000000000b9","email":"bob@acme.com","name":"Bob (old seat)","isRemoved":true},{"id":"4","publicId":"user_01k2ja2000e0080000000000c3","email":"carol@acme.com","name":"Carol","isRemoved":false},{"id":"5","publicId":"user_01k2ja2000e0080000000000d4","email":"dave@acme.com","name":"Dave","isRemoved":false},{"id":"6","publicId":"user_01k2ja2000e0080000000000e5","email":"erin@acme.com","name":"Erin","isRemoved":false},{"id":"7","publicId":"user_01k2ja2000e0080000000000f6","email":"frank@acme.com","name":"Frank","isRemoved":false}]}
+
+#091 02:49:44.056 POST https://api.cursor.com/v1/origin/repos/acme/rocket/grants
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  {"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"}
+     response: 200 {"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"}
+
+#092 02:49:44.058 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e5"},"permission":"admin"},{"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"}]}
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+#093 02:49:44.162 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+#094 02:49:44.162 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e5"},"permission":"admin"},{"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"}]}
+
+#095 02:49:44.162 GET https://api.cursor.com/v1/origin/repos/acme/rocket
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"cloneUrl":"https://origin.cursor.com/acme/rocket.git","createdAt":"2026-01-01T00:00:00Z","defaultBranch":"main","fullName":"acme/rocket","id":"repo_01k2ja2000e0080000000000r1","name":"rocket","owner":{"id":"team_01k2ja2000e0080000000000t1","slug":"acme","type":"team"},"updatedAt":"2026-01-02T00:00:00Z","visibility":"private"}
+
+#096 02:49:44.162 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e5"},"permission":"admin"},{"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"}]}
+
+#097 02:49:44.162 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+#098 02:49:44.162 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+#099 02:49:44.162 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e5"},"permission":"admin"},{"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"}]}
+
+#100 02:49:44.162 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e5"},"permission":"admin"},{"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"}]}
+
+#101 02:49:44.167 GET https://api.cursor.com/organizations/groups?name=Security
+     auth: Basic(organization_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"groups":[{"id":"g_1002","publicId":"grp_01k2ja2000e0080000000000g2","name":"Security"}],"pagination":{"hasNextPage":false}}
+
+#102 02:49:44.167 GET https://api.cursor.com/teams/members?page=1&pageSize=100
+     auth: Basic(team_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"teamMembers":[{"id":"1","publicId":"user_01k2ja2000e0080000000000a1","email":"alice@acme.com","name":"Alice","isRemoved":false},{"id":"2","publicId":"user_01k2ja2000e0080000000000b2","email":"bob@acme.com","name":"Bob","isRemoved":false},{"id":"3","publicId":"user_01k2ja2000e0080000000000b9","email":"bob@acme.com","name":"Bob (old seat)","isRemoved":true},{"id":"4","publicId":"user_01k2ja2000e0080000000000c3","email":"carol@acme.com","name":"Carol","isRemoved":false},{"id":"5","publicId":"user_01k2ja2000e0080000000000d4","email":"dave@acme.com","name":"Dave","isRemoved":false},{"id":"6","publicId":"user_01k2ja2000e0080000000000e5","email":"erin@acme.com","name":"Erin","isRemoved":false},{"id":"7","publicId":"user_01k2ja2000e0080000000000f6","email":"frank@acme.com","name":"Frank","isRemoved":false}]}
+
+#103 02:49:44.168 GET https://api.cursor.com/organizations/groups?name=Engineering
+     auth: Basic(organization_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"groups":[{"id":"g_1001","publicId":"grp_01k2ja2000e0080000000000g1","name":"Engineering"}],"pagination":{"hasNextPage":false}}
+
+#104 02:49:44.168 GET https://api.cursor.com/teams/members?page=1&pageSize=100
+     auth: Basic(team_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"teamMembers":[{"id":"1","publicId":"user_01k2ja2000e0080000000000a1","email":"alice@acme.com","name":"Alice","isRemoved":false},{"id":"2","publicId":"user_01k2ja2000e0080000000000b2","email":"bob@acme.com","name":"Bob","isRemoved":false},{"id":"3","publicId":"user_01k2ja2000e0080000000000b9","email":"bob@acme.com","name":"Bob (old seat)","isRemoved":true},{"id":"4","publicId":"user_01k2ja2000e0080000000000c3","email":"carol@acme.com","name":"Carol","isRemoved":false},{"id":"5","publicId":"user_01k2ja2000e0080000000000d4","email":"dave@acme.com","name":"Dave","isRemoved":false},{"id":"6","publicId":"user_01k2ja2000e0080000000000e5","email":"erin@acme.com","name":"Erin","isRemoved":false},{"id":"7","publicId":"user_01k2ja2000e0080000000000f6","email":"frank@acme.com","name":"Frank","isRemoved":false}]}
+
+#105 02:49:44.168 GET https://api.cursor.com/organizations/groups?name=Engineering
+     auth: Basic(organization_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"groups":[{"id":"g_1001","publicId":"grp_01k2ja2000e0080000000000g1","name":"Engineering"}],"pagination":{"hasNextPage":false}}
+
+#106 02:49:44.169 GET https://api.cursor.com/v1/origin/repos/acme/rocket/rulesets/rs_01k2ja2000e008000000000001
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"id":"rs_01k2ja2000e008000000000001","name":"require-review","description":"e2e: review + CI before merge","enforcement":"active","kind":"merge_branch","includedRefNames":["refs/heads/main"],"excludedRefNames":[],"rules":[{"id":"rule_01k2ja2000e008000000000002","ruleType":"pull_request","parameters":{"requiredApprovingReviewCount":1,"dismissStaleReviewsOnPush":true}},{"id":"rule_01k2ja2000e008000000000003","ruleType":"require_status_checks","parameters":{"requiredChecks":[{"actorKind":"app","actorId":"app_01k2ja2000e0080000000000c1","groupKey":"ci"}]}}],"bypassActors":[{"id":"ba_01k2ja2000e008000000000004","bypassMode":"always","originRole":{"role":"repository_admin"}}]}
+
+#107 02:49:44.170 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+#108 02:49:44.170 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e5"},"permission":"admin"},{"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"}]}
+
+==== STAGE F: directory drift: erin's email now resolves to a different user_ id -> plan re-resolves and forces replacement on user ====
+
+---- control: team directory replaced (7 members) ----
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+#109 02:49:44.291 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+#110 02:49:44.291 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+#111 02:49:44.291 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e5"},"permission":"admin"},{"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"}]}
+
+#112 02:49:44.291 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+#113 02:49:44.291 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e5"},"permission":"admin"},{"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"}]}
+
+#114 02:49:44.291 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e5"},"permission":"admin"},{"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"}]}
+
+#115 02:49:44.291 GET https://api.cursor.com/v1/origin/repos/acme/rocket
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"cloneUrl":"https://origin.cursor.com/acme/rocket.git","createdAt":"2026-01-01T00:00:00Z","defaultBranch":"main","fullName":"acme/rocket","id":"repo_01k2ja2000e0080000000000r1","name":"rocket","owner":{"id":"team_01k2ja2000e0080000000000t1","slug":"acme","type":"team"},"updatedAt":"2026-01-02T00:00:00Z","visibility":"private"}
+
+#116 02:49:44.291 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e5"},"permission":"admin"},{"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"}]}
+
+#117 02:49:44.297 GET https://api.cursor.com/organizations/groups?name=Security
+     auth: Basic(organization_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"groups":[{"id":"g_1002","publicId":"grp_01k2ja2000e0080000000000g2","name":"Security"}],"pagination":{"hasNextPage":false}}
+
+#118 02:49:44.297 GET https://api.cursor.com/organizations/groups?name=Engineering
+     auth: Basic(organization_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"groups":[{"id":"g_1001","publicId":"grp_01k2ja2000e0080000000000g1","name":"Engineering"}],"pagination":{"hasNextPage":false}}
+
+#119 02:49:44.298 GET https://api.cursor.com/organizations/groups?name=Engineering
+     auth: Basic(organization_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"groups":[{"id":"g_1001","publicId":"grp_01k2ja2000e0080000000000g1","name":"Engineering"}],"pagination":{"hasNextPage":false}}
+
+#120 02:49:44.298 GET https://api.cursor.com/teams/members?page=1&pageSize=100
+     auth: Basic(team_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"teamMembers":[{"id":"1","publicId":"user_01k2ja2000e0080000000000a1","email":"alice@acme.com","name":"Alice","isRemoved":false},{"id":"2","publicId":"user_01k2ja2000e0080000000000b2","email":"bob@acme.com","name":"Bob","isRemoved":false},{"id":"3","publicId":"user_01k2ja2000e0080000000000b9","email":"bob@acme.com","name":"Bob (old seat)","isRemoved":true},{"id":"4","publicId":"user_01k2ja2000e0080000000000c3","email":"carol@acme.com","name":"Carol","isRemoved":false},{"id":"5","publicId":"user_01k2ja2000e0080000000000d4","email":"dave@acme.com","name":"Dave","isRemoved":false},{"id":"6","publicId":"user_01k2ja2000e0080000000000e9","email":"erin@acme.com","name":"Erin (re-keyed seat)","isRemoved":false},{"id":"7","publicId":"user_01k2ja2000e0080000000000f6","email":"frank@acme.com","name":"Frank","isRemoved":false}]}
+
+#121 02:49:44.298 GET https://api.cursor.com/teams/members?page=1&pageSize=100
+     auth: Basic(team_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"teamMembers":[{"id":"1","publicId":"user_01k2ja2000e0080000000000a1","email":"alice@acme.com","name":"Alice","isRemoved":false},{"id":"2","publicId":"user_01k2ja2000e0080000000000b2","email":"bob@acme.com","name":"Bob","isRemoved":false},{"id":"3","publicId":"user_01k2ja2000e0080000000000b9","email":"bob@acme.com","name":"Bob (old seat)","isRemoved":true},{"id":"4","publicId":"user_01k2ja2000e0080000000000c3","email":"carol@acme.com","name":"Carol","isRemoved":false},{"id":"5","publicId":"user_01k2ja2000e0080000000000d4","email":"dave@acme.com","name":"Dave","isRemoved":false},{"id":"6","publicId":"user_01k2ja2000e0080000000000e9","email":"erin@acme.com","name":"Erin (re-keyed seat)","isRemoved":false},{"id":"7","publicId":"user_01k2ja2000e0080000000000f6","email":"frank@acme.com","name":"Frank","isRemoved":false}]}
+
+#122 02:49:44.299 GET https://api.cursor.com/v1/origin/repos/acme/rocket/rulesets/rs_01k2ja2000e008000000000001
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"id":"rs_01k2ja2000e008000000000001","name":"require-review","description":"e2e: review + CI before merge","enforcement":"active","kind":"merge_branch","includedRefNames":["refs/heads/main"],"excludedRefNames":[],"rules":[{"id":"rule_01k2ja2000e008000000000002","ruleType":"pull_request","parameters":{"requiredApprovingReviewCount":1,"dismissStaleReviewsOnPush":true}},{"id":"rule_01k2ja2000e008000000000003","ruleType":"require_status_checks","parameters":{"requiredChecks":[{"actorKind":"app","actorId":"app_01k2ja2000e0080000000000c1","groupKey":"ci"}]}}],"bypassActors":[{"id":"ba_01k2ja2000e008000000000004","bypassMode":"always","originRole":{"role":"repository_admin"}}]}
+
+#123 02:49:44.299 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+#124 02:49:44.301 GET https://api.cursor.com/teams/members?page=1&pageSize=100
+     auth: Basic(team_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"teamMembers":[{"id":"1","publicId":"user_01k2ja2000e0080000000000a1","email":"alice@acme.com","name":"Alice","isRemoved":false},{"id":"2","publicId":"user_01k2ja2000e0080000000000b2","email":"bob@acme.com","name":"Bob","isRemoved":false},{"id":"3","publicId":"user_01k2ja2000e0080000000000b9","email":"bob@acme.com","name":"Bob (old seat)","isRemoved":true},{"id":"4","publicId":"user_01k2ja2000e0080000000000c3","email":"carol@acme.com","name":"Carol","isRemoved":false},{"id":"5","publicId":"user_01k2ja2000e0080000000000d4","email":"dave@acme.com","name":"Dave","isRemoved":false},{"id":"6","publicId":"user_01k2ja2000e0080000000000e9","email":"erin@acme.com","name":"Erin (re-keyed seat)","isRemoved":false},{"id":"7","publicId":"user_01k2ja2000e0080000000000f6","email":"frank@acme.com","name":"Frank","isRemoved":false}]}
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+#125 02:49:44.393 DELETE https://api.cursor.com/v1/origin/repos/acme/rocket/grants
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  {"user":{"id":"user_01k2ja2000e0080000000000e5"}}
+     response: 204 <empty>
+
+#126 02:49:44.395 GET https://api.cursor.com/teams/members?page=1&pageSize=100
+     auth: Basic(team_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"teamMembers":[{"id":"1","publicId":"user_01k2ja2000e0080000000000a1","email":"alice@acme.com","name":"Alice","isRemoved":false},{"id":"2","publicId":"user_01k2ja2000e0080000000000b2","email":"bob@acme.com","name":"Bob","isRemoved":false},{"id":"3","publicId":"user_01k2ja2000e0080000000000b9","email":"bob@acme.com","name":"Bob (old seat)","isRemoved":true},{"id":"4","publicId":"user_01k2ja2000e0080000000000c3","email":"carol@acme.com","name":"Carol","isRemoved":false},{"id":"5","publicId":"user_01k2ja2000e0080000000000d4","email":"dave@acme.com","name":"Dave","isRemoved":false},{"id":"6","publicId":"user_01k2ja2000e0080000000000e9","email":"erin@acme.com","name":"Erin (re-keyed seat)","isRemoved":false},{"id":"7","publicId":"user_01k2ja2000e0080000000000f6","email":"frank@acme.com","name":"Frank","isRemoved":false}]}
+
+#127 02:49:44.397 POST https://api.cursor.com/v1/origin/repos/acme/rocket/grants
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  {"user":{"id":"user_01k2ja2000e0080000000000e9"},"permission":"admin"}
+     response: 200 {"user":{"id":"user_01k2ja2000e0080000000000e9"},"permission":"admin"}
+
+#128 02:49:44.398 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e9"},"permission":"admin"}]}
+
+==== STAGE G: import by user_email resolves through Team Admin API; following plan is a no-op ====
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+#129 02:49:44.415 POST https://api.cursor.com/v1/origin/repos/acme/rocket/grants
+     auth: Bearer(<provider token, redacted>)
+     user-agent: curl/8.5.0
+     request:  {"user":{"id":"user_01k2ja2000e0080000000000f6"},"permission":"read"}
+     response: 200 {"user":{"id":"user_01k2ja2000e0080000000000f6"},"permission":"read"}
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+#130 02:49:44.490 GET https://api.cursor.com/teams/members?page=1&pageSize=100
+     auth: Basic(team_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"teamMembers":[{"id":"1","publicId":"user_01k2ja2000e0080000000000a1","email":"alice@acme.com","name":"Alice","isRemoved":false},{"id":"2","publicId":"user_01k2ja2000e0080000000000b2","email":"bob@acme.com","name":"Bob","isRemoved":false},{"id":"3","publicId":"user_01k2ja2000e0080000000000b9","email":"bob@acme.com","name":"Bob (old seat)","isRemoved":true},{"id":"4","publicId":"user_01k2ja2000e0080000000000c3","email":"carol@acme.com","name":"Carol","isRemoved":false},{"id":"5","publicId":"user_01k2ja2000e0080000000000d4","email":"dave@acme.com","name":"Dave","isRemoved":false},{"id":"6","publicId":"user_01k2ja2000e0080000000000e9","email":"erin@acme.com","name":"Erin (re-keyed seat)","isRemoved":false},{"id":"7","publicId":"user_01k2ja2000e0080000000000f6","email":"frank@acme.com","name":"Frank","isRemoved":false}]}
+
+#131 02:49:44.490 GET https://api.cursor.com/v1/origin/repos/acme/rocket
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"cloneUrl":"https://origin.cursor.com/acme/rocket.git","createdAt":"2026-01-01T00:00:00Z","defaultBranch":"main","fullName":"acme/rocket","id":"repo_01k2ja2000e0080000000000r1","name":"rocket","owner":{"id":"team_01k2ja2000e0080000000000t1","slug":"acme","type":"team"},"updatedAt":"2026-01-02T00:00:00Z","visibility":"private"}
+
+#132 02:49:44.490 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e9"},"permission":"admin"},{"user":{"id":"user_01k2ja2000e0080000000000f6"},"permission":"read"}]}
+
+#133 02:49:44.490 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+#134 02:49:44.491 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e9"},"permission":"admin"},{"user":{"id":"user_01k2ja2000e0080000000000f6"},"permission":"read"}]}
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+#135 02:49:44.596 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e9"},"permission":"admin"},{"user":{"id":"user_01k2ja2000e0080000000000f6"},"permission":"read"}]}
+
+#136 02:49:44.596 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+#137 02:49:44.596 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e9"},"permission":"admin"},{"user":{"id":"user_01k2ja2000e0080000000000f6"},"permission":"read"}]}
+
+#138 02:49:44.596 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e9"},"permission":"admin"},{"user":{"id":"user_01k2ja2000e0080000000000f6"},"permission":"read"}]}
+
+#139 02:49:44.596 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e9"},"permission":"admin"},{"user":{"id":"user_01k2ja2000e0080000000000f6"},"permission":"read"}]}
+
+#140 02:49:44.596 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+#141 02:49:44.596 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+#142 02:49:44.596 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e9"},"permission":"admin"},{"user":{"id":"user_01k2ja2000e0080000000000f6"},"permission":"read"}]}
+
+#143 02:49:44.597 GET https://api.cursor.com/v1/origin/repos/acme/rocket
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"cloneUrl":"https://origin.cursor.com/acme/rocket.git","createdAt":"2026-01-01T00:00:00Z","defaultBranch":"main","fullName":"acme/rocket","id":"repo_01k2ja2000e0080000000000r1","name":"rocket","owner":{"id":"team_01k2ja2000e0080000000000t1","slug":"acme","type":"team"},"updatedAt":"2026-01-02T00:00:00Z","visibility":"private"}
+
+#144 02:49:44.602 GET https://api.cursor.com/teams/members?page=1&pageSize=100
+     auth: Basic(team_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"teamMembers":[{"id":"1","publicId":"user_01k2ja2000e0080000000000a1","email":"alice@acme.com","name":"Alice","isRemoved":false},{"id":"2","publicId":"user_01k2ja2000e0080000000000b2","email":"bob@acme.com","name":"Bob","isRemoved":false},{"id":"3","publicId":"user_01k2ja2000e0080000000000b9","email":"bob@acme.com","name":"Bob (old seat)","isRemoved":true},{"id":"4","publicId":"user_01k2ja2000e0080000000000c3","email":"carol@acme.com","name":"Carol","isRemoved":false},{"id":"5","publicId":"user_01k2ja2000e0080000000000d4","email":"dave@acme.com","name":"Dave","isRemoved":false},{"id":"6","publicId":"user_01k2ja2000e0080000000000e9","email":"erin@acme.com","name":"Erin (re-keyed seat)","isRemoved":false},{"id":"7","publicId":"user_01k2ja2000e0080000000000f6","email":"frank@acme.com","name":"Frank","isRemoved":false}]}
+
+#145 02:49:44.602 GET https://api.cursor.com/organizations/groups?name=Engineering
+     auth: Basic(organization_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"groups":[{"id":"g_1001","publicId":"grp_01k2ja2000e0080000000000g1","name":"Engineering"}],"pagination":{"hasNextPage":false}}
+
+#146 02:49:44.602 GET https://api.cursor.com/organizations/groups?name=Engineering
+     auth: Basic(organization_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"groups":[{"id":"g_1001","publicId":"grp_01k2ja2000e0080000000000g1","name":"Engineering"}],"pagination":{"hasNextPage":false}}
+
+#147 02:49:44.602 GET https://api.cursor.com/organizations/groups?name=Security
+     auth: Basic(organization_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"groups":[{"id":"g_1002","publicId":"grp_01k2ja2000e0080000000000g2","name":"Security"}],"pagination":{"hasNextPage":false}}
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+#148 02:49:44.603 GET https://api.cursor.com/teams/members?page=1&pageSize=100
+     auth: Basic(team_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"teamMembers":[{"id":"1","publicId":"user_01k2ja2000e0080000000000a1","email":"alice@acme.com","name":"Alice","isRemoved":false},{"id":"2","publicId":"user_01k2ja2000e0080000000000b2","email":"bob@acme.com","name":"Bob","isRemoved":false},{"id":"3","publicId":"user_01k2ja2000e0080000000000b9","email":"bob@acme.com","name":"Bob (old seat)","isRemoved":true},{"id":"4","publicId":"user_01k2ja2000e0080000000000c3","email":"carol@acme.com","name":"Carol","isRemoved":false},{"id":"5","publicId":"user_01k2ja2000e0080000000000d4","email":"dave@acme.com","name":"Dave","isRemoved":false},{"id":"6","publicId":"user_01k2ja2000e0080000000000e9","email":"erin@acme.com","name":"Erin (re-keyed seat)","isRemoved":false},{"id":"7","publicId":"user_01k2ja2000e0080000000000f6","email":"frank@acme.com","name":"Frank","isRemoved":false}]}
+
+#149 02:49:44.604 GET https://api.cursor.com/teams/members?page=1&pageSize=100
+     auth: Basic(team_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"teamMembers":[{"id":"1","publicId":"user_01k2ja2000e0080000000000a1","email":"alice@acme.com","name":"Alice","isRemoved":false},{"id":"2","publicId":"user_01k2ja2000e0080000000000b2","email":"bob@acme.com","name":"Bob","isRemoved":false},{"id":"3","publicId":"user_01k2ja2000e0080000000000b9","email":"bob@acme.com","name":"Bob (old seat)","isRemoved":true},{"id":"4","publicId":"user_01k2ja2000e0080000000000c3","email":"carol@acme.com","name":"Carol","isRemoved":false},{"id":"5","publicId":"user_01k2ja2000e0080000000000d4","email":"dave@acme.com","name":"Dave","isRemoved":false},{"id":"6","publicId":"user_01k2ja2000e0080000000000e9","email":"erin@acme.com","name":"Erin (re-keyed seat)","isRemoved":false},{"id":"7","publicId":"user_01k2ja2000e0080000000000f6","email":"frank@acme.com","name":"Frank","isRemoved":false}]}
+
+#150 02:49:44.605 GET https://api.cursor.com/v1/origin/repos/acme/rocket/rulesets/rs_01k2ja2000e008000000000001
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"id":"rs_01k2ja2000e008000000000001","name":"require-review","description":"e2e: review + CI before merge","enforcement":"active","kind":"merge_branch","includedRefNames":["refs/heads/main"],"excludedRefNames":[],"rules":[{"id":"rule_01k2ja2000e008000000000002","ruleType":"pull_request","parameters":{"requiredApprovingReviewCount":1,"dismissStaleReviewsOnPush":true}},{"id":"rule_01k2ja2000e008000000000003","ruleType":"require_status_checks","parameters":{"requiredChecks":[{"actorKind":"app","actorId":"app_01k2ja2000e0080000000000c1","groupKey":"ci"}]}}],"bypassActors":[{"id":"ba_01k2ja2000e008000000000004","bypassMode":"always","originRole":{"role":"repository_admin"}}]}
+
+#151 02:49:44.605 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e9"},"permission":"admin"},{"user":{"id":"user_01k2ja2000e0080000000000f6"},"permission":"read"}]}
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+#152 02:49:44.605 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+==== STAGE H: destroy is refused while ruleset deletion_protection=true (PR #12 fix), then allowed after it is set to false ====
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+#153 02:49:44.768 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e9"},"permission":"admin"},{"user":{"id":"user_01k2ja2000e0080000000000f6"},"permission":"read"}]}
+
+#154 02:49:44.768 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e9"},"permission":"admin"},{"user":{"id":"user_01k2ja2000e0080000000000f6"},"permission":"read"}]}
+
+#155 02:49:44.769 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+#156 02:49:44.769 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e9"},"permission":"admin"},{"user":{"id":"user_01k2ja2000e0080000000000f6"},"permission":"read"}]}
+
+#158 02:49:44.769 GET https://api.cursor.com/v1/origin/repos/acme/rocket
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"cloneUrl":"https://origin.cursor.com/acme/rocket.git","createdAt":"2026-01-01T00:00:00Z","defaultBranch":"main","fullName":"acme/rocket","id":"repo_01k2ja2000e0080000000000r1","name":"rocket","owner":{"id":"team_01k2ja2000e0080000000000t1","slug":"acme","type":"team"},"updatedAt":"2026-01-02T00:00:00Z","visibility":"private"}
+
+#160 02:49:44.769 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e9"},"permission":"admin"},{"user":{"id":"user_01k2ja2000e0080000000000f6"},"permission":"read"}]}
+
+#161 02:49:44.769 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+#159 02:49:44.769 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+#157 02:49:44.769 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e9"},"permission":"admin"},{"user":{"id":"user_01k2ja2000e0080000000000f6"},"permission":"read"}]}
+
+#162 02:49:44.773 GET https://api.cursor.com/teams/members?page=1&pageSize=100
+     auth: Basic(team_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"teamMembers":[{"id":"1","publicId":"user_01k2ja2000e0080000000000a1","email":"alice@acme.com","name":"Alice","isRemoved":false},{"id":"2","publicId":"user_01k2ja2000e0080000000000b2","email":"bob@acme.com","name":"Bob","isRemoved":false},{"id":"3","publicId":"user_01k2ja2000e0080000000000b9","email":"bob@acme.com","name":"Bob (old seat)","isRemoved":true},{"id":"4","publicId":"user_01k2ja2000e0080000000000c3","email":"carol@acme.com","name":"Carol","isRemoved":false},{"id":"5","publicId":"user_01k2ja2000e0080000000000d4","email":"dave@acme.com","name":"Dave","isRemoved":false},{"id":"6","publicId":"user_01k2ja2000e0080000000000e9","email":"erin@acme.com","name":"Erin (re-keyed seat)","isRemoved":false},{"id":"7","publicId":"user_01k2ja2000e0080000000000f6","email":"frank@acme.com","name":"Frank","isRemoved":false}]}
+
+#163 02:49:44.773 GET https://api.cursor.com/organizations/groups?name=Engineering
+     auth: Basic(organization_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"groups":[{"id":"g_1001","publicId":"grp_01k2ja2000e0080000000000g1","name":"Engineering"}],"pagination":{"hasNextPage":false}}
+
+#164 02:49:44.775 GET https://api.cursor.com/organizations/groups?name=Security
+     auth: Basic(organization_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"groups":[{"id":"g_1002","publicId":"grp_01k2ja2000e0080000000000g2","name":"Security"}],"pagination":{"hasNextPage":false}}
+
+#165 02:49:44.775 GET https://api.cursor.com/teams/members?page=1&pageSize=100
+     auth: Basic(team_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"teamMembers":[{"id":"1","publicId":"user_01k2ja2000e0080000000000a1","email":"alice@acme.com","name":"Alice","isRemoved":false},{"id":"2","publicId":"user_01k2ja2000e0080000000000b2","email":"bob@acme.com","name":"Bob","isRemoved":false},{"id":"3","publicId":"user_01k2ja2000e0080000000000b9","email":"bob@acme.com","name":"Bob (old seat)","isRemoved":true},{"id":"4","publicId":"user_01k2ja2000e0080000000000c3","email":"carol@acme.com","name":"Carol","isRemoved":false},{"id":"5","publicId":"user_01k2ja2000e0080000000000d4","email":"dave@acme.com","name":"Dave","isRemoved":false},{"id":"6","publicId":"user_01k2ja2000e0080000000000e9","email":"erin@acme.com","name":"Erin (re-keyed seat)","isRemoved":false},{"id":"7","publicId":"user_01k2ja2000e0080000000000f6","email":"frank@acme.com","name":"Frank","isRemoved":false}]}
+
+#166 02:49:44.776 GET https://api.cursor.com/organizations/groups?name=Engineering
+     auth: Basic(organization_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"groups":[{"id":"g_1001","publicId":"grp_01k2ja2000e0080000000000g1","name":"Engineering"}],"pagination":{"hasNextPage":false}}
+
+#167 02:49:44.776 GET https://api.cursor.com/teams/members?page=1&pageSize=100
+     auth: Basic(team_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"teamMembers":[{"id":"1","publicId":"user_01k2ja2000e0080000000000a1","email":"alice@acme.com","name":"Alice","isRemoved":false},{"id":"2","publicId":"user_01k2ja2000e0080000000000b2","email":"bob@acme.com","name":"Bob","isRemoved":false},{"id":"3","publicId":"user_01k2ja2000e0080000000000b9","email":"bob@acme.com","name":"Bob (old seat)","isRemoved":true},{"id":"4","publicId":"user_01k2ja2000e0080000000000c3","email":"carol@acme.com","name":"Carol","isRemoved":false},{"id":"5","publicId":"user_01k2ja2000e0080000000000d4","email":"dave@acme.com","name":"Dave","isRemoved":false},{"id":"6","publicId":"user_01k2ja2000e0080000000000e9","email":"erin@acme.com","name":"Erin (re-keyed seat)","isRemoved":false},{"id":"7","publicId":"user_01k2ja2000e0080000000000f6","email":"frank@acme.com","name":"Frank","isRemoved":false}]}
+
+#168 02:49:44.778 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+#169 02:49:44.778 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e9"},"permission":"admin"},{"user":{"id":"user_01k2ja2000e0080000000000f6"},"permission":"read"}]}
+
+#170 02:49:44.778 GET https://api.cursor.com/v1/origin/repos/acme/rocket/rulesets/rs_01k2ja2000e008000000000001
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"id":"rs_01k2ja2000e008000000000001","name":"require-review","description":"e2e: review + CI before merge","enforcement":"active","kind":"merge_branch","includedRefNames":["refs/heads/main"],"excludedRefNames":[],"rules":[{"id":"rule_01k2ja2000e008000000000002","ruleType":"pull_request","parameters":{"requiredApprovingReviewCount":1,"dismissStaleReviewsOnPush":true}},{"id":"rule_01k2ja2000e008000000000003","ruleType":"require_status_checks","parameters":{"requiredChecks":[{"actorKind":"app","actorId":"app_01k2ja2000e0080000000000c1","groupKey":"ci"}]}}],"bypassActors":[{"id":"ba_01k2ja2000e008000000000004","bypassMode":"always","originRole":{"role":"repository_admin"}}]}
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+#171 02:49:44.916 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+#172 02:49:44.916 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+#173 02:49:44.916 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+#174 02:49:44.917 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e9"},"permission":"admin"},{"user":{"id":"user_01k2ja2000e0080000000000f6"},"permission":"read"}]}
+
+#175 02:49:44.917 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e9"},"permission":"admin"},{"user":{"id":"user_01k2ja2000e0080000000000f6"},"permission":"read"}]}
+
+#176 02:49:44.917 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e9"},"permission":"admin"},{"user":{"id":"user_01k2ja2000e0080000000000f6"},"permission":"read"}]}
+
+#177 02:49:44.917 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e9"},"permission":"admin"},{"user":{"id":"user_01k2ja2000e0080000000000f6"},"permission":"read"}]}
+
+#178 02:49:44.917 GET https://api.cursor.com/v1/origin/repos/acme/rocket
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"cloneUrl":"https://origin.cursor.com/acme/rocket.git","createdAt":"2026-01-01T00:00:00Z","defaultBranch":"main","fullName":"acme/rocket","id":"repo_01k2ja2000e0080000000000r1","name":"rocket","owner":{"id":"team_01k2ja2000e0080000000000t1","slug":"acme","type":"team"},"updatedAt":"2026-01-02T00:00:00Z","visibility":"private"}
+
+#179 02:49:44.917 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e9"},"permission":"admin"},{"user":{"id":"user_01k2ja2000e0080000000000f6"},"permission":"read"}]}
+
+#180 02:49:44.922 GET https://api.cursor.com/teams/members?page=1&pageSize=100
+     auth: Basic(team_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"teamMembers":[{"id":"1","publicId":"user_01k2ja2000e0080000000000a1","email":"alice@acme.com","name":"Alice","isRemoved":false},{"id":"2","publicId":"user_01k2ja2000e0080000000000b2","email":"bob@acme.com","name":"Bob","isRemoved":false},{"id":"3","publicId":"user_01k2ja2000e0080000000000b9","email":"bob@acme.com","name":"Bob (old seat)","isRemoved":true},{"id":"4","publicId":"user_01k2ja2000e0080000000000c3","email":"carol@acme.com","name":"Carol","isRemoved":false},{"id":"5","publicId":"user_01k2ja2000e0080000000000d4","email":"dave@acme.com","name":"Dave","isRemoved":false},{"id":"6","publicId":"user_01k2ja2000e0080000000000e9","email":"erin@acme.com","name":"Erin (re-keyed seat)","isRemoved":false},{"id":"7","publicId":"user_01k2ja2000e0080000000000f6","email":"frank@acme.com","name":"Frank","isRemoved":false}]}
+
+#181 02:49:44.922 GET https://api.cursor.com/organizations/groups?name=Security
+     auth: Basic(organization_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"groups":[{"id":"g_1002","publicId":"grp_01k2ja2000e0080000000000g2","name":"Security"}],"pagination":{"hasNextPage":false}}
+
+#182 02:49:44.923 GET https://api.cursor.com/teams/members?page=1&pageSize=100
+     auth: Basic(team_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"teamMembers":[{"id":"1","publicId":"user_01k2ja2000e0080000000000a1","email":"alice@acme.com","name":"Alice","isRemoved":false},{"id":"2","publicId":"user_01k2ja2000e0080000000000b2","email":"bob@acme.com","name":"Bob","isRemoved":false},{"id":"3","publicId":"user_01k2ja2000e0080000000000b9","email":"bob@acme.com","name":"Bob (old seat)","isRemoved":true},{"id":"4","publicId":"user_01k2ja2000e0080000000000c3","email":"carol@acme.com","name":"Carol","isRemoved":false},{"id":"5","publicId":"user_01k2ja2000e0080000000000d4","email":"dave@acme.com","name":"Dave","isRemoved":false},{"id":"6","publicId":"user_01k2ja2000e0080000000000e9","email":"erin@acme.com","name":"Erin (re-keyed seat)","isRemoved":false},{"id":"7","publicId":"user_01k2ja2000e0080000000000f6","email":"frank@acme.com","name":"Frank","isRemoved":false}]}
+
+#183 02:49:44.924 GET https://api.cursor.com/organizations/groups?name=Engineering
+     auth: Basic(organization_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"groups":[{"id":"g_1001","publicId":"grp_01k2ja2000e0080000000000g1","name":"Engineering"}],"pagination":{"hasNextPage":false}}
+
+#184 02:49:44.924 GET https://api.cursor.com/organizations/groups?name=Engineering
+     auth: Basic(organization_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"groups":[{"id":"g_1001","publicId":"grp_01k2ja2000e0080000000000g1","name":"Engineering"}],"pagination":{"hasNextPage":false}}
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+#185 02:49:44.924 GET https://api.cursor.com/teams/members?page=1&pageSize=100
+     auth: Basic(team_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"teamMembers":[{"id":"1","publicId":"user_01k2ja2000e0080000000000a1","email":"alice@acme.com","name":"Alice","isRemoved":false},{"id":"2","publicId":"user_01k2ja2000e0080000000000b2","email":"bob@acme.com","name":"Bob","isRemoved":false},{"id":"3","publicId":"user_01k2ja2000e0080000000000b9","email":"bob@acme.com","name":"Bob (old seat)","isRemoved":true},{"id":"4","publicId":"user_01k2ja2000e0080000000000c3","email":"carol@acme.com","name":"Carol","isRemoved":false},{"id":"5","publicId":"user_01k2ja2000e0080000000000d4","email":"dave@acme.com","name":"Dave","isRemoved":false},{"id":"6","publicId":"user_01k2ja2000e0080000000000e9","email":"erin@acme.com","name":"Erin (re-keyed seat)","isRemoved":false},{"id":"7","publicId":"user_01k2ja2000e0080000000000f6","email":"frank@acme.com","name":"Frank","isRemoved":false}]}
+
+#186 02:49:44.925 GET https://api.cursor.com/v1/origin/repos/acme/rocket/rulesets/rs_01k2ja2000e008000000000001
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"id":"rs_01k2ja2000e008000000000001","name":"require-review","description":"e2e: review + CI before merge","enforcement":"active","kind":"merge_branch","includedRefNames":["refs/heads/main"],"excludedRefNames":[],"rules":[{"id":"rule_01k2ja2000e008000000000002","ruleType":"pull_request","parameters":{"requiredApprovingReviewCount":1,"dismissStaleReviewsOnPush":true}},{"id":"rule_01k2ja2000e008000000000003","ruleType":"require_status_checks","parameters":{"requiredChecks":[{"actorKind":"app","actorId":"app_01k2ja2000e0080000000000c1","groupKey":"ci"}]}}],"bypassActors":[{"id":"ba_01k2ja2000e008000000000004","bypassMode":"always","originRole":{"role":"repository_admin"}}]}
+
+#187 02:49:44.926 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+#188 02:49:44.926 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e9"},"permission":"admin"},{"user":{"id":"user_01k2ja2000e0080000000000f6"},"permission":"read"}]}
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+#189 02:49:44.983 PUT https://api.cursor.com/v1/origin/repos/acme/rocket/rulesets/rs_01k2ja2000e008000000000001
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  {"name":"require-review","description":"e2e: review + CI before merge","enforcement":"active","kind":"merge_branch","includedRefNames":["refs/heads/main"],"excludedRefNames":[],"rules":[{"ruleType":"pull_request","parameters":{"requiredApprovingReviewCount":1,"dismissStaleReviewsOnPush":true}},{"ruleType":"require_status_checks","parameters":{"requiredChecks":[{"actorKind":"app","actorId":"app_01k2ja2000e0080000000000c1","groupKey":"ci"}]}}],"bypassActors":[{"bypassMode":"always","originRole":{"role":"repository_admin"}}]}
+     response: 200 {"id":"rs_01k2ja2000e008000000000001","name":"require-review","description":"e2e: review + CI before merge","enforcement":"active","kind":"merge_branch","includedRefNames":["refs/heads/main"],"excludedRefNames":[],"rules":[{"id":"rule_01k2ja2000e008000000000005","ruleType":"pull_request","parameters":{"requiredApprovingReviewCount":1,"dismissStaleReviewsOnPush":true}},{"id":"rule_01k2ja2000e008000000000006","ruleType":"require_status_checks","parameters":{"requiredChecks":[{"actorKind":"app","actorId":"app_01k2ja2000e0080000000000c1","groupKey":"ci"}]}}],"bypassActors":[{"id":"ba_01k2ja2000e008000000000007","bypassMode":"always","originRole":{"role":"repository_admin"}}]}
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+#190 02:49:45.090 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e9"},"permission":"admin"},{"user":{"id":"user_01k2ja2000e0080000000000f6"},"permission":"read"}]}
+
+#191 02:49:45.090 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+#192 02:49:45.090 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+#193 02:49:45.090 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e9"},"permission":"admin"},{"user":{"id":"user_01k2ja2000e0080000000000f6"},"permission":"read"}]}
+
+#194 02:49:45.090 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+#195 02:49:45.090 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e9"},"permission":"admin"},{"user":{"id":"user_01k2ja2000e0080000000000f6"},"permission":"read"}]}
+
+#196 02:49:45.092 GET https://api.cursor.com/v1/origin/repos/acme/rocket
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"cloneUrl":"https://origin.cursor.com/acme/rocket.git","createdAt":"2026-01-01T00:00:00Z","defaultBranch":"main","fullName":"acme/rocket","id":"repo_01k2ja2000e0080000000000r1","name":"rocket","owner":{"id":"team_01k2ja2000e0080000000000t1","slug":"acme","type":"team"},"updatedAt":"2026-01-02T00:00:00Z","visibility":"private"}
+
+#197 02:49:45.092 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e9"},"permission":"admin"},{"user":{"id":"user_01k2ja2000e0080000000000f6"},"permission":"read"}]}
+
+#198 02:49:45.092 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e9"},"permission":"admin"},{"user":{"id":"user_01k2ja2000e0080000000000f6"},"permission":"read"}]}
+
+#199 02:49:45.095 GET https://api.cursor.com/teams/members?page=1&pageSize=100
+     auth: Basic(team_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"teamMembers":[{"id":"1","publicId":"user_01k2ja2000e0080000000000a1","email":"alice@acme.com","name":"Alice","isRemoved":false},{"id":"2","publicId":"user_01k2ja2000e0080000000000b2","email":"bob@acme.com","name":"Bob","isRemoved":false},{"id":"3","publicId":"user_01k2ja2000e0080000000000b9","email":"bob@acme.com","name":"Bob (old seat)","isRemoved":true},{"id":"4","publicId":"user_01k2ja2000e0080000000000c3","email":"carol@acme.com","name":"Carol","isRemoved":false},{"id":"5","publicId":"user_01k2ja2000e0080000000000d4","email":"dave@acme.com","name":"Dave","isRemoved":false},{"id":"6","publicId":"user_01k2ja2000e0080000000000e9","email":"erin@acme.com","name":"Erin (re-keyed seat)","isRemoved":false},{"id":"7","publicId":"user_01k2ja2000e0080000000000f6","email":"frank@acme.com","name":"Frank","isRemoved":false}]}
+
+#200 02:49:45.095 GET https://api.cursor.com/organizations/groups?name=Engineering
+     auth: Basic(organization_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"groups":[{"id":"g_1001","publicId":"grp_01k2ja2000e0080000000000g1","name":"Engineering"}],"pagination":{"hasNextPage":false}}
+
+#201 02:49:45.096 GET https://api.cursor.com/organizations/groups?name=Security
+     auth: Basic(organization_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"groups":[{"id":"g_1002","publicId":"grp_01k2ja2000e0080000000000g2","name":"Security"}],"pagination":{"hasNextPage":false}}
+
+#202 02:49:45.097 GET https://api.cursor.com/teams/members?page=1&pageSize=100
+     auth: Basic(team_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"teamMembers":[{"id":"1","publicId":"user_01k2ja2000e0080000000000a1","email":"alice@acme.com","name":"Alice","isRemoved":false},{"id":"2","publicId":"user_01k2ja2000e0080000000000b2","email":"bob@acme.com","name":"Bob","isRemoved":false},{"id":"3","publicId":"user_01k2ja2000e0080000000000b9","email":"bob@acme.com","name":"Bob (old seat)","isRemoved":true},{"id":"4","publicId":"user_01k2ja2000e0080000000000c3","email":"carol@acme.com","name":"Carol","isRemoved":false},{"id":"5","publicId":"user_01k2ja2000e0080000000000d4","email":"dave@acme.com","name":"Dave","isRemoved":false},{"id":"6","publicId":"user_01k2ja2000e0080000000000e9","email":"erin@acme.com","name":"Erin (re-keyed seat)","isRemoved":false},{"id":"7","publicId":"user_01k2ja2000e0080000000000f6","email":"frank@acme.com","name":"Frank","isRemoved":false}]}
+
+#203 02:49:45.097 GET https://api.cursor.com/organizations/groups?name=Engineering
+     auth: Basic(organization_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"groups":[{"id":"g_1001","publicId":"grp_01k2ja2000e0080000000000g1","name":"Engineering"}],"pagination":{"hasNextPage":false}}
+
+#204 02:49:45.097 GET https://api.cursor.com/teams/members?page=1&pageSize=100
+     auth: Basic(team_api_key as username, empty password)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"teamMembers":[{"id":"1","publicId":"user_01k2ja2000e0080000000000a1","email":"alice@acme.com","name":"Alice","isRemoved":false},{"id":"2","publicId":"user_01k2ja2000e0080000000000b2","email":"bob@acme.com","name":"Bob","isRemoved":false},{"id":"3","publicId":"user_01k2ja2000e0080000000000b9","email":"bob@acme.com","name":"Bob (old seat)","isRemoved":true},{"id":"4","publicId":"user_01k2ja2000e0080000000000c3","email":"carol@acme.com","name":"Carol","isRemoved":false},{"id":"5","publicId":"user_01k2ja2000e0080000000000d4","email":"dave@acme.com","name":"Dave","isRemoved":false},{"id":"6","publicId":"user_01k2ja2000e0080000000000e9","email":"erin@acme.com","name":"Erin (re-keyed seat)","isRemoved":false},{"id":"7","publicId":"user_01k2ja2000e0080000000000f6","email":"frank@acme.com","name":"Frank","isRemoved":false}]}
+
+#205 02:49:45.098 GET https://api.cursor.com/v1/origin/owners/acme/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}]}
+
+#206 02:49:45.099 GET https://api.cursor.com/v1/origin/repos/acme/rocket/rulesets/rs_01k2ja2000e008000000000001
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"id":"rs_01k2ja2000e008000000000001","name":"require-review","description":"e2e: review + CI before merge","enforcement":"active","kind":"merge_branch","includedRefNames":["refs/heads/main"],"excludedRefNames":[],"rules":[{"id":"rule_01k2ja2000e008000000000005","ruleType":"pull_request","parameters":{"requiredApprovingReviewCount":1,"dismissStaleReviewsOnPush":true}},{"id":"rule_01k2ja2000e008000000000006","ruleType":"require_status_checks","parameters":{"requiredChecks":[{"actorKind":"app","actorId":"app_01k2ja2000e0080000000000c1","groupKey":"ci"}]}}],"bypassActors":[{"id":"ba_01k2ja2000e008000000000007","bypassMode":"always","originRole":{"role":"repository_admin"}}]}
+
+#207 02:49:45.099 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants?page=1&pageSize=100
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 200 {"grants":[{"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"},{"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"},{"user":{"id":"user_01k2ja2000e0080000000000e9"},"permission":"admin"},{"user":{"id":"user_01k2ja2000e0080000000000f6"},"permission":"read"}]}
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+     [proxy] CONNECT api.cursor.com:443 -> tunnelled to mock TLS listener 127.0.0.1:35655
+
+#208 02:49:45.171 DELETE https://api.cursor.com/v1/origin/repos/acme/rocket/grants
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  {"user":{"id":"user_01k2ja2000e0080000000000d4"}}
+     response: 204 <empty>
+
+#209 02:49:45.171 DELETE https://api.cursor.com/v1/origin/owners/acme/grants
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  {"teamGroup":{"kind":"admins"}}
+     response: 204 <empty>
+
+#210 02:49:45.171 DELETE https://api.cursor.com/v1/origin/repos/acme/rocket/grants
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  {"group":{"id":"grp_01k2ja2000e0080000000000g1"}}
+     response: 204 <empty>
+
+#211 02:49:45.171 DELETE https://api.cursor.com/v1/origin/repos/acme/rocket/grants
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  {"user":{"id":"user_01k2ja2000e0080000000000e9"}}
+     response: 204 <empty>
+
+#212 02:49:45.171 DELETE https://api.cursor.com/v1/origin/owners/acme/grants
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  {"group":{"id":"grp_01k2ja2000e0080000000000g2"}}
+     response: 204 <empty>
+
+#213 02:49:45.171 DELETE https://api.cursor.com/v1/origin/owners/acme/grants
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  {"group":{"id":"grp_01k2ja2000e0080000000000g1"}}
+     response: 204 <empty>
+
+#214 02:49:45.171 DELETE https://api.cursor.com/v1/origin/repos/acme/rocket/rulesets/rs_01k2ja2000e008000000000001
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  <empty>
+     response: 204 <empty>
+
+#215 02:49:45.171 DELETE https://api.cursor.com/v1/origin/repos/acme/rocket/grants
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  {"user":{"id":"user_01k2ja2000e0080000000000c3"}}
+     response: 204 <empty>
+
+#216 02:49:45.172 DELETE https://api.cursor.com/v1/origin/repos/acme/rocket/grants
+     auth: Bearer(<provider token, redacted>)
+     user-agent: terraform-provider-cursor/e2e-aab5ba0
+     request:  {"user":{"id":"user_01k2ja2000e0080000000000f6"}}
+     response: 204 <empty>
+
+==== END: mock state after destroy (expect no grants, no rulesets, wireViolations=0) ====
+

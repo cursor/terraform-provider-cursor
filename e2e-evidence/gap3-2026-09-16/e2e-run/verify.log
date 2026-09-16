@@ -1,0 +1,52 @@
+provider requests in trace: 215
+           57 GET https://api.cursor.com/v1/origin/repos/acme/rocket/grants
+           42 GET https://api.cursor.com/v1/origin/owners/acme/grants
+           36 GET https://api.cursor.com/organizations/groups
+           33 GET https://api.cursor.com/teams/members
+           12 GET https://api.cursor.com/v1/origin/repos/acme/rocket
+           10 GET https://api.cursor.com/v1/origin/repos/acme/rocket/rulesets/{id}
+            8 POST https://api.cursor.com/v1/origin/repos/acme/rocket/grants
+            8 DELETE https://api.cursor.com/v1/origin/repos/acme/rocket/grants
+            3 POST https://api.cursor.com/v1/origin/owners/acme/grants
+            3 DELETE https://api.cursor.com/v1/origin/owners/acme/grants
+            1 PUT https://api.cursor.com/v1/origin/repos/acme/rocket/rulesets/{id}
+            1 POST https://api.cursor.com/v1/origin/repos/acme/rocket/rulesets
+            1 DELETE https://api.cursor.com/v1/origin/repos/acme/rocket/rulesets/{id}
+
+Origin grant writes (POST/DELETE .../grants): 22
+      #011 POST   v1/origin/owners/acme/grants                            {"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"}
+      #012 POST   v1/origin/repos/acme/rocket/grants                      {"user":{"id":"user_01k2ja2000e0080000000000c3"},"permission":"write"}
+      #013 POST   v1/origin/repos/acme/rocket/grants                      {"user":{"id":"user_01k2ja2000e0080000000000b2"},"permission":"read"}
+      #014 POST   v1/origin/repos/acme/rocket/grants                      {"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"read"}
+      #015 POST   v1/origin/owners/acme/grants                            {"group":{"id":"grp_01k2ja2000e0080000000000g2"},"permission":"PERMISSION_ADMIN"}
+      #016 POST   v1/origin/repos/acme/rocket/grants                      {"user":{"id":"user_01k2ja2000e0080000000000a1"},"permission":"write"}
+      #017 POST   v1/origin/owners/acme/grants                            {"group":{"id":"grp_01k2ja2000e0080000000000g1"},"permission":"PERMISSION_CONTRIBUTOR"}
+      #053 POST   v1/origin/repos/acme/rocket/grants                      {"user":{"id":"user_01k2ja2000e0080000000000a1"},"permission":"admin"}
+      #071 DELETE v1/origin/repos/acme/rocket/grants                      {"user":{"id":"user_01k2ja2000e0080000000000a1"}}
+      #073 POST   v1/origin/repos/acme/rocket/grants                      {"user":{"id":"user_01k2ja2000e0080000000000e5"},"permission":"admin"}
+      #089 DELETE v1/origin/repos/acme/rocket/grants                      {"user":{"id":"user_01k2ja2000e0080000000000b2"}}
+      #091 POST   v1/origin/repos/acme/rocket/grants                      {"user":{"id":"user_01k2ja2000e0080000000000d4"},"permission":"read"}
+      #125 DELETE v1/origin/repos/acme/rocket/grants                      {"user":{"id":"user_01k2ja2000e0080000000000e5"}}
+      #127 POST   v1/origin/repos/acme/rocket/grants                      {"user":{"id":"user_01k2ja2000e0080000000000e9"},"permission":"admin"}
+      #208 DELETE v1/origin/repos/acme/rocket/grants                      {"user":{"id":"user_01k2ja2000e0080000000000d4"}}
+      #209 DELETE v1/origin/owners/acme/grants                            {"teamGroup":{"kind":"admins"}}
+      #210 DELETE v1/origin/repos/acme/rocket/grants                      {"group":{"id":"grp_01k2ja2000e0080000000000g1"}}
+      #211 DELETE v1/origin/repos/acme/rocket/grants                      {"user":{"id":"user_01k2ja2000e0080000000000e9"}}
+      #212 DELETE v1/origin/owners/acme/grants                            {"group":{"id":"grp_01k2ja2000e0080000000000g2"}}
+      #213 DELETE v1/origin/owners/acme/grants                            {"group":{"id":"grp_01k2ja2000e0080000000000g1"}}
+      #215 DELETE v1/origin/repos/acme/rocket/grants                      {"user":{"id":"user_01k2ja2000e0080000000000c3"}}
+      #216 DELETE v1/origin/repos/acme/rocket/grants                      {"user":{"id":"user_01k2ja2000e0080000000000f6"}}
+
+PASS  every grant write body starts with a user_ id, a grp_ id, or a teamGroup kind
+PASS  no Origin request body contains an email address, a group name, or a g_ internal id
+PASS  mock recorded zero wire-contract violations
+PASS  all 146 Origin requests carry Authorization: Bearer <provider token>
+PASS  all 33 Team Admin requests use Basic(team_api_key, empty password)
+PASS  all 36 Organization Admin requests use Basic(organization_api_key, empty password)
+PASS  every Organization Admin lookup used the exact ?name= filter
+PASS  provider reached no host or path other than api.cursor.com Origin/Team Admin/Org Admin
+PASS  no 4xx/5xx responses to any provider request
+PASS  removed duplicate seat (isRemoved=true, same email) never reached the wire
+PASS  unknown-at-plan email resolved at apply and posted as user_...d4
+
+VERIFY RESULT: FAIL=0

@@ -1,0 +1,9 @@
+[
+  {"id": "1", "publicId": "user_01k2ja2000e0080000000000a1", "email": "alice@acme.com", "name": "Alice"},
+  {"id": "2", "publicId": "user_01k2ja2000e0080000000000b2", "email": "bob@acme.com", "name": "Bob"},
+  {"id": "3", "publicId": "user_01k2ja2000e0080000000000b9", "email": "bob@acme.com", "name": "Bob (old seat)", "isRemoved": true},
+  {"id": "4", "publicId": "user_01k2ja2000e0080000000000c3", "email": "carol@acme.com", "name": "Carol"},
+  {"id": "5", "publicId": "user_01k2ja2000e0080000000000d4", "email": "dave@acme.com", "name": "Dave"},
+  {"id": "6", "publicId": "user_01k2ja2000e0080000000000e9", "email": "erin@acme.com", "name": "Erin (re-keyed seat)"},
+  {"id": "7", "publicId": "user_01k2ja2000e0080000000000f6", "email": "frank@acme.com", "name": "Frank"}
+]

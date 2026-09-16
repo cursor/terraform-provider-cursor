@@ -1,0 +1,122 @@
+$ /tmp/tofu/tofu apply -no-color e.tfplan
+
+Warning: Provider development overrides are in effect
+
+The following provider development overrides are set in the CLI
+configuration:
+ - cursor/cursor in /tmp/gap3-evidence/harness/out/bin
+
+The behavior may therefore not match any released version of the provider and
+applying changes may cause the state to become incompatible with published
+releases.
+cursor_origin_repo_grant.late: Destroying... [id=acme/rocket:user:user_01k2ja2000e0080000000000b2]
+cursor_origin_repo_grant.late: Destruction complete after 0s
+terraform_data.late_email: Modifying... [id=bb08e177-0653-2baa-44d8-75efad9e674e]
+terraform_data.late_email: Modifications complete after 0s [id=bb08e177-0653-2baa-44d8-75efad9e674e]
+cursor_origin_repo_grant.late: Creating...
+cursor_origin_repo_grant.late: Creation complete after 0s [id=acme/rocket:user:user_01k2ja2000e0080000000000d4]
+data.cursor_origin_repo_grants.rocket: Reading...
+data.cursor_origin_repo_grants.rocket: Read complete after 0s
+
+Apply complete! Resources: 1 added, 1 changed, 1 destroyed.
+
+Outputs:
+
+alice = {
+  "id" = "acme/rocket:user:user_01k2ja2000e0080000000000e5"
+  "user" = {
+    "id" = "user_01k2ja2000e0080000000000e5"
+  }
+  "user_email" = "erin@acme.com"
+}
+eng = {
+  "group" = {
+    "id" = "grp_01k2ja2000e0080000000000g1"
+  }
+  "group_name" = "Engineering"
+  "id" = "acme/rocket:group:grp_01k2ja2000e0080000000000g1"
+}
+eng_ns = {
+  "group" = {
+    "id" = "grp_01k2ja2000e0080000000000g1"
+  }
+  "id" = "acme:group:grp_01k2ja2000e0080000000000g1"
+  "permission" = "contributor"
+}
+late = {
+  "id" = "acme/rocket:user:user_01k2ja2000e0080000000000d4"
+  "user" = {
+    "id" = "user_01k2ja2000e0080000000000d4"
+  }
+  "user_email" = "dave@acme.com"
+}
+owner_grants = tolist([
+  {
+    "group" = null /* object */
+    "id" = "acme:team_group:admins"
+    "permission" = "admin"
+    "team_group" = {
+      "kind" = "admins"
+    }
+    "user" = null /* object */
+  },
+  {
+    "group" = {
+      "id" = "grp_01k2ja2000e0080000000000g2"
+    }
+    "id" = "acme:group:grp_01k2ja2000e0080000000000g2"
+    "permission" = "admin"
+    "team_group" = null /* object */
+    "user" = null /* object */
+  },
+  {
+    "group" = {
+      "id" = "grp_01k2ja2000e0080000000000g1"
+    }
+    "id" = "acme:group:grp_01k2ja2000e0080000000000g1"
+    "permission" = "contributor"
+    "team_group" = null /* object */
+    "user" = null /* object */
+  },
+])
+repo_grants = tolist([
+  {
+    "group" = null /* object */
+    "id" = "acme/rocket:user:user_01k2ja2000e0080000000000c3"
+    "permission" = "write"
+    "team_group" = null /* object */
+    "user" = {
+      "id" = "user_01k2ja2000e0080000000000c3"
+    }
+  },
+  {
+    "group" = {
+      "id" = "grp_01k2ja2000e0080000000000g1"
+    }
+    "id" = "acme/rocket:group:grp_01k2ja2000e0080000000000g1"
+    "permission" = "read"
+    "team_group" = null /* object */
+    "user" = null /* object */
+  },
+  {
+    "group" = null /* object */
+    "id" = "acme/rocket:user:user_01k2ja2000e0080000000000e5"
+    "permission" = "admin"
+    "team_group" = null /* object */
+    "user" = {
+      "id" = "user_01k2ja2000e0080000000000e5"
+    }
+  },
+  {
+    "group" = null /* object */
+    "id" = "acme/rocket:user:user_01k2ja2000e0080000000000d4"
+    "permission" = "read"
+    "team_group" = null /* object */
+    "user" = {
+      "id" = "user_01k2ja2000e0080000000000d4"
+    }
+  },
+])
+repo_id = "repo_01k2ja2000e0080000000000r1"
+ruleset_id = "rs_01k2ja2000e008000000000001"
+exit=0 (expected 0)

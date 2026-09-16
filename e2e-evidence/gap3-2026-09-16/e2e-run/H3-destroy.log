@@ -1,0 +1,311 @@
+$ /tmp/tofu/tofu destroy -auto-approve -no-color -var alice_permission=admin -var alice_email=erin@acme.com -var late_email=dave@acme.com -var ruleset_deletion_protection=false
+
+Warning: Provider development overrides are in effect
+
+The following provider development overrides are set in the CLI
+configuration:
+ - cursor/cursor in /tmp/gap3-evidence/harness/out/bin
+
+The behavior may therefore not match any released version of the provider and
+applying changes may cause the state to become incompatible with published
+releases.
+terraform_data.late_email: Refreshing state... [id=bb08e177-0653-2baa-44d8-75efad9e674e]
+cursor_origin_owner_grant.security: Refreshing state... [id=acme:group:grp_01k2ja2000e0080000000000g2]
+cursor_origin_repo_grant.late: Refreshing state... [id=acme/rocket:user:user_01k2ja2000e0080000000000d4]
+cursor_origin_owner_grant.eng_ns: Refreshing state... [id=acme:group:grp_01k2ja2000e0080000000000g1]
+cursor_origin_owner_grant.team_admins: Refreshing state... [id=acme:team_group:admins]
+cursor_origin_repo_grant.carol_by_id: Refreshing state... [id=acme/rocket:user:user_01k2ja2000e0080000000000c3]
+cursor_origin_repo_grant.eng: Refreshing state... [id=acme/rocket:group:grp_01k2ja2000e0080000000000g1]
+data.cursor_origin_repo.rocket: Reading...
+cursor_origin_repo_grant.alice: Refreshing state... [id=acme/rocket:user:user_01k2ja2000e0080000000000e9]
+cursor_origin_repo_grant.frank: Refreshing state... [id=acme/rocket:user:user_01k2ja2000e0080000000000f6]
+data.cursor_origin_repo.rocket: Read complete after 0s [id=repo_01k2ja2000e0080000000000r1]
+cursor_origin_repo_ruleset.main: Refreshing state... [id=rs_01k2ja2000e008000000000001]
+data.cursor_origin_owner_grants.acme: Reading...
+data.cursor_origin_repo_grants.rocket: Reading...
+data.cursor_origin_owner_grants.acme: Read complete after 0s
+data.cursor_origin_repo_grants.rocket: Read complete after 0s
+
+OpenTofu used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  - destroy
+
+OpenTofu will perform the following actions:
+
+  # cursor_origin_owner_grant.eng_ns will be destroyed
+  - resource "cursor_origin_owner_grant" "eng_ns" {
+      - group      = {
+          - id = "grp_01k2ja2000e0080000000000g1" -> null
+        } -> null
+      - group_name = "Engineering" -> null
+      - id         = "acme:group:grp_01k2ja2000e0080000000000g1" -> null
+      - owner      = "acme" -> null
+      - permission = "contributor" -> null
+    }
+
+  # cursor_origin_owner_grant.security will be destroyed
+  - resource "cursor_origin_owner_grant" "security" {
+      - group      = {
+          - id = "grp_01k2ja2000e0080000000000g2" -> null
+        } -> null
+      - group_name = "Security" -> null
+      - id         = "acme:group:grp_01k2ja2000e0080000000000g2" -> null
+      - owner      = "acme" -> null
+      - permission = "admin" -> null
+    }
+
+  # cursor_origin_owner_grant.team_admins will be destroyed
+  - resource "cursor_origin_owner_grant" "team_admins" {
+      - id         = "acme:team_group:admins" -> null
+      - owner      = "acme" -> null
+      - permission = "admin" -> null
+      - team_group = {
+          - kind = "admins" -> null
+        } -> null
+    }
+
+  # cursor_origin_repo_grant.alice will be destroyed
+  - resource "cursor_origin_repo_grant" "alice" {
+      - id         = "acme/rocket:user:user_01k2ja2000e0080000000000e9" -> null
+      - owner      = "acme" -> null
+      - permission = "admin" -> null
+      - repo       = "rocket" -> null
+      - user       = {
+          - id = "user_01k2ja2000e0080000000000e9" -> null
+        } -> null
+      - user_email = "erin@acme.com" -> null
+    }
+
+  # cursor_origin_repo_grant.carol_by_id will be destroyed
+  - resource "cursor_origin_repo_grant" "carol_by_id" {
+      - id         = "acme/rocket:user:user_01k2ja2000e0080000000000c3" -> null
+      - owner      = "acme" -> null
+      - permission = "write" -> null
+      - repo       = "rocket" -> null
+      - user       = {
+          - id = "user_01k2ja2000e0080000000000c3" -> null
+        } -> null
+    }
+
+  # cursor_origin_repo_grant.eng will be destroyed
+  - resource "cursor_origin_repo_grant" "eng" {
+      - group      = {
+          - id = "grp_01k2ja2000e0080000000000g1" -> null
+        } -> null
+      - group_name = "Engineering" -> null
+      - id         = "acme/rocket:group:grp_01k2ja2000e0080000000000g1" -> null
+      - owner      = "acme" -> null
+      - permission = "read" -> null
+      - repo       = "rocket" -> null
+    }
+
+  # cursor_origin_repo_grant.frank will be destroyed
+  - resource "cursor_origin_repo_grant" "frank" {
+      - id         = "acme/rocket:user:user_01k2ja2000e0080000000000f6" -> null
+      - owner      = "acme" -> null
+      - permission = "read" -> null
+      - repo       = "rocket" -> null
+      - user       = {
+          - id = "user_01k2ja2000e0080000000000f6" -> null
+        } -> null
+      - user_email = "frank@acme.com" -> null
+    }
+
+  # cursor_origin_repo_grant.late will be destroyed
+  - resource "cursor_origin_repo_grant" "late" {
+      - id         = "acme/rocket:user:user_01k2ja2000e0080000000000d4" -> null
+      - owner      = "acme" -> null
+      - permission = "read" -> null
+      - repo       = "rocket" -> null
+      - user       = {
+          - id = "user_01k2ja2000e0080000000000d4" -> null
+        } -> null
+      - user_email = "dave@acme.com" -> null
+    }
+
+  # cursor_origin_repo_ruleset.main will be destroyed
+  - resource "cursor_origin_repo_ruleset" "main" {
+      - allow_broad_bypass  = false -> null
+      - allow_unenforced    = false -> null
+      - deletion_protection = false -> null
+      - description         = "e2e: review + CI before merge" -> null
+      - enforcement         = "active" -> null
+      - excluded_ref_names  = [] -> null
+      - id                  = "rs_01k2ja2000e008000000000001" -> null
+      - included_ref_names  = [
+          - "refs/heads/main",
+        ] -> null
+      - kind                = "merge_branch" -> null
+      - name                = "require-review" -> null
+      - owner               = "acme" -> null
+      - repo                = "rocket" -> null
+
+      - bypass_actor {
+          - bypass_mode = "always" -> null
+          - id          = "ba_01k2ja2000e008000000000007" -> null
+
+          - origin_role {
+              - role = "repository_admin" -> null
+            }
+        }
+
+      - rule {
+          - id = "rule_01k2ja2000e008000000000005" -> null
+
+          - pull_request {
+              - dismiss_stale_reviews_on_push   = true -> null
+              - required_approving_review_count = 1 -> null
+            }
+        }
+      - rule {
+          - id = "rule_01k2ja2000e008000000000006" -> null
+
+          - require_status_checks {
+              - required_check {
+                  - actor_id   = "app_01k2ja2000e0080000000000c1" -> null
+                  - actor_kind = "app" -> null
+                  - group_key  = "ci" -> null
+                }
+            }
+        }
+    }
+
+  # terraform_data.late_email will be destroyed
+  - resource "terraform_data" "late_email" {
+      - id     = "bb08e177-0653-2baa-44d8-75efad9e674e" -> null
+      - input  = "dave@acme.com" -> null
+      - output = "dave@acme.com" -> null
+    }
+
+Plan: 0 to add, 0 to change, 10 to destroy.
+
+Changes to Outputs:
+  - alice        = {
+      - id         = "acme/rocket:user:user_01k2ja2000e0080000000000e9"
+      - user       = {
+          - id = "user_01k2ja2000e0080000000000e9"
+        }
+      - user_email = "erin@acme.com"
+    } -> null
+  - eng          = {
+      - group      = {
+          - id = "grp_01k2ja2000e0080000000000g1"
+        }
+      - group_name = "Engineering"
+      - id         = "acme/rocket:group:grp_01k2ja2000e0080000000000g1"
+    } -> null
+  - eng_ns       = {
+      - group      = {
+          - id = "grp_01k2ja2000e0080000000000g1"
+        }
+      - id         = "acme:group:grp_01k2ja2000e0080000000000g1"
+      - permission = "contributor"
+    } -> null
+  - late         = {
+      - id         = "acme/rocket:user:user_01k2ja2000e0080000000000d4"
+      - user       = {
+          - id = "user_01k2ja2000e0080000000000d4"
+        }
+      - user_email = "dave@acme.com"
+    } -> null
+  - owner_grants = [
+      - {
+          - group      = null
+          - id         = "acme:team_group:admins"
+          - permission = "admin"
+          - team_group = {
+              - kind = "admins"
+            }
+          - user       = null
+        },
+      - {
+          - group      = {
+              - id = "grp_01k2ja2000e0080000000000g2"
+            }
+          - id         = "acme:group:grp_01k2ja2000e0080000000000g2"
+          - permission = "admin"
+          - team_group = null
+          - user       = null
+        },
+      - {
+          - group      = {
+              - id = "grp_01k2ja2000e0080000000000g1"
+            }
+          - id         = "acme:group:grp_01k2ja2000e0080000000000g1"
+          - permission = "contributor"
+          - team_group = null
+          - user       = null
+        },
+    ] -> null
+  - repo_grants  = [
+      - {
+          - group      = null
+          - id         = "acme/rocket:user:user_01k2ja2000e0080000000000c3"
+          - permission = "write"
+          - team_group = null
+          - user       = {
+              - id = "user_01k2ja2000e0080000000000c3"
+            }
+        },
+      - {
+          - group      = {
+              - id = "grp_01k2ja2000e0080000000000g1"
+            }
+          - id         = "acme/rocket:group:grp_01k2ja2000e0080000000000g1"
+          - permission = "read"
+          - team_group = null
+          - user       = null
+        },
+      - {
+          - group      = null
+          - id         = "acme/rocket:user:user_01k2ja2000e0080000000000d4"
+          - permission = "read"
+          - team_group = null
+          - user       = {
+              - id = "user_01k2ja2000e0080000000000d4"
+            }
+        },
+      - {
+          - group      = null
+          - id         = "acme/rocket:user:user_01k2ja2000e0080000000000e9"
+          - permission = "admin"
+          - team_group = null
+          - user       = {
+              - id = "user_01k2ja2000e0080000000000e9"
+            }
+        },
+      - {
+          - group      = null
+          - id         = "acme/rocket:user:user_01k2ja2000e0080000000000f6"
+          - permission = "read"
+          - team_group = null
+          - user       = {
+              - id = "user_01k2ja2000e0080000000000f6"
+            }
+        },
+    ] -> null
+  - repo_id      = "repo_01k2ja2000e0080000000000r1" -> null
+  - ruleset_id   = "rs_01k2ja2000e008000000000001" -> null
+cursor_origin_repo_grant.eng: Destroying... [id=acme/rocket:group:grp_01k2ja2000e0080000000000g1]
+cursor_origin_owner_grant.security: Destroying... [id=acme:group:grp_01k2ja2000e0080000000000g2]
+cursor_origin_repo_grant.frank: Destroying... [id=acme/rocket:user:user_01k2ja2000e0080000000000f6]
+cursor_origin_repo_grant.carol_by_id: Destroying... [id=acme/rocket:user:user_01k2ja2000e0080000000000c3]
+cursor_origin_repo_grant.alice: Destroying... [id=acme/rocket:user:user_01k2ja2000e0080000000000e9]
+cursor_origin_repo_grant.late: Destroying... [id=acme/rocket:user:user_01k2ja2000e0080000000000d4]
+cursor_origin_owner_grant.team_admins: Destroying... [id=acme:team_group:admins]
+cursor_origin_owner_grant.eng_ns: Destroying... [id=acme:group:grp_01k2ja2000e0080000000000g1]
+cursor_origin_repo_ruleset.main: Destroying... [id=rs_01k2ja2000e008000000000001]
+cursor_origin_repo_grant.eng: Destruction complete after 0s
+cursor_origin_owner_grant.team_admins: Destruction complete after 0s
+cursor_origin_repo_grant.late: Destruction complete after 0s
+terraform_data.late_email: Destroying... [id=bb08e177-0653-2baa-44d8-75efad9e674e]
+terraform_data.late_email: Destruction complete after 0s
+cursor_origin_repo_grant.carol_by_id: Destruction complete after 0s
+cursor_origin_owner_grant.security: Destruction complete after 0s
+cursor_origin_owner_grant.eng_ns: Destruction complete after 0s
+cursor_origin_repo_grant.alice: Destruction complete after 0s
+cursor_origin_repo_grant.frank: Destruction complete after 0s
+cursor_origin_repo_ruleset.main: Destruction complete after 0s
+
+Destroy complete! Resources: 10 destroyed.
+exit=0 (expected 0)

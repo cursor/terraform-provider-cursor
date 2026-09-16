@@ -1,0 +1,13 @@
+$ /tmp/tofu/tofu state show -no-color cursor_origin_repo_grant.frank
+# cursor_origin_repo_grant.frank:
+resource "cursor_origin_repo_grant" "frank" {
+    id         = "acme/rocket:user:user_01k2ja2000e0080000000000f6"
+    owner      = "acme"
+    permission = "read"
+    repo       = "rocket"
+    user       = {
+        id = "user_01k2ja2000e0080000000000f6"
+    }
+    user_email = "frank@acme.com"
+}
+exit=0 (expected 0)

@@ -1,0 +1,6 @@
+=== go test -race ./... -count=1 ===
+?   	github.com/cursor/terraform-provider-cursor	[no test files]
+?   	github.com/cursor/terraform-provider-cursor/internal/proto/v1	[no test files]
+?   	github.com/cursor/terraform-provider-cursor/internal/proto/v1/v1connect	[no test files]
+ok  	github.com/cursor/terraform-provider-cursor/internal/provider	1.160s
+go test -race exit=0

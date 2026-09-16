@@ -1,0 +1,186 @@
+=== go test ./internal/provider -count=1 -v -run 'Origin|Admin|Grant|Principal|Ruleset|Resolve|TeamMember|OrganizationGroup' ===
+=== RUN   TestResolveTeamMemberIDUsesBasicAuthAndPaginates
+--- PASS: TestResolveTeamMemberIDUsesBasicAuthAndPaginates (0.00s)
+=== RUN   TestResolveTeamMemberIDTreatsUnpaginatedResponseAsComplete
+=== RUN   TestResolveTeamMemberIDTreatsUnpaginatedResponseAsComplete/1_members
+=== RUN   TestResolveTeamMemberIDTreatsUnpaginatedResponseAsComplete/100_members
+=== RUN   TestResolveTeamMemberIDTreatsUnpaginatedResponseAsComplete/207_members
+--- PASS: TestResolveTeamMemberIDTreatsUnpaginatedResponseAsComplete (0.00s)
+    --- PASS: TestResolveTeamMemberIDTreatsUnpaginatedResponseAsComplete/1_members (0.00s)
+    --- PASS: TestResolveTeamMemberIDTreatsUnpaginatedResponseAsComplete/100_members (0.00s)
+    --- PASS: TestResolveTeamMemberIDTreatsUnpaginatedResponseAsComplete/207_members (0.00s)
+=== RUN   TestResolveTeamMemberIDStopsWhenHasNextPageFalse
+--- PASS: TestResolveTeamMemberIDStopsWhenHasNextPageFalse (0.00s)
+=== RUN   TestResolveTeamMemberIDSkipsRemovedMembers
+--- PASS: TestResolveTeamMemberIDSkipsRemovedMembers (0.00s)
+=== RUN   TestResolveTeamMemberIDErrors
+--- PASS: TestResolveTeamMemberIDErrors (0.00s)
+=== RUN   TestResolveTeamMemberIDRejectedKey
+--- PASS: TestResolveTeamMemberIDRejectedKey (0.00s)
+=== RUN   TestResolveOrganizationGroupIDUsesNameFilterAndPublicID
+--- PASS: TestResolveOrganizationGroupIDUsesNameFilterAndPublicID (0.00s)
+=== RUN   TestResolveOrganizationGroupIDRejectsUnfilteredResponse
+--- PASS: TestResolveOrganizationGroupIDRejectsUnfilteredResponse (0.00s)
+=== RUN   TestAdminPagingCapsRunawayServers
+--- PASS: TestAdminPagingCapsRunawayServers (0.01s)
+=== RUN   TestResolveToken_ExchangesAPIKey
+--- PASS: TestResolveToken_ExchangesAPIKey (0.00s)
+=== RUN   TestResolveToken_PassthroughNonAPIKey
+--- PASS: TestResolveToken_PassthroughNonAPIKey (0.00s)
+=== RUN   TestResolveToken_EmptyToken
+--- PASS: TestResolveToken_EmptyToken (0.00s)
+=== RUN   TestResolveToken_ExchangeFailsOnHTTPError
+--- PASS: TestResolveToken_ExchangeFailsOnHTTPError (0.00s)
+=== RUN   TestResolveToken_ExchangeFailsOnEmptyAccessToken
+--- PASS: TestResolveToken_ExchangeFailsOnEmptyAccessToken (0.00s)
+=== RUN   TestResolveToken_ExchangeFailsOnWhitespaceAccessToken
+--- PASS: TestResolveToken_ExchangeFailsOnWhitespaceAccessToken (0.00s)
+=== RUN   TestOriginRepoGrantsDataSourceRead
+--- PASS: TestOriginRepoGrantsDataSourceRead (0.00s)
+=== RUN   TestOriginOwnerGrantsDataSourceReadMapsPermissions
+--- PASS: TestOriginOwnerGrantsDataSourceReadMapsPermissions (0.00s)
+=== RUN   TestOriginGrantsDataSourceRejectsBadSlug
+--- PASS: TestOriginGrantsDataSourceRejectsBadSlug (0.00s)
+=== RUN   TestGetOriginRepoByOwnerAndName
+--- PASS: TestGetOriginRepoByOwnerAndName (0.00s)
+=== RUN   TestGetOriginRepoByID
+--- PASS: TestGetOriginRepoByID (0.00s)
+=== RUN   TestGetOriginRepoNotFound
+--- PASS: TestGetOriginRepoNotFound (0.00s)
+=== RUN   TestGetOriginRepoHTTPErrorWithoutJSON
+--- PASS: TestGetOriginRepoHTTPErrorWithoutJSON (0.00s)
+=== RUN   TestOriginRepoDataSourceReadByName
+--- PASS: TestOriginRepoDataSourceReadByName (0.00s)
+=== RUN   TestOriginRepoDataSourceReadByID
+--- PASS: TestOriginRepoDataSourceReadByID (0.00s)
+=== RUN   TestOriginRepoDataSourceReadRejectsMismatchedName
+--- PASS: TestOriginRepoDataSourceReadRejectsMismatchedName (0.00s)
+=== RUN   TestOriginRepoLookupValidation
+=== RUN   TestOriginRepoLookupValidation/missing_lookup
+=== RUN   TestOriginRepoLookupValidation/owner_without_name
+=== RUN   TestOriginRepoLookupValidation/reserved_owner
+=== RUN   TestOriginRepoLookupValidation/blank_strings
+--- PASS: TestOriginRepoLookupValidation (0.00s)
+    --- PASS: TestOriginRepoLookupValidation/missing_lookup (0.00s)
+    --- PASS: TestOriginRepoLookupValidation/owner_without_name (0.00s)
+    --- PASS: TestOriginRepoLookupValidation/reserved_owner (0.00s)
+    --- PASS: TestOriginRepoLookupValidation/blank_strings (0.00s)
+=== RUN   TestNewAPIClientSetsOriginAuth
+--- PASS: TestNewAPIClientSetsOriginAuth (0.00s)
+=== RUN   TestOriginGrantListPagesUntilShortPage
+--- PASS: TestOriginGrantListPagesUntilShortPage (0.00s)
+=== RUN   TestOriginGrantListEmptyCollection
+--- PASS: TestOriginGrantListEmptyCollection (0.00s)
+=== RUN   TestOriginGrantFindStopsAtMatchingPage
+--- PASS: TestOriginGrantFindStopsAtMatchingPage (0.00s)
+=== RUN   TestOriginGrantFindMissingReturnsNil
+--- PASS: TestOriginGrantFindMissingReturnsNil (0.00s)
+=== RUN   TestOriginGrantFindPropagatesNotFound
+--- PASS: TestOriginGrantFindPropagatesNotFound (0.00s)
+=== RUN   TestOriginGrantUpsertAndDeleteBodies
+--- PASS: TestOriginGrantUpsertAndDeleteBodies (0.00s)
+=== RUN   TestOriginGrantUpsertEmptyResponseUsesRequest
+--- PASS: TestOriginGrantUpsertEmptyResponseUsesRequest (0.00s)
+=== RUN   TestOriginGrantUpsertRejectsForeignPrincipal
+--- PASS: TestOriginGrantUpsertRejectsForeignPrincipal (0.00s)
+=== RUN   TestOriginGrantUpsertRequiresPrincipalAndPermission
+--- PASS: TestOriginGrantUpsertRequiresPrincipalAndPermission (0.00s)
+=== RUN   TestOriginGrantDeleteNotFound
+--- PASS: TestOriginGrantDeleteNotFound (0.00s)
+=== RUN   TestOriginGrantKeyFromWire
+--- PASS: TestOriginGrantKeyFromWire (0.00s)
+=== RUN   TestOriginGrantIDRoundTrip
+--- PASS: TestOriginGrantIDRoundTrip (0.00s)
+=== RUN   TestOriginRepoGrantReadRemovesMissingGrant
+--- PASS: TestOriginRepoGrantReadRemovesMissingGrant (0.00s)
+=== RUN   TestOriginRepoGrantReadRefreshesPermission
+--- PASS: TestOriginRepoGrantReadRefreshesPermission (0.00s)
+=== RUN   TestOriginRepoGrantReadListErrorKeepsState
+--- PASS: TestOriginRepoGrantReadListErrorKeepsState (0.00s)
+=== RUN   TestOriginRepoGrantCreateByID
+--- PASS: TestOriginRepoGrantCreateByID (0.00s)
+=== RUN   TestOriginRepoGrantCreateResolvesUserEmailAtApply
+--- PASS: TestOriginRepoGrantCreateResolvesUserEmailAtApply (0.00s)
+=== RUN   TestOriginOwnerGrantCreateResolvesGroupName
+--- PASS: TestOriginOwnerGrantCreateResolvesGroupName (0.00s)
+=== RUN   TestOriginRepoGrantModifyPlanResolvesEmailAndFlagsReplacement
+--- PASS: TestOriginRepoGrantModifyPlanResolvesEmailAndFlagsReplacement (0.00s)
+=== RUN   TestOriginRepoGrantCreateReusesPlannedResolution
+--- PASS: TestOriginRepoGrantCreateReusesPlannedResolution (0.00s)
+=== RUN   TestOriginRepoGrantModifyPlanNormalizesComputedObjects
+--- PASS: TestOriginRepoGrantModifyPlanNormalizesComputedObjects (0.00s)
+=== RUN   TestOriginRepoGrantModifyPlanDefersUnknownEmailAndReportsMissingKey
+--- PASS: TestOriginRepoGrantModifyPlanDefersUnknownEmailAndReportsMissingKey (0.00s)
+=== RUN   TestOriginRepoGrantModifyPlanUnknownEmailDropsStalePrincipal
+--- PASS: TestOriginRepoGrantModifyPlanUnknownEmailDropsStalePrincipal (0.00s)
+=== RUN   TestOriginOwnerGrantModifyPlanUnknownGroupNameDropsStalePrincipal
+--- PASS: TestOriginOwnerGrantModifyPlanUnknownGroupNameDropsStalePrincipal (0.00s)
+=== RUN   TestOriginRepoGrantModifyPlanUnknownRepoLeavesIDUnknown
+--- PASS: TestOriginRepoGrantModifyPlanUnknownRepoLeavesIDUnknown (0.00s)
+=== RUN   TestOriginOwnerGrantModifyPlanUnknownOwnerLeavesIDUnknown
+--- PASS: TestOriginOwnerGrantModifyPlanUnknownOwnerLeavesIDUnknown (0.00s)
+=== RUN   TestOriginOwnerGrantReadMapsCustomPermission
+--- PASS: TestOriginOwnerGrantReadMapsCustomPermission (0.00s)
+=== RUN   TestOriginRepoGrantDeleteNotFoundIsSuccess
+--- PASS: TestOriginRepoGrantDeleteNotFoundIsSuccess (0.00s)
+=== RUN   TestOriginRepoGrantDeleteSurfacesPreconditionError
+--- PASS: TestOriginRepoGrantDeleteSurfacesPreconditionError (0.00s)
+=== RUN   TestOriginGrantImportState
+--- PASS: TestOriginGrantImportState (0.00s)
+=== RUN   TestValidateOriginGrants
+--- PASS: TestValidateOriginGrants (0.00s)
+=== RUN   TestOriginGrantValidateConfigHandlesUnknownPrincipalObject
+--- PASS: TestOriginGrantValidateConfigHandlesUnknownPrincipalObject (0.00s)
+=== RUN   TestOriginGrantSchemaPlanModifiers
+--- PASS: TestOriginGrantSchemaPlanModifiers (0.00s)
+=== RUN   TestOriginRulesetCreateUpdateDelete
+--- PASS: TestOriginRulesetCreateUpdateDelete (0.00s)
+=== RUN   TestOriginRulesetModelMatchesSchema
+--- PASS: TestOriginRulesetModelMatchesSchema (0.00s)
+=== RUN   TestOriginRulesetEmptyRuleBlocksRoundTripThroughSchema
+--- PASS: TestOriginRulesetEmptyRuleBlocksRoundTripThroughSchema (0.00s)
+=== RUN   TestOriginRuleParametersWire
+--- PASS: TestOriginRuleParametersWire (0.00s)
+=== RUN   TestOriginRulesetReadKeepsUnsetRuleArgumentsNull
+--- PASS: TestOriginRulesetReadKeepsUnsetRuleArgumentsNull (0.00s)
+=== RUN   TestOriginRulesetReadNotFound
+--- PASS: TestOriginRulesetReadNotFound (0.00s)
+=== RUN   TestOriginRulesetToModelPreservesConfiguredIdentity
+--- PASS: TestOriginRulesetToModelPreservesConfiguredIdentity (0.00s)
+=== RUN   TestValidateOriginRulesetModel
+--- PASS: TestValidateOriginRulesetModel (0.00s)
+=== RUN   TestParseOriginRulesetImportID
+--- PASS: TestParseOriginRulesetImportID (0.00s)
+=== RUN   TestOriginRulesetRefreshKeepsUnsetRequiredCheckArgumentsNull
+--- PASS: TestOriginRulesetRefreshKeepsUnsetRequiredCheckArgumentsNull (0.00s)
+=== RUN   TestOriginRulesetApplyUsesResponseIDs
+--- PASS: TestOriginRulesetApplyUsesResponseIDs (0.00s)
+=== RUN   TestOriginRulesetApplyKeepsUnsetRuleArgumentsNull
+--- PASS: TestOriginRulesetApplyKeepsUnsetRuleArgumentsNull (0.00s)
+=== RUN   TestOriginRulesetReadImportsRulesFromAPI
+--- PASS: TestOriginRulesetReadImportsRulesFromAPI (0.00s)
+=== RUN   TestOriginRulesetReadRejectsUnsupportedRuleType
+--- PASS: TestOriginRulesetReadRejectsUnsupportedRuleType (0.00s)
+=== RUN   TestOriginRulesetOmittedBypassActorErrors
+--- PASS: TestOriginRulesetOmittedBypassActorErrors (0.00s)
+=== RUN   TestOriginRulesetWriteOmitsNestedIDsAndSendsEmptySlices
+--- PASS: TestOriginRulesetWriteOmitsNestedIDsAndSendsEmptySlices (0.00s)
+=== RUN   TestOriginRulesetMatchesBypassActorsByPrincipal
+--- PASS: TestOriginRulesetMatchesBypassActorsByPrincipal (0.00s)
+=== RUN   TestNestedRulesetIDsHaveNoPlanModifiers
+--- PASS: TestNestedRulesetIDsHaveNoPlanModifiers (0.00s)
+=== RUN   TestOriginRuleSchemaHasOneBlockPerRuleType
+--- PASS: TestOriginRuleSchemaHasOneBlockPerRuleType (0.00s)
+=== RUN   TestOriginRulesetReadNotFoundKeepsState
+--- PASS: TestOriginRulesetReadNotFoundKeepsState (0.00s)
+=== RUN   TestOriginRulesetDeleteProtection
+--- PASS: TestOriginRulesetDeleteProtection (0.00s)
+=== RUN   TestOriginRulesetDestroyPlanRespectsDeletionProtection
+--- PASS: TestOriginRulesetDestroyPlanRespectsDeletionProtection (0.00s)
+=== RUN   TestRulesetReplacementGuard
+--- PASS: TestRulesetReplacementGuard (0.00s)
+=== RUN   TestOriginRulesetDeleteNotFoundIsSuccess
+--- PASS: TestOriginRulesetDeleteNotFoundIsSuccess (0.00s)
+PASS
+ok  	github.com/cursor/terraform-provider-cursor/internal/provider	0.046s
+exit=0

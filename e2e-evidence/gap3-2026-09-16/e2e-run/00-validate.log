@@ -1,0 +1,15 @@
+$ /tmp/tofu/tofu validate
+[33m╷[0m[0m
+[33m│[0m [0m[1m[33mWarning: [0m[0m[1mProvider development overrides are in effect[0m
+[33m│[0m [0m
+[33m│[0m [0m[0mThe following provider development overrides are set in the CLI
+[33m│[0m [0mconfiguration:
+[33m│[0m [0m - cursor/cursor in /tmp/gap3-evidence/harness/out/bin
+[33m│[0m [0m
+[33m│[0m [0mThe behavior may therefore not match any released version of the provider
+[33m│[0m [0mand applying changes may cause the state to become incompatible with
+[33m│[0m [0mpublished releases.
+[33m╵[0m[0m
+[32m[1mSuccess![0m The configuration is valid, but there were some
+validation warnings as shown above.[0m
+exit=0 (expected 0)

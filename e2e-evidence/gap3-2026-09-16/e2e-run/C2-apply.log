@@ -1,0 +1,118 @@
+$ /tmp/tofu/tofu apply -no-color c.tfplan
+
+Warning: Provider development overrides are in effect
+
+The following provider development overrides are set in the CLI
+configuration:
+ - cursor/cursor in /tmp/gap3-evidence/harness/out/bin
+
+The behavior may therefore not match any released version of the provider and
+applying changes may cause the state to become incompatible with published
+releases.
+cursor_origin_repo_grant.alice: Modifying... [id=acme/rocket:user:user_01k2ja2000e0080000000000a1]
+cursor_origin_repo_grant.alice: Modifications complete after 0s [id=acme/rocket:user:user_01k2ja2000e0080000000000a1]
+data.cursor_origin_repo_grants.rocket: Reading...
+data.cursor_origin_repo_grants.rocket: Read complete after 0s
+
+Apply complete! Resources: 0 added, 1 changed, 0 destroyed.
+
+Outputs:
+
+alice = {
+  "id" = "acme/rocket:user:user_01k2ja2000e0080000000000a1"
+  "user" = {
+    "id" = "user_01k2ja2000e0080000000000a1"
+  }
+  "user_email" = "alice@acme.com"
+}
+eng = {
+  "group" = {
+    "id" = "grp_01k2ja2000e0080000000000g1"
+  }
+  "group_name" = "Engineering"
+  "id" = "acme/rocket:group:grp_01k2ja2000e0080000000000g1"
+}
+eng_ns = {
+  "group" = {
+    "id" = "grp_01k2ja2000e0080000000000g1"
+  }
+  "id" = "acme:group:grp_01k2ja2000e0080000000000g1"
+  "permission" = "contributor"
+}
+late = {
+  "id" = "acme/rocket:user:user_01k2ja2000e0080000000000b2"
+  "user" = {
+    "id" = "user_01k2ja2000e0080000000000b2"
+  }
+  "user_email" = "bob@acme.com"
+}
+owner_grants = tolist([
+  {
+    "group" = null /* object */
+    "id" = "acme:team_group:admins"
+    "permission" = "admin"
+    "team_group" = {
+      "kind" = "admins"
+    }
+    "user" = null /* object */
+  },
+  {
+    "group" = {
+      "id" = "grp_01k2ja2000e0080000000000g2"
+    }
+    "id" = "acme:group:grp_01k2ja2000e0080000000000g2"
+    "permission" = "admin"
+    "team_group" = null /* object */
+    "user" = null /* object */
+  },
+  {
+    "group" = {
+      "id" = "grp_01k2ja2000e0080000000000g1"
+    }
+    "id" = "acme:group:grp_01k2ja2000e0080000000000g1"
+    "permission" = "contributor"
+    "team_group" = null /* object */
+    "user" = null /* object */
+  },
+])
+repo_grants = tolist([
+  {
+    "group" = null /* object */
+    "id" = "acme/rocket:user:user_01k2ja2000e0080000000000c3"
+    "permission" = "write"
+    "team_group" = null /* object */
+    "user" = {
+      "id" = "user_01k2ja2000e0080000000000c3"
+    }
+  },
+  {
+    "group" = null /* object */
+    "id" = "acme/rocket:user:user_01k2ja2000e0080000000000b2"
+    "permission" = "read"
+    "team_group" = null /* object */
+    "user" = {
+      "id" = "user_01k2ja2000e0080000000000b2"
+    }
+  },
+  {
+    "group" = {
+      "id" = "grp_01k2ja2000e0080000000000g1"
+    }
+    "id" = "acme/rocket:group:grp_01k2ja2000e0080000000000g1"
+    "permission" = "read"
+    "team_group" = null /* object */
+    "user" = null /* object */
+  },
+  {
+    "group" = null /* object */
+    "id" = "acme/rocket:user:user_01k2ja2000e0080000000000a1"
+    "permission" = "admin"
+    "team_group" = null /* object */
+    "user" = {
+      "id" = "user_01k2ja2000e0080000000000a1"
+    }
+  },
+])
+repo_id = "repo_01k2ja2000e0080000000000r1"
+ruleset_id = "rs_01k2ja2000e008000000000001"
+exit=0 (expected 0)

@@ -1,0 +1,233 @@
+{
+  "alice": {
+    "sensitive": false,
+    "type": [
+      "object",
+      {
+        "id": "string",
+        "user": [
+          "object",
+          {
+            "id": "string"
+          }
+        ],
+        "user_email": "string"
+      }
+    ],
+    "value": {
+      "id": "acme/rocket:user:user_01k2ja2000e0080000000000a1",
+      "user": {
+        "id": "user_01k2ja2000e0080000000000a1"
+      },
+      "user_email": "alice@acme.com"
+    }
+  },
+  "eng": {
+    "sensitive": false,
+    "type": [
+      "object",
+      {
+        "group": [
+          "object",
+          {
+            "id": "string"
+          }
+        ],
+        "group_name": "string",
+        "id": "string"
+      }
+    ],
+    "value": {
+      "group": {
+        "id": "grp_01k2ja2000e0080000000000g1"
+      },
+      "group_name": "Engineering",
+      "id": "acme/rocket:group:grp_01k2ja2000e0080000000000g1"
+    }
+  },
+  "eng_ns": {
+    "sensitive": false,
+    "type": [
+      "object",
+      {
+        "group": [
+          "object",
+          {
+            "id": "string"
+          }
+        ],
+        "id": "string",
+        "permission": "string"
+      }
+    ],
+    "value": {
+      "group": {
+        "id": "grp_01k2ja2000e0080000000000g1"
+      },
+      "id": "acme:group:grp_01k2ja2000e0080000000000g1",
+      "permission": "contributor"
+    }
+  },
+  "late": {
+    "sensitive": false,
+    "type": [
+      "object",
+      {
+        "id": "string",
+        "user": [
+          "object",
+          {
+            "id": "string"
+          }
+        ],
+        "user_email": "string"
+      }
+    ],
+    "value": {
+      "id": "acme/rocket:user:user_01k2ja2000e0080000000000b2",
+      "user": {
+        "id": "user_01k2ja2000e0080000000000b2"
+      },
+      "user_email": "bob@acme.com"
+    }
+  },
+  "owner_grants": {
+    "sensitive": false,
+    "type": [
+      "list",
+      [
+        "object",
+        {
+          "group": [
+            "object",
+            {
+              "id": "string"
+            }
+          ],
+          "id": "string",
+          "permission": "string",
+          "team_group": [
+            "object",
+            {
+              "kind": "string"
+            }
+          ],
+          "user": [
+            "object",
+            {
+              "id": "string"
+            }
+          ]
+        }
+      ]
+    ],
+    "value": [
+      {
+        "group": null,
+        "id": "acme:team_group:admins",
+        "permission": "admin",
+        "team_group": {
+          "kind": "admins"
+        },
+        "user": null
+      },
+      {
+        "group": {
+          "id": "grp_01k2ja2000e0080000000000g2"
+        },
+        "id": "acme:group:grp_01k2ja2000e0080000000000g2",
+        "permission": "admin",
+        "team_group": null,
+        "user": null
+      },
+      {
+        "group": {
+          "id": "grp_01k2ja2000e0080000000000g1"
+        },
+        "id": "acme:group:grp_01k2ja2000e0080000000000g1",
+        "permission": "contributor",
+        "team_group": null,
+        "user": null
+      }
+    ]
+  },
+  "repo_grants": {
+    "sensitive": false,
+    "type": [
+      "list",
+      [
+        "object",
+        {
+          "group": [
+            "object",
+            {
+              "id": "string"
+            }
+          ],
+          "id": "string",
+          "permission": "string",
+          "team_group": [
+            "object",
+            {
+              "kind": "string"
+            }
+          ],
+          "user": [
+            "object",
+            {
+              "id": "string"
+            }
+          ]
+        }
+      ]
+    ],
+    "value": [
+      {
+        "group": null,
+        "id": "acme/rocket:user:user_01k2ja2000e0080000000000c3",
+        "permission": "write",
+        "team_group": null,
+        "user": {
+          "id": "user_01k2ja2000e0080000000000c3"
+        }
+      },
+      {
+        "group": null,
+        "id": "acme/rocket:user:user_01k2ja2000e0080000000000b2",
+        "permission": "read",
+        "team_group": null,
+        "user": {
+          "id": "user_01k2ja2000e0080000000000b2"
+        }
+      },
+      {
+        "group": {
+          "id": "grp_01k2ja2000e0080000000000g1"
+        },
+        "id": "acme/rocket:group:grp_01k2ja2000e0080000000000g1",
+        "permission": "read",
+        "team_group": null,
+        "user": null
+      },
+      {
+        "group": null,
+        "id": "acme/rocket:user:user_01k2ja2000e0080000000000a1",
+        "permission": "write",
+        "team_group": null,
+        "user": {
+          "id": "user_01k2ja2000e0080000000000a1"
+        }
+      }
+    ]
+  },
+  "repo_id": {
+    "sensitive": false,
+    "type": "string",
+    "value": "repo_01k2ja2000e0080000000000r1"
+  },
+  "ruleset_id": {
+    "sensitive": false,
+    "type": "string",
+    "value": "rs_01k2ja2000e008000000000001"
+  }
+}

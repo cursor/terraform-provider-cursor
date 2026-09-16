@@ -1,0 +1,26 @@
+=== go vet ./... ===
+go: downloading connectrpc.com/connect v1.19.1
+go: downloading github.com/hashicorp/terraform-plugin-framework v1.17.0
+go: downloading google.golang.org/protobuf v1.36.11
+go: downloading github.com/hashicorp/terraform-plugin-go v0.29.0
+go: downloading github.com/vmihailenco/msgpack/v5 v5.4.1
+go: downloading github.com/hashicorp/terraform-plugin-log v0.10.0
+go: downloading github.com/hashicorp/go-hclog v1.6.3
+go: downloading github.com/hashicorp/go-plugin v1.7.0
+go: downloading github.com/mitchellh/go-testing-interface v1.14.1
+go: downloading google.golang.org/grpc v1.79.3
+go: downloading github.com/hashicorp/go-uuid v1.0.3
+go: downloading github.com/hashicorp/terraform-registry-address v0.4.0
+go: downloading github.com/vmihailenco/tagparser/v2 v2.0.0
+go: downloading github.com/fatih/color v1.18.0
+go: downloading github.com/mattn/go-isatty v0.0.20
+go: downloading github.com/golang/protobuf v1.5.4
+go: downloading github.com/hashicorp/yamux v0.1.2
+go: downloading github.com/oklog/run v1.1.0
+go: downloading github.com/mattn/go-colorable v0.1.14
+go: downloading github.com/hashicorp/terraform-svchost v0.1.1
+go: downloading google.golang.org/genproto/googleapis/rpc v0.0.0-20251202230838-ff82c1b0f217
+go: downloading golang.org/x/net v0.55.0
+go: downloading golang.org/x/sys v0.45.0
+go: downloading golang.org/x/text v0.37.0
+go vet exit=0

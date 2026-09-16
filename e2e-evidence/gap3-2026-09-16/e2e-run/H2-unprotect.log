@@ -1,0 +1,175 @@
+$ /tmp/tofu/tofu apply -auto-approve -no-color -var alice_permission=admin -var alice_email=erin@acme.com -var late_email=dave@acme.com -var ruleset_deletion_protection=false
+
+Warning: Provider development overrides are in effect
+
+The following provider development overrides are set in the CLI
+configuration:
+ - cursor/cursor in /tmp/gap3-evidence/harness/out/bin
+
+The behavior may therefore not match any released version of the provider and
+applying changes may cause the state to become incompatible with published
+releases.
+terraform_data.late_email: Refreshing state... [id=bb08e177-0653-2baa-44d8-75efad9e674e]
+cursor_origin_repo_grant.carol_by_id: Refreshing state... [id=acme/rocket:user:user_01k2ja2000e0080000000000c3]
+cursor_origin_owner_grant.team_admins: Refreshing state... [id=acme:team_group:admins]
+cursor_origin_owner_grant.eng_ns: Refreshing state... [id=acme:group:grp_01k2ja2000e0080000000000g1]
+cursor_origin_repo_grant.eng: Refreshing state... [id=acme/rocket:group:grp_01k2ja2000e0080000000000g1]
+data.cursor_origin_repo.rocket: Reading...
+cursor_origin_repo_grant.frank: Refreshing state... [id=acme/rocket:user:user_01k2ja2000e0080000000000f6]
+cursor_origin_repo_grant.alice: Refreshing state... [id=acme/rocket:user:user_01k2ja2000e0080000000000e9]
+cursor_origin_repo_grant.late: Refreshing state... [id=acme/rocket:user:user_01k2ja2000e0080000000000d4]
+cursor_origin_owner_grant.security: Refreshing state... [id=acme:group:grp_01k2ja2000e0080000000000g2]
+data.cursor_origin_repo.rocket: Read complete after 0s [id=repo_01k2ja2000e0080000000000r1]
+cursor_origin_repo_ruleset.main: Refreshing state... [id=rs_01k2ja2000e008000000000001]
+data.cursor_origin_owner_grants.acme: Reading...
+data.cursor_origin_repo_grants.rocket: Reading...
+data.cursor_origin_owner_grants.acme: Read complete after 0s
+data.cursor_origin_repo_grants.rocket: Read complete after 0s
+
+OpenTofu used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  ~ update in-place
+
+OpenTofu will perform the following actions:
+
+  # cursor_origin_repo_ruleset.main will be updated in-place
+  ~ resource "cursor_origin_repo_ruleset" "main" {
+      ~ deletion_protection = true -> false
+        id                  = "rs_01k2ja2000e008000000000001"
+        name                = "require-review"
+        # (9 unchanged attributes hidden)
+
+      ~ bypass_actor {
+          ~ id          = "ba_01k2ja2000e008000000000004" -> (known after apply)
+            # (1 unchanged attribute hidden)
+
+            # (1 unchanged block hidden)
+        }
+
+      ~ rule {
+          ~ id = "rule_01k2ja2000e008000000000002" -> (known after apply)
+
+            # (1 unchanged block hidden)
+        }
+      ~ rule {
+          ~ id = "rule_01k2ja2000e008000000000003" -> (known after apply)
+
+            # (1 unchanged block hidden)
+        }
+    }
+
+Plan: 0 to add, 1 to change, 0 to destroy.
+cursor_origin_repo_ruleset.main: Modifying... [id=rs_01k2ja2000e008000000000001]
+cursor_origin_repo_ruleset.main: Modifications complete after 0s [id=rs_01k2ja2000e008000000000001]
+
+Apply complete! Resources: 0 added, 1 changed, 0 destroyed.
+
+Outputs:
+
+alice = {
+  "id" = "acme/rocket:user:user_01k2ja2000e0080000000000e9"
+  "user" = {
+    "id" = "user_01k2ja2000e0080000000000e9"
+  }
+  "user_email" = "erin@acme.com"
+}
+eng = {
+  "group" = {
+    "id" = "grp_01k2ja2000e0080000000000g1"
+  }
+  "group_name" = "Engineering"
+  "id" = "acme/rocket:group:grp_01k2ja2000e0080000000000g1"
+}
+eng_ns = {
+  "group" = {
+    "id" = "grp_01k2ja2000e0080000000000g1"
+  }
+  "id" = "acme:group:grp_01k2ja2000e0080000000000g1"
+  "permission" = "contributor"
+}
+late = {
+  "id" = "acme/rocket:user:user_01k2ja2000e0080000000000d4"
+  "user" = {
+    "id" = "user_01k2ja2000e0080000000000d4"
+  }
+  "user_email" = "dave@acme.com"
+}
+owner_grants = tolist([
+  {
+    "group" = null /* object */
+    "id" = "acme:team_group:admins"
+    "permission" = "admin"
+    "team_group" = {
+      "kind" = "admins"
+    }
+    "user" = null /* object */
+  },
+  {
+    "group" = {
+      "id" = "grp_01k2ja2000e0080000000000g2"
+    }
+    "id" = "acme:group:grp_01k2ja2000e0080000000000g2"
+    "permission" = "admin"
+    "team_group" = null /* object */
+    "user" = null /* object */
+  },
+  {
+    "group" = {
+      "id" = "grp_01k2ja2000e0080000000000g1"
+    }
+    "id" = "acme:group:grp_01k2ja2000e0080000000000g1"
+    "permission" = "contributor"
+    "team_group" = null /* object */
+    "user" = null /* object */
+  },
+])
+repo_grants = tolist([
+  {
+    "group" = null /* object */
+    "id" = "acme/rocket:user:user_01k2ja2000e0080000000000c3"
+    "permission" = "write"
+    "team_group" = null /* object */
+    "user" = {
+      "id" = "user_01k2ja2000e0080000000000c3"
+    }
+  },
+  {
+    "group" = {
+      "id" = "grp_01k2ja2000e0080000000000g1"
+    }
+    "id" = "acme/rocket:group:grp_01k2ja2000e0080000000000g1"
+    "permission" = "read"
+    "team_group" = null /* object */
+    "user" = null /* object */
+  },
+  {
+    "group" = null /* object */
+    "id" = "acme/rocket:user:user_01k2ja2000e0080000000000d4"
+    "permission" = "read"
+    "team_group" = null /* object */
+    "user" = {
+      "id" = "user_01k2ja2000e0080000000000d4"
+    }
+  },
+  {
+    "group" = null /* object */
+    "id" = "acme/rocket:user:user_01k2ja2000e0080000000000e9"
+    "permission" = "admin"
+    "team_group" = null /* object */
+    "user" = {
+      "id" = "user_01k2ja2000e0080000000000e9"
+    }
+  },
+  {
+    "group" = null /* object */
+    "id" = "acme/rocket:user:user_01k2ja2000e0080000000000f6"
+    "permission" = "read"
+    "team_group" = null /* object */
+    "user" = {
+      "id" = "user_01k2ja2000e0080000000000f6"
+    }
+  },
+])
+repo_id = "repo_01k2ja2000e0080000000000r1"
+ruleset_id = "rs_01k2ja2000e008000000000001"
+exit=0 (expected 0)

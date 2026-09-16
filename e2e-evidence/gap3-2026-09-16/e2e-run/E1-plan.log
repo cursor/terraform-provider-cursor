@@ -1,0 +1,107 @@
+$ /tmp/tofu/tofu plan -out=e.tfplan -no-color -var alice_permission=admin -var alice_email=erin@acme.com -var late_email=dave@acme.com
+
+Warning: Provider development overrides are in effect
+
+The following provider development overrides are set in the CLI
+configuration:
+ - cursor/cursor in /tmp/gap3-evidence/harness/out/bin
+
+The behavior may therefore not match any released version of the provider and
+applying changes may cause the state to become incompatible with published
+releases.
+terraform_data.late_email: Refreshing state... [id=bb08e177-0653-2baa-44d8-75efad9e674e]
+cursor_origin_owner_grant.team_admins: Refreshing state... [id=acme:team_group:admins]
+cursor_origin_repo_grant.late: Refreshing state... [id=acme/rocket:user:user_01k2ja2000e0080000000000b2]
+cursor_origin_repo_grant.alice: Refreshing state... [id=acme/rocket:user:user_01k2ja2000e0080000000000e5]
+cursor_origin_owner_grant.security: Refreshing state... [id=acme:group:grp_01k2ja2000e0080000000000g2]
+cursor_origin_repo_grant.carol_by_id: Refreshing state... [id=acme/rocket:user:user_01k2ja2000e0080000000000c3]
+cursor_origin_owner_grant.eng_ns: Refreshing state... [id=acme:group:grp_01k2ja2000e0080000000000g1]
+cursor_origin_repo_grant.eng: Refreshing state... [id=acme/rocket:group:grp_01k2ja2000e0080000000000g1]
+data.cursor_origin_repo.rocket: Reading...
+data.cursor_origin_repo.rocket: Read complete after 0s [id=repo_01k2ja2000e0080000000000r1]
+cursor_origin_repo_ruleset.main: Refreshing state... [id=rs_01k2ja2000e008000000000001]
+data.cursor_origin_owner_grants.acme: Reading...
+data.cursor_origin_owner_grants.acme: Read complete after 0s
+
+OpenTofu used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  ~ update in-place
+-/+ destroy and then create replacement
+ <= read (data resources)
+
+OpenTofu will perform the following actions:
+
+  # data.cursor_origin_repo_grants.rocket will be read during apply
+  # (depends on a resource or a module with changes pending)
+ <= data "cursor_origin_repo_grants" "rocket" {
+      + grants = (known after apply)
+      + owner  = "acme"
+      + repo   = "rocket"
+    }
+
+  # cursor_origin_repo_grant.late must be replaced
+-/+ resource "cursor_origin_repo_grant" "late" {
+      ~ id         = "acme/rocket:user:user_01k2ja2000e0080000000000b2" -> (known after apply)
+      ~ user       = {
+          ~ id = "user_01k2ja2000e0080000000000b2" -> (known after apply)
+        } -> (known after apply)
+      ~ user_email = "bob@acme.com" # forces replacement -> (known after apply) # forces replacement
+        # (3 unchanged attributes hidden)
+    }
+
+  # terraform_data.late_email will be updated in-place
+  ~ resource "terraform_data" "late_email" {
+        id     = "bb08e177-0653-2baa-44d8-75efad9e674e"
+      ~ input  = "bob@acme.com" -> "dave@acme.com"
+      ~ output = "bob@acme.com" -> (known after apply)
+    }
+
+Plan: 1 to add, 1 to change, 1 to destroy.
+
+Changes to Outputs:
+  ~ late         = {
+      ~ id         = "acme/rocket:user:user_01k2ja2000e0080000000000b2" -> (known after apply)
+      ~ user       = {
+          - id = "user_01k2ja2000e0080000000000b2"
+        } -> (known after apply)
+      ~ user_email = "bob@acme.com" -> (known after apply)
+    }
+  ~ repo_grants  = [
+      - {
+          - group      = null
+          - id         = "acme/rocket:user:user_01k2ja2000e0080000000000c3"
+          - permission = "write"
+          - team_group = null
+          - user       = {
+              - id = "user_01k2ja2000e0080000000000c3"
+            }
+        },
+      - {
+          - group      = null
+          - id         = "acme/rocket:user:user_01k2ja2000e0080000000000b2"
+          - permission = "read"
+          - team_group = null
+          - user       = {
+              - id = "user_01k2ja2000e0080000000000b2"
+            }
+        },
+      - {
+          - group      = {
+              - id = "grp_01k2ja2000e0080000000000g1"
+            }
+          - id         = "acme/rocket:group:grp_01k2ja2000e0080000000000g1"
+          - permission = "read"
+          - team_group = null
+          - user       = null
+        },
+      - {
+          - group      = null
+          - id         = "acme/rocket:user:user_01k2ja2000e0080000000000e5"
+          - permission = "admin"
+          - team_group = null
+          - user       = {
+              - id = "user_01k2ja2000e0080000000000e5"
+            }
+        },
+    ] -> (known after apply)
+exit=0 (expected 0)

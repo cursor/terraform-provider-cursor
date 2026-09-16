@@ -1,0 +1,18 @@
+$ /tmp/tofu/tofu import -no-color -var alice_permission=admin -var alice_email=erin@acme.com -var late_email=dave@acme.com cursor_origin_repo_grant.frank acme/rocket:user_email:frank@acme.com
+cursor_origin_repo_grant.frank: Importing from ID "acme/rocket:user_email:frank@acme.com"...
+data.cursor_origin_repo.rocket: Reading...
+data.cursor_origin_repo_grants.rocket: Reading...
+data.cursor_origin_owner_grants.acme: Reading...
+cursor_origin_repo_grant.frank: Import prepared!
+  Prepared cursor_origin_repo_grant for import
+cursor_origin_repo_grant.frank: Refreshing state... [id=acme/rocket:user:user_01k2ja2000e0080000000000f6]
+data.cursor_origin_repo.rocket: Read complete after 0s [id=repo_01k2ja2000e0080000000000r1]
+data.cursor_origin_owner_grants.acme: Read complete after 0s
+data.cursor_origin_repo_grants.rocket: Read complete after 0s
+
+Import successful!
+
+The resources that were imported are shown above. These resources are now in
+your OpenTofu state and will henceforth be managed by OpenTofu.
+
+exit=0 (expected 0)

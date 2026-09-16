@@ -1,0 +1,4 @@
+$ /tmp/tofu/tofu version
+OpenTofu v1.10.6
+on linux_amd64
+exit=0 (expected 0)

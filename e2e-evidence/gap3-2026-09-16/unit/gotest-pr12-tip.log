@@ -1,0 +1,5 @@
+?   	github.com/cursor/terraform-provider-cursor	[no test files]
+?   	github.com/cursor/terraform-provider-cursor/internal/proto/v1	[no test files]
+?   	github.com/cursor/terraform-provider-cursor/internal/proto/v1/v1connect	[no test files]
+ok  	github.com/cursor/terraform-provider-cursor/internal/provider	0.024s
+exit=0

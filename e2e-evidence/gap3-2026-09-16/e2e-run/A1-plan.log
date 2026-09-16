@@ -1,0 +1,201 @@
+$ /tmp/tofu/tofu plan -out=a.tfplan -no-color
+
+Warning: Provider development overrides are in effect
+
+The following provider development overrides are set in the CLI
+configuration:
+ - cursor/cursor in /tmp/gap3-evidence/harness/out/bin
+
+The behavior may therefore not match any released version of the provider and
+applying changes may cause the state to become incompatible with published
+releases.
+data.cursor_origin_repo.rocket: Reading...
+data.cursor_origin_repo.rocket: Read complete after 0s [id=repo_01k2ja2000e0080000000000r1]
+
+OpenTofu used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  + create
+ <= read (data resources)
+
+OpenTofu will perform the following actions:
+
+  # data.cursor_origin_owner_grants.acme will be read during apply
+  # (depends on a resource or a module with changes pending)
+ <= data "cursor_origin_owner_grants" "acme" {
+      + grants = (known after apply)
+      + owner  = "acme"
+    }
+
+  # data.cursor_origin_repo_grants.rocket will be read during apply
+  # (depends on a resource or a module with changes pending)
+ <= data "cursor_origin_repo_grants" "rocket" {
+      + grants = (known after apply)
+      + owner  = "acme"
+      + repo   = "rocket"
+    }
+
+  # cursor_origin_owner_grant.eng_ns will be created
+  + resource "cursor_origin_owner_grant" "eng_ns" {
+      + group      = {
+          + id = "grp_01k2ja2000e0080000000000g1"
+        }
+      + group_name = "Engineering"
+      + id         = "acme:group:grp_01k2ja2000e0080000000000g1"
+      + owner      = "acme"
+      + permission = "contributor"
+    }
+
+  # cursor_origin_owner_grant.security will be created
+  + resource "cursor_origin_owner_grant" "security" {
+      + group      = {
+          + id = "grp_01k2ja2000e0080000000000g2"
+        }
+      + group_name = "Security"
+      + id         = "acme:group:grp_01k2ja2000e0080000000000g2"
+      + owner      = "acme"
+      + permission = "admin"
+    }
+
+  # cursor_origin_owner_grant.team_admins will be created
+  + resource "cursor_origin_owner_grant" "team_admins" {
+      + id         = "acme:team_group:admins"
+      + owner      = "acme"
+      + permission = "admin"
+      + team_group = {
+          + kind = "admins"
+        }
+    }
+
+  # cursor_origin_repo_grant.alice will be created
+  + resource "cursor_origin_repo_grant" "alice" {
+      + id         = "acme/rocket:user:user_01k2ja2000e0080000000000a1"
+      + owner      = "acme"
+      + permission = "write"
+      + repo       = "rocket"
+      + user       = {
+          + id = "user_01k2ja2000e0080000000000a1"
+        }
+      + user_email = "alice@acme.com"
+    }
+
+  # cursor_origin_repo_grant.carol_by_id will be created
+  + resource "cursor_origin_repo_grant" "carol_by_id" {
+      + id         = "acme/rocket:user:user_01k2ja2000e0080000000000c3"
+      + owner      = "acme"
+      + permission = "write"
+      + repo       = "rocket"
+      + user       = {
+          + id = "user_01k2ja2000e0080000000000c3"
+        }
+    }
+
+  # cursor_origin_repo_grant.eng will be created
+  + resource "cursor_origin_repo_grant" "eng" {
+      + group      = {
+          + id = "grp_01k2ja2000e0080000000000g1"
+        }
+      + group_name = "Engineering"
+      + id         = "acme/rocket:group:grp_01k2ja2000e0080000000000g1"
+      + owner      = "acme"
+      + permission = "read"
+      + repo       = "rocket"
+    }
+
+  # cursor_origin_repo_grant.late will be created
+  + resource "cursor_origin_repo_grant" "late" {
+      + id         = (known after apply)
+      + owner      = "acme"
+      + permission = "read"
+      + repo       = "rocket"
+      + user       = (known after apply)
+      + user_email = (known after apply)
+    }
+
+  # cursor_origin_repo_ruleset.main will be created
+  + resource "cursor_origin_repo_ruleset" "main" {
+      + allow_broad_bypass  = false
+      + allow_unenforced    = false
+      + deletion_protection = true
+      + description         = "e2e: review + CI before merge"
+      + enforcement         = "active"
+      + excluded_ref_names  = []
+      + id                  = (known after apply)
+      + included_ref_names  = [
+          + "refs/heads/main",
+        ]
+      + kind                = "merge_branch"
+      + name                = "require-review"
+      + owner               = "acme"
+      + repo                = "rocket"
+
+      + bypass_actor {
+          + bypass_mode = "always"
+          + id          = (known after apply)
+
+          + origin_role {
+              + role = "repository_admin"
+            }
+        }
+
+      + rule {
+          + id = (known after apply)
+
+          + pull_request {
+              + dismiss_stale_reviews_on_push   = true
+              + required_approving_review_count = 1
+            }
+        }
+      + rule {
+          + id = (known after apply)
+
+          + require_status_checks {
+              + required_check {
+                  + actor_id   = "app_01k2ja2000e0080000000000c1"
+                  + actor_kind = "app"
+                  + group_key  = "ci"
+                }
+            }
+        }
+    }
+
+  # terraform_data.late_email will be created
+  + resource "terraform_data" "late_email" {
+      + id     = (known after apply)
+      + input  = "bob@acme.com"
+      + output = (known after apply)
+    }
+
+Plan: 9 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  + alice        = {
+      + id         = "acme/rocket:user:user_01k2ja2000e0080000000000a1"
+      + user       = {
+          + id = "user_01k2ja2000e0080000000000a1"
+        }
+      + user_email = "alice@acme.com"
+    }
+  + eng          = {
+      + group      = {
+          + id = "grp_01k2ja2000e0080000000000g1"
+        }
+      + group_name = "Engineering"
+      + id         = "acme/rocket:group:grp_01k2ja2000e0080000000000g1"
+    }
+  + eng_ns       = {
+      + group      = {
+          + id = "grp_01k2ja2000e0080000000000g1"
+        }
+      + id         = "acme:group:grp_01k2ja2000e0080000000000g1"
+      + permission = "contributor"
+    }
+  + late         = {
+      + id         = (known after apply)
+      + user       = (known after apply)
+      + user_email = (known after apply)
+    }
+  + owner_grants = (known after apply)
+  + repo_grants  = (known after apply)
+  + repo_id      = "repo_01k2ja2000e0080000000000r1"
+  + ruleset_id   = (known after apply)
+exit=0 (expected 0)
