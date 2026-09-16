@@ -42,7 +42,7 @@ func (p *cursorProvider) Metadata(_ context.Context, _ provider.MetadataRequest,
 
 func (p *cursorProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Manage Cursor Automations. Talks to the Cursor Automations API over Connect RPC.",
+		Description: "Manage Cursor Automations and Origin repository rulesets, and read Origin repositories. Automations use the Cursor Automations API over Connect RPC. Origin calls use the public Origin API and the same auth token.",
 		Attributes: map[string]schema.Attribute{
 			"token": schema.StringAttribute{
 				Optional:    true,
@@ -92,12 +92,14 @@ func (p *cursorProvider) Configure(ctx context.Context, req provider.ConfigureRe
 func (p *cursorProvider) Resources(_ context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewPlatformWorkflowResource,
+		NewOriginRepoRulesetResource,
 	}
 }
 
 func (p *cursorProvider) DataSources(_ context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewPlatformWorkflowDataSource,
+		NewOriginRepoDataSource,
 	}
 }
 

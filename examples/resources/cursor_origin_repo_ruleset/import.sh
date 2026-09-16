@@ -1,0 +1,1 @@
+terraform import cursor_origin_repo_ruleset.main acme/rocket/rs_01k2ja2000e0080000000000t7
