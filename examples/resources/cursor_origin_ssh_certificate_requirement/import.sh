@@ -1,0 +1,1 @@
+terraform import cursor_origin_ssh_certificate_requirement.acme acme

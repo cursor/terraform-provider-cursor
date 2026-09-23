@@ -1,0 +1,2 @@
+terraform import cursor_origin_ssh_certificate_authority.production acme:nsca_01k2ja2000e0080000000000s5
+terraform import cursor_origin_ssh_certificate_authority.production acme:SHA256:D5vlIclvaSZlwq4gmckavfLE7n7F542Eyhk/PvXkRq0
