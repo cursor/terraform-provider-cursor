@@ -1,0 +1,2 @@
+terraform import cursor_origin_inbound_ip_allowlist_entry.office acme:nsip_01k2ja2000e0080000000000c4
+terraform import cursor_origin_inbound_ip_allowlist_entry.office acme:203.0.113.0/24
