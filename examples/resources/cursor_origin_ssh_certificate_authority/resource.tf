@@ -1,5 +1,5 @@
 resource "cursor_origin_ssh_certificate_authority" "production" {
-  owner               = "acme"
+  namespace           = "acme"
   name                = "Acme production CA"
   public_key          = file("${path.module}/acme-ssh-ca.pub")
   deletion_protection = true

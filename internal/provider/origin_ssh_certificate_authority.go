@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 const (
@@ -41,6 +43,35 @@ type originSSHCertificateRequirement struct {
 
 func originSSHCertificateAuthoritiesPath(namespace string) string {
 	return "/namespaces/" + url.PathEscape(namespace) + "/ssh-certificate-authorities"
+}
+
+func validateOriginNamespaceAlias(namespace, owner types.String) error {
+	if namespace.IsNull() && owner.IsNull() {
+		return fmt.Errorf("namespace is required")
+	}
+	if !namespace.IsNull() {
+		if err := requireIDSafeSlug(namespace, "namespace"); err != nil {
+			return err
+		}
+	}
+	if !owner.IsNull() {
+		if err := requireIDSafeSlug(owner, "owner"); err != nil {
+			return err
+		}
+	}
+	if !namespace.IsNull() && !namespace.IsUnknown() && !owner.IsNull() && !owner.IsUnknown() && namespace.ValueString() != owner.ValueString() {
+		return fmt.Errorf("namespace %q and the deprecated owner %q must match; set only namespace", namespace.ValueString(), owner.ValueString())
+	}
+	return nil
+}
+
+func alignOriginNamespaceAlias(configNamespace, configOwner types.String, namespace, owner *types.String) {
+	switch {
+	case configOwner.IsNull():
+		*owner = *namespace
+	case configNamespace.IsNull():
+		*namespace = *owner
+	}
 }
 
 func (c *apiClient) listOriginSSHCertificateAuthorities(ctx context.Context, namespace string) (*originSSHCertificateAuthorityList, error) {

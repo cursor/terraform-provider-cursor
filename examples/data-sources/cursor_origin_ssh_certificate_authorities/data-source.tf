@@ -1,5 +1,5 @@
 data "cursor_origin_ssh_certificate_authorities" "acme" {
-  owner = "acme"
+  namespace = "acme"
 }
 
 output "acme_ssh_ca_fingerprints" {

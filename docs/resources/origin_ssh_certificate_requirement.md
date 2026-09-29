@@ -3,19 +3,19 @@
 page_title: "cursor_origin_ssh_certificate_requirement Resource - cursor"
 subcategory: ""
 description: |-
-  Manages whether an Origin owner requires SSH certificates. While required, git over SSH on the owner's repositories accepts only certificates from the owner's authorities: SSH keys registered by users and user API keys over HTTPS are refused. Requiring certificates needs at least one cursor_origin_ssh_certificate_authority on the owner, so reference one (for example through owner) or use depends_on; that also orders destroy so the flag is cleared before the last authority is removed. One resource per owner. Destroying it sets the flag back to false; deletion_protection defaults to true, so Terraform will not destroy or replace it until that is set to false and applied.
+  Manages whether an Origin namespace requires SSH certificates. While required, git over SSH on the namespace's repositories accepts only certificates from the namespace's authorities: SSH keys registered by users and user API keys over HTTPS are refused. Requiring certificates needs at least one cursor_origin_ssh_certificate_authority on the namespace, so reference one (for example through namespace) or use depends_on; that also orders destroy so the flag is cleared before the last authority is removed. One resource per namespace. Destroying it sets the flag back to false; deletion_protection defaults to true, so Terraform will not destroy or replace it until that is set to false and applied.
 ---
 
 # cursor_origin_ssh_certificate_requirement (Resource)
 
-Manages whether an Origin owner requires SSH certificates. While required, git over SSH on the owner's repositories accepts only certificates from the owner's authorities: SSH keys registered by users and user API keys over HTTPS are refused. Requiring certificates needs at least one cursor_origin_ssh_certificate_authority on the owner, so reference one (for example through owner) or use depends_on; that also orders destroy so the flag is cleared before the last authority is removed. One resource per owner. Destroying it sets the flag back to false; deletion_protection defaults to true, so Terraform will not destroy or replace it until that is set to false and applied.
+Manages whether an Origin namespace requires SSH certificates. While required, git over SSH on the namespace's repositories accepts only certificates from the namespace's authorities: SSH keys registered by users and user API keys over HTTPS are refused. Requiring certificates needs at least one cursor_origin_ssh_certificate_authority on the namespace, so reference one (for example through namespace) or use depends_on; that also orders destroy so the flag is cleared before the last authority is removed. One resource per namespace. Destroying it sets the flag back to false; deletion_protection defaults to true, so Terraform will not destroy or replace it until that is set to false and applied.
 
 ## Example Usage
 
 ```terraform
-# Referencing the authority's owner adds it first and clears the flag before it is removed.
+# Referencing the authority's namespace adds it first and clears the flag before it is removed.
 resource "cursor_origin_ssh_certificate_requirement" "acme" {
-  owner                = cursor_origin_ssh_certificate_authority.production.owner
+  namespace            = cursor_origin_ssh_certificate_authority.production.namespace
   require_certificates = true
   deletion_protection  = true
 }
@@ -26,16 +26,17 @@ resource "cursor_origin_ssh_certificate_requirement" "acme" {
 
 ### Required
 
-- `owner` (String) Owner slug of the team namespace. Changing this replaces the resource, which clears the flag on the old owner. Blocked while deletion_protection is true.
-- `require_certificates` (Boolean) True to require SSH certificates on the owner's repositories.
+- `require_certificates` (Boolean) True to require SSH certificates on the namespace's repositories.
 
 ### Optional
 
-- `deletion_protection` (Boolean) When true, Terraform will not destroy this resource, which would clear the flag. That includes terraform destroy and replacements caused by changing owner. Set to false and apply before destroying or moving it. Null is treated as protected.
+- `deletion_protection` (Boolean) When true, Terraform will not destroy this resource, which would clear the flag. That includes terraform destroy and replacements caused by changing namespace. Set to false and apply before destroying or moving it. Null is treated as protected.
+- `namespace` (String) Slug of the team namespace. Required unless the deprecated owner is set. Changing this replaces the resource, which clears the flag on the old namespace. Blocked while deletion_protection is true.
+- `owner` (String, Deprecated) Deprecated alias of namespace. Use namespace instead; if both are set they must match.
 
 ### Read-Only
 
-- `id` (String) The owner slug.
+- `id` (String) The namespace slug.
 
 ## Import
 

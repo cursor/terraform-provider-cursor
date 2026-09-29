@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -22,7 +23,7 @@ func TestOriginSSHCertificateRequirementCreateUpdateDelete(t *testing.T) {
 	ctx := context.Background()
 	res := &originSSHCertificateRequirementResource{client: mock.client()}
 	sch := sshRequirementSchema(t, res)
-	plan := originSSHCertificateRequirementModel{ID: types.StringUnknown(), Owner: types.StringValue("acme"), RequireCertificates: types.BoolValue(true), DeletionProtection: types.BoolValue(false)}
+	plan := originSSHCertificateRequirementModel{ID: types.StringUnknown(), Namespace: types.StringValue("acme"), Owner: types.StringValue("acme"), RequireCertificates: types.BoolValue(true), DeletionProtection: types.BoolValue(false)}
 	planValue := tfsdk.Plan{Schema: sch}
 	if diags := planValue.Set(ctx, &plan); diags.HasError() {
 		t.Fatal(diags)
@@ -77,7 +78,7 @@ func TestOriginSSHCertificateRequirementCreateWithoutAuthorityFails(t *testing.T
 	ctx := context.Background()
 	res := &originSSHCertificateRequirementResource{client: mock.client()}
 	sch := sshRequirementSchema(t, res)
-	plan := originSSHCertificateRequirementModel{ID: types.StringUnknown(), Owner: types.StringValue("acme"), RequireCertificates: types.BoolValue(true)}
+	plan := originSSHCertificateRequirementModel{ID: types.StringUnknown(), Namespace: types.StringValue("acme"), Owner: types.StringValue("acme"), RequireCertificates: types.BoolValue(true)}
 	planValue := tfsdk.Plan{Schema: sch}
 	if diags := planValue.Set(ctx, &plan); diags.HasError() {
 		t.Fatal(diags)
@@ -97,7 +98,7 @@ func TestOriginSSHCertificateRequirementRead(t *testing.T) {
 
 	ctx := context.Background()
 	res := &originSSHCertificateRequirementResource{client: mock.client()}
-	state := sshRequirementState(t, res, originSSHCertificateRequirementModel{ID: types.StringValue("acme"), Owner: types.StringValue("acme"), RequireCertificates: types.BoolNull()})
+	state := sshRequirementState(t, res, originSSHCertificateRequirementModel{ID: types.StringValue("acme"), Namespace: types.StringValue("acme"), Owner: types.StringValue("acme"), RequireCertificates: types.BoolNull()})
 	resp := &resource.ReadResponse{State: state}
 	res.Read(ctx, resource.ReadRequest{State: state}, resp)
 	if resp.Diagnostics.HasError() {
@@ -122,11 +123,11 @@ func TestOriginSSHCertificateRequirementReadErrorKeepsState(t *testing.T) {
 	defer server.Close()
 
 	res := &originSSHCertificateRequirementResource{client: testOriginClient(server)}
-	state := sshRequirementState(t, res, originSSHCertificateRequirementModel{ID: types.StringValue("acme"), Owner: types.StringValue("acme"), RequireCertificates: types.BoolValue(true), DeletionProtection: types.BoolValue(false)})
+	state := sshRequirementState(t, res, originSSHCertificateRequirementModel{ID: types.StringValue("acme"), Namespace: types.StringValue("acme"), Owner: types.StringValue("acme"), RequireCertificates: types.BoolValue(true), DeletionProtection: types.BoolValue(false)})
 	resp := &resource.ReadResponse{State: state}
 	res.Read(context.Background(), resource.ReadRequest{State: state}, resp)
 	if !resp.Diagnostics.HasError() {
-		t.Fatal("expected read error when the owner cannot be listed")
+		t.Fatal("expected read error when the namespace cannot be listed")
 	}
 	if resp.State.Raw.IsNull() {
 		t.Fatal("read removed state on 404")
@@ -135,7 +136,7 @@ func TestOriginSSHCertificateRequirementReadErrorKeepsState(t *testing.T) {
 	deleteResp := &resource.DeleteResponse{}
 	res.Delete(context.Background(), resource.DeleteRequest{State: state}, deleteResp)
 	if deleteResp.Diagnostics.HasError() {
-		t.Fatalf("delete of a missing owner must succeed: %v", deleteResp.Diagnostics)
+		t.Fatalf("delete of a missing namespace must succeed: %v", deleteResp.Diagnostics)
 	}
 }
 
@@ -153,7 +154,7 @@ func TestOriginSSHCertificateRequirementImportAndValidate(t *testing.T) {
 	if diags := resp.State.Get(ctx, &got); diags.HasError() {
 		t.Fatal(diags)
 	}
-	if got.Owner.ValueString() != "acme" || got.ID.ValueString() != "acme" || !got.RequireCertificates.IsNull() || !got.DeletionProtection.ValueBool() {
+	if got.Namespace.ValueString() != "acme" || got.Owner.ValueString() != "acme" || got.ID.ValueString() != "acme" || !got.RequireCertificates.IsNull() || !got.DeletionProtection.ValueBool() {
 		t.Fatalf("imported = %#v", got)
 	}
 	for _, id := range []string{"", "acme/rocket", "acme:x", " acme"} {
@@ -164,15 +165,67 @@ func TestOriginSSHCertificateRequirementImportAndValidate(t *testing.T) {
 		}
 	}
 
-	config := tfsdk.Plan{Schema: sch}
-	model := originSSHCertificateRequirementModel{ID: types.StringNull(), Owner: types.StringValue("acme:bad"), RequireCertificates: types.BoolValue(true)}
-	if diags := config.Set(ctx, &model); diags.HasError() {
-		t.Fatal(diags)
+	validate := func(namespace, owner types.String) error {
+		model := originSSHCertificateRequirementModel{Namespace: namespace, Owner: owner, RequireCertificates: types.BoolValue(true)}
+		validateResp := &resource.ValidateConfigResponse{}
+		res.ValidateConfig(ctx, resource.ValidateConfigRequest{Config: sshRequirementConfig(t, sch, model)}, validateResp)
+		if validateResp.Diagnostics.HasError() {
+			return errors.New(validateResp.Diagnostics.Errors()[0].Detail())
+		}
+		return nil
 	}
-	validateResp := &resource.ValidateConfigResponse{}
-	res.ValidateConfig(ctx, resource.ValidateConfigRequest{Config: tfsdk.Config{Schema: sch, Raw: config.Raw}}, validateResp)
-	if !validateResp.Diagnostics.HasError() {
-		t.Fatal("expected owner slug validation error")
+	for name, tc := range map[string]struct {
+		namespace, owner types.String
+		want             string
+	}{
+		"namespace":            {types.StringValue("acme"), types.StringNull(), ""},
+		"deprecated owner":     {types.StringNull(), types.StringValue("acme"), ""},
+		"both matching":        {types.StringValue("acme"), types.StringValue("acme"), ""},
+		"unknown namespace":    {types.StringUnknown(), types.StringNull(), ""},
+		"neither":              {types.StringNull(), types.StringNull(), "namespace is required"},
+		"bad namespace":        {types.StringValue("acme:bad"), types.StringNull(), "namespace must not contain"},
+		"bad deprecated owner": {types.StringNull(), types.StringValue("acme:bad"), "owner must not contain"},
+		"mismatch":             {types.StringValue("acme"), types.StringValue("other"), "must match"},
+	} {
+		err := validate(tc.namespace, tc.owner)
+		if tc.want == "" && err != nil {
+			t.Errorf("%s: unexpected error %v", name, err)
+		}
+		if tc.want != "" && (err == nil || !strings.Contains(err.Error(), tc.want)) {
+			t.Errorf("%s: error = %v, want %q", name, err, tc.want)
+		}
+	}
+}
+
+func TestOriginSSHCertificateRequirementModifyPlanAlignsNamespaceAlias(t *testing.T) {
+	ctx := context.Background()
+	res := &originSSHCertificateRequirementResource{}
+	sch := sshRequirementSchema(t, res)
+	for name, tc := range map[string]struct {
+		config, plan originSSHCertificateRequirementModel
+	}{
+		"namespace": {
+			config: originSSHCertificateRequirementModel{Namespace: types.StringValue("acme"), RequireCertificates: types.BoolValue(true)},
+			plan:   originSSHCertificateRequirementModel{ID: types.StringUnknown(), Namespace: types.StringValue("acme"), Owner: types.StringUnknown(), RequireCertificates: types.BoolValue(true), DeletionProtection: types.BoolValue(true)},
+		},
+		"deprecated owner": {
+			config: originSSHCertificateRequirementModel{Owner: types.StringValue("acme"), RequireCertificates: types.BoolValue(true)},
+			plan:   originSSHCertificateRequirementModel{ID: types.StringUnknown(), Namespace: types.StringUnknown(), Owner: types.StringValue("acme"), RequireCertificates: types.BoolValue(true), DeletionProtection: types.BoolValue(true)},
+		},
+	} {
+		planValue := tfsdk.Plan{Schema: sch}
+		if diags := planValue.Set(ctx, &tc.plan); diags.HasError() {
+			t.Fatal(diags)
+		}
+		resp := &resource.ModifyPlanResponse{Plan: planValue}
+		res.ModifyPlan(ctx, resource.ModifyPlanRequest{Plan: planValue, Config: sshRequirementConfig(t, sch, tc.config), State: emptyState(ctx, sch)}, resp)
+		var got originSSHCertificateRequirementModel
+		if diags := resp.Plan.Get(ctx, &got); diags.HasError() {
+			t.Fatal(diags)
+		}
+		if resp.Diagnostics.HasError() || got.Namespace.ValueString() != "acme" || got.Owner.ValueString() != "acme" {
+			t.Fatalf("%s: plan = %#v, %v", name, got, resp.Diagnostics)
+		}
 	}
 }
 
@@ -183,7 +236,7 @@ func TestOriginSSHCertificateRequirementUpdateOfDeletionProtectionSkipsAPI(t *te
 	ctx := context.Background()
 	res := &originSSHCertificateRequirementResource{client: mock.client()}
 	sch := sshRequirementSchema(t, res)
-	prior := originSSHCertificateRequirementModel{ID: types.StringValue("acme"), Owner: types.StringValue("acme"), RequireCertificates: types.BoolValue(true), DeletionProtection: types.BoolValue(true)}
+	prior := originSSHCertificateRequirementModel{ID: types.StringValue("acme"), Namespace: types.StringValue("acme"), Owner: types.StringValue("acme"), RequireCertificates: types.BoolValue(true), DeletionProtection: types.BoolValue(true)}
 	plan := prior
 	plan.DeletionProtection = types.BoolValue(false)
 	planValue := tfsdk.Plan{Schema: sch}
@@ -215,7 +268,7 @@ func TestOriginSSHCertificateRequirementDeleteProtection(t *testing.T) {
 
 	ctx := context.Background()
 	res := &originSSHCertificateRequirementResource{client: mock.client()}
-	protected := originSSHCertificateRequirementModel{ID: types.StringValue("acme"), Owner: types.StringValue("acme"), RequireCertificates: types.BoolValue(true), DeletionProtection: types.BoolValue(true)}
+	protected := originSSHCertificateRequirementModel{ID: types.StringValue("acme"), Namespace: types.StringValue("acme"), Owner: types.StringValue("acme"), RequireCertificates: types.BoolValue(true), DeletionProtection: types.BoolValue(true)}
 	resp := &resource.DeleteResponse{}
 	res.Delete(ctx, resource.DeleteRequest{State: sshRequirementState(t, res, protected)}, resp)
 	if !resp.Diagnostics.HasError() || !strings.Contains(resp.Diagnostics.Errors()[0].Detail(), "deletion_protection") {
@@ -249,7 +302,7 @@ func TestOriginSSHCertificateRequirementModifyPlanRespectsDeletionProtection(t *
 	res := &originSSHCertificateRequirementResource{}
 	sch := sshRequirementSchema(t, res)
 	nullPlan := tfsdk.Plan{Schema: sch, Raw: tftypes.NewValue(sch.Type().TerraformType(ctx), nil)}
-	protected := originSSHCertificateRequirementModel{ID: types.StringValue("acme"), Owner: types.StringValue("acme"), RequireCertificates: types.BoolValue(true), DeletionProtection: types.BoolValue(true)}
+	protected := originSSHCertificateRequirementModel{ID: types.StringValue("acme"), Namespace: types.StringValue("acme"), Owner: types.StringValue("acme"), RequireCertificates: types.BoolValue(true), DeletionProtection: types.BoolValue(true)}
 
 	resp := &resource.ModifyPlanResponse{Plan: nullPlan}
 	res.ModifyPlan(ctx, resource.ModifyPlanRequest{Plan: nullPlan, State: sshRequirementState(t, res, protected)}, resp)
@@ -263,18 +316,18 @@ func TestOriginSSHCertificateRequirementModifyPlanRespectsDeletionProtection(t *
 			t.Fatal(diags)
 		}
 		resp := &resource.ModifyPlanResponse{Plan: planValue}
-		res.ModifyPlan(ctx, resource.ModifyPlanRequest{Plan: planValue, State: sshRequirementState(t, res, state)}, resp)
+		res.ModifyPlan(ctx, resource.ModifyPlanRequest{Plan: planValue, Config: sshRequirementConfig(t, sch, plan), State: sshRequirementState(t, res, state)}, resp)
 		return resp
 	}
 	moved := protected
-	moved.Owner = types.StringValue("other")
-	if resp := modify(protected, moved); !resp.Diagnostics.HasError() || !strings.Contains(resp.Diagnostics.Errors()[0].Detail(), "changing owner") {
-		t.Fatalf("diagnostics = %v, want the owner change refused while protected", resp.Diagnostics)
+	moved.Namespace, moved.Owner = types.StringValue("other"), types.StringValue("other")
+	if resp := modify(protected, moved); !resp.Diagnostics.HasError() || !strings.Contains(resp.Diagnostics.Errors()[0].Detail(), "changing namespace") {
+		t.Fatalf("diagnostics = %v, want the namespace change refused while protected", resp.Diagnostics)
 	}
-	unknownOwner := protected
-	unknownOwner.Owner = types.StringUnknown()
-	if resp := modify(protected, unknownOwner); !resp.Diagnostics.HasError() || !strings.Contains(resp.Diagnostics.Errors()[0].Detail(), "owner is not known until apply") {
-		t.Fatalf("diagnostics = %v, want an unknown owner refused while protected", resp.Diagnostics)
+	unknownNamespace := protected
+	unknownNamespace.Namespace, unknownNamespace.Owner = types.StringUnknown(), types.StringUnknown()
+	if resp := modify(protected, unknownNamespace); !resp.Diagnostics.HasError() || !strings.Contains(resp.Diagnostics.Errors()[0].Detail(), "namespace is not known until apply") {
+		t.Fatalf("diagnostics = %v, want an unknown namespace refused while protected", resp.Diagnostics)
 	}
 	relaxed := protected
 	relaxed.RequireCertificates = types.BoolValue(false)
@@ -291,11 +344,11 @@ func TestOriginSSHCertificateRequirementModifyPlanRespectsDeletionProtection(t *
 	}
 	moved.DeletionProtection = types.BoolValue(false)
 	if resp := modify(unprotected, moved); resp.Diagnostics.HasError() {
-		t.Fatalf("owner change after deletion_protection = false was applied must plan: %v", resp.Diagnostics)
+		t.Fatalf("namespace change after deletion_protection = false was applied must plan: %v", resp.Diagnostics)
 	}
-	unknownOwner.DeletionProtection = types.BoolValue(false)
-	if resp := modify(unprotected, unknownOwner); resp.Diagnostics.HasError() {
-		t.Fatalf("unknown owner after deletion_protection = false was applied must plan: %v", resp.Diagnostics)
+	unknownNamespace.DeletionProtection = types.BoolValue(false)
+	if resp := modify(unprotected, unknownNamespace); resp.Diagnostics.HasError() {
+		t.Fatalf("unknown namespace after deletion_protection = false was applied must plan: %v", resp.Diagnostics)
 	}
 }
 
@@ -307,6 +360,16 @@ func sshRequirementSchema(t *testing.T, res *originSSHCertificateRequirementReso
 		t.Fatalf("schema diagnostics: %v", resp.Diagnostics)
 	}
 	return resp.Schema
+}
+
+func sshRequirementConfig(t *testing.T, sch schema.Schema, model originSSHCertificateRequirementModel) tfsdk.Config {
+	t.Helper()
+	model.ID = types.StringNull()
+	value := tfsdk.Plan{Schema: sch}
+	if diags := value.Set(context.Background(), &model); diags.HasError() {
+		t.Fatal(diags)
+	}
+	return tfsdk.Config{Schema: sch, Raw: value.Raw}
 }
 
 func sshRequirementState(t *testing.T, res *originSSHCertificateRequirementResource, model originSSHCertificateRequirementModel) tfsdk.State {
