@@ -10,29 +10,35 @@ import (
 	"testing"
 )
 
-func TestOriginGrantListPagesUntilShortPage(t *testing.T) {
-	var pages []string
+func TestOriginGrantListFollowsPageTokensPastShortPages(t *testing.T) {
+	var tokens []string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet || r.URL.Path != "/repos/acme/rocket/grants" {
 			t.Errorf("unexpected %s %s", r.Method, r.URL.Path)
 			http.NotFound(w, r)
 			return
 		}
-		if got := r.URL.Query().Get("pageSize"); got != "100" {
+		query := r.URL.Query()
+		if got := query.Get("pageSize"); got != "100" {
 			t.Errorf("pageSize = %q", got)
 		}
-		page := r.URL.Query().Get("page")
-		pages = append(pages, page)
-		switch page {
-		case "1":
-			writeJSON(t, w, http.StatusOK, originGrantList{Grants: sampleUserGrants(100)})
-		case "2":
+		if query.Has("page") {
+			t.Errorf("page = %q; the API pages with pageToken", query.Get("page"))
+		}
+		token := query.Get("pageToken")
+		tokens = append(tokens, token)
+		switch token {
+		case "":
+			writeJSON(t, w, http.StatusOK, originGrantList{Grants: sampleUserGrants(2), NextPageToken: "p2+/="})
+		case "p2+/=":
+			writeJSON(t, w, http.StatusOK, originGrantList{NextPageToken: "p3"})
+		case "p3":
 			writeJSON(t, w, http.StatusOK, originGrantList{Grants: []originGrant{{
 				TeamGroup:  &originGrantTeamGroup{Kind: originTeamGroupAdmins},
 				Permission: originPermissionAdmin,
 			}}})
 		default:
-			t.Errorf("unexpected page %q", page)
+			t.Errorf("unexpected pageToken %q", token)
 			writeJSON(t, w, http.StatusOK, originGrantList{})
 		}
 	}))
@@ -42,14 +48,31 @@ func TestOriginGrantListPagesUntilShortPage(t *testing.T) {
 	if err != nil {
 		t.Fatalf("listOriginGrants() error: %v", err)
 	}
-	if len(grants) != 101 {
-		t.Fatalf("len(grants) = %d, want 101", len(grants))
+	if strings.Join(tokens, ",") != ",p2+/=,p3" {
+		t.Fatalf("pageTokens sent = %q, want none, then p2+/=, then p3", tokens)
 	}
-	if strings.Join(pages, ",") != "1,2" {
-		t.Fatalf("pages requested = %v, want 1,2", pages)
+	if len(grants) != 3 {
+		t.Fatalf("len(grants) = %d, want 3", len(grants))
 	}
-	if grants[100].TeamGroup == nil || grants[100].TeamGroup.Kind != originTeamGroupAdmins {
-		t.Fatalf("last grant = %#v", grants[100])
+	if grants[2].TeamGroup == nil || grants[2].TeamGroup.Kind != originTeamGroupAdmins {
+		t.Fatalf("last grant = %#v", grants[2])
+	}
+}
+
+func TestOriginGrantListStopsAtPageLimit(t *testing.T) {
+	requests := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests++
+		writeJSON(t, w, http.StatusOK, originGrantList{NextPageToken: fmt.Sprintf("p%d", requests)})
+	}))
+	defer server.Close()
+
+	_, err := testOriginClient(server).listOriginGrants(context.Background(), originOwnerGrantsPath("acme"))
+	if err == nil || !strings.Contains(err.Error(), "more than 100 pages") {
+		t.Fatalf("error = %v, want page limit", err)
+	}
+	if requests != maxOriginGrantPages {
+		t.Fatalf("requests = %d, want %d", requests, maxOriginGrantPages)
 	}
 }
 
@@ -72,12 +95,12 @@ func TestOriginGrantFindStopsAtMatchingPage(t *testing.T) {
 	requests := 0
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requests++
-		if r.URL.Query().Get("page") != "1" {
-			t.Errorf("unexpected page %q", r.URL.Query().Get("page"))
+		if token := r.URL.Query().Get("pageToken"); token != "" {
+			t.Errorf("unexpected pageToken %q", token)
 		}
 		grants := sampleUserGrants(100)
 		grants[7] = originGrant{Group: &originGrantGroup{ID: "grp_01"}, Permission: originPermissionWrite}
-		writeJSON(t, w, http.StatusOK, originGrantList{Grants: grants})
+		writeJSON(t, w, http.StatusOK, originGrantList{Grants: grants, NextPageToken: "p2"})
 	}))
 	defer server.Close()
 
