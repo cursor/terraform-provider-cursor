@@ -46,7 +46,7 @@ func (p *cursorProvider) Metadata(_ context.Context, _ provider.MetadataRequest,
 
 func (p *cursorProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Manage Cursor Automations, Origin repository rulesets, Origin repository and owner grants, and Origin owner SSH certificate authorities, and read Origin repositories. Automations use the Cursor Automations API over Connect RPC. Origin calls use the public Origin API and the same auth token. Grants keyed by user_email or group_name also need the Team or Organization Admin API key.",
+		Description: "Manage Cursor Automations, Origin repository rulesets, Origin repository and owner grants, Origin owner SSH certificate authorities, and Origin namespace inbound IP allowlists, and read Origin repositories. Automations use the Cursor Automations API over Connect RPC. Origin calls use the public Origin API and the same auth token. Grants keyed by user_email or group_name also need the Team or Organization Admin API key.",
 		Attributes: map[string]schema.Attribute{
 			"token": schema.StringAttribute{
 				Optional:    true,
@@ -114,6 +114,8 @@ func (p *cursorProvider) Resources(_ context.Context) []func() resource.Resource
 		NewOriginOwnerGrantResource,
 		NewOriginSSHCertificateAuthorityResource,
 		NewOriginSSHCertificateRequirementResource,
+		NewOriginInboundIPAllowlistResource,
+		NewOriginInboundIPAllowlistEntryResource,
 	}
 }
 
@@ -124,6 +126,7 @@ func (p *cursorProvider) DataSources(_ context.Context) []func() datasource.Data
 		NewOriginRepoGrantsDataSource,
 		NewOriginOwnerGrantsDataSource,
 		NewOriginSSHCertificateAuthoritiesDataSource,
+		NewOriginInboundIPAllowlistEntriesDataSource,
 	}
 }
 
