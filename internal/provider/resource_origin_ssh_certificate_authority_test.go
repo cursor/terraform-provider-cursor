@@ -3,12 +3,14 @@ package provider
 import (
 	"context"
 	"encoding/json"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -552,6 +554,121 @@ func TestOriginSSHCertificateStateUpgradeFromV0(t *testing.T) {
 	wantRequirement := originSSHCertificateRequirementModel{ID: types.StringValue("acme"), Namespace: types.StringValue("acme"), Owner: types.StringValue("acme"), RequireCertificates: types.BoolValue(true), DeletionProtection: types.BoolValue(true)}
 	if requirement != wantRequirement {
 		t.Fatalf("upgraded requirement = %#v, want %#v", requirement, wantRequirement)
+	}
+}
+
+type mockClientProvider struct {
+	provider.Provider
+	client *apiClient
+}
+
+func (p mockClientProvider) Configure(_ context.Context, _ provider.ConfigureRequest, resp *provider.ConfigureResponse) {
+	resp.ResourceData = p.client
+}
+
+func TestOriginSSHCertificateAliasesKnownAfterApplyWhenSlugIsUnknownAtPlan(t *testing.T) {
+	mock := newSSHCAMock(t)
+	defer mock.Close()
+	ctx := context.Background()
+	server, err := providerserver.NewProtocol6WithError(mockClientProvider{Provider: New("test")(), client: mock.client()})()
+	if err != nil {
+		t.Fatal(err)
+	}
+	schemas, err := server.GetProviderSchema(ctx, &tfprotov6.GetProviderSchemaRequest{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	object := func(typ tftypes.Type, set map[string]tftypes.Value) tftypes.Value {
+		values := map[string]tftypes.Value{}
+		for name, attr := range typ.(tftypes.Object).AttributeTypes {
+			values[name] = tftypes.NewValue(attr, nil)
+		}
+		maps.Copy(values, set)
+		return tftypes.NewValue(typ, values)
+	}
+	encode := func(typ tftypes.Type, value tftypes.Value) *tfprotov6.DynamicValue {
+		t.Helper()
+		encoded, err := tfprotov6.NewDynamicValue(typ, value)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return &encoded
+	}
+	requireNoErrors := func(step string, diags []*tfprotov6.Diagnostic) {
+		t.Helper()
+		for _, diag := range diags {
+			if diag.Severity == tfprotov6.DiagnosticSeverityError {
+				t.Fatalf("%s: %s: %s", step, diag.Summary, diag.Detail)
+			}
+		}
+	}
+	aliases := func(typ tftypes.Type, state *tfprotov6.DynamicValue) (tftypes.Value, tftypes.Value) {
+		t.Helper()
+		value, err := state.Unmarshal(typ)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var attrs map[string]tftypes.Value
+		if err := value.As(&attrs); err != nil {
+			t.Fatal(err)
+		}
+		return attrs["namespace"], attrs["owner"]
+	}
+
+	providerType := schemas.Provider.ValueType()
+	configured, err := server.ConfigureProvider(ctx, &tfprotov6.ConfigureProviderRequest{Config: encode(providerType, object(providerType, nil))})
+	if err != nil {
+		t.Fatal(err)
+	}
+	requireNoErrors("configure", configured.Diagnostics)
+
+	for _, tc := range []struct{ alias, slug, key string }{
+		{"namespace", "acme", sampleSSHCAKey},
+		{"owner", "globex", secondSSHCAKey},
+	} {
+		for _, r := range []struct {
+			typeName, collection string
+			config               map[string]tftypes.Value
+		}{
+			{"cursor_origin_ssh_certificate_authority", "ssh-certificate-authorities", map[string]tftypes.Value{
+				"name":       tftypes.NewValue(tftypes.String, "Acme production CA"),
+				"public_key": tftypes.NewValue(tftypes.String, tc.key),
+			}},
+			{"cursor_origin_ssh_certificate_requirement", "ssh-certificate-authorities:setRequirement", map[string]tftypes.Value{
+				"require_certificates": tftypes.NewValue(tftypes.Bool, true),
+			}},
+		} {
+			typ := schemas.ResourceSchemas[r.typeName].ValueType()
+			prior := encode(typ, tftypes.NewValue(typ, nil))
+			plan := func(slug any) (*tfprotov6.DynamicValue, *tfprotov6.PlanResourceChangeResponse) {
+				t.Helper()
+				set := maps.Clone(r.config)
+				set[tc.alias] = tftypes.NewValue(tftypes.String, slug)
+				config := encode(typ, object(typ, set))
+				resp, err := server.PlanResourceChange(ctx, &tfprotov6.PlanResourceChangeRequest{TypeName: r.typeName, PriorState: prior, ProposedNewState: config, Config: config})
+				if err != nil {
+					t.Fatal(err)
+				}
+				requireNoErrors(r.typeName+" plan", resp.Diagnostics)
+				return config, resp
+			}
+
+			_, unknown := plan(tftypes.UnknownValue)
+			if namespace, owner := aliases(typ, unknown.PlannedState); namespace.IsKnown() || owner.IsKnown() {
+				t.Fatalf("%s with %s unknown at plan: namespace = %s, owner = %s, want both unknown", r.typeName, tc.alias, namespace, owner)
+			}
+			config, planned := plan(tc.slug)
+			applied, err := server.ApplyResourceChange(ctx, &tfprotov6.ApplyResourceChangeRequest{TypeName: r.typeName, PriorState: prior, PlannedState: planned.PlannedState, PlannedPrivate: planned.PlannedPrivate, Config: config})
+			if err != nil {
+				t.Fatal(err)
+			}
+			requireNoErrors(r.typeName+" apply", applied.Diagnostics)
+			want := tftypes.NewValue(tftypes.String, tc.slug)
+			route := "POST /namespaces/" + tc.slug + "/" + r.collection
+			if namespace, owner := aliases(typ, applied.NewState); !namespace.Equal(want) || !owner.Equal(want) || mock.count(route) != 1 {
+				t.Fatalf("%s with %s known only at apply: namespace = %s, owner = %s, %s calls = %d", r.typeName, tc.alias, namespace, owner, route, mock.count(route))
+			}
+		}
 	}
 }
 
