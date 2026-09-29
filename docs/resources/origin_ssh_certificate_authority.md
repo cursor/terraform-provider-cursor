@@ -3,18 +3,18 @@
 page_title: "cursor_origin_ssh_certificate_authority Resource - cursor"
 subcategory: ""
 description: |-
-  Manages one SSH certificate authority an Origin owner trusts: members of the owning team can use git over SSH on the owner's repositories with user certificates the authority signed. The Origin API has no update for an authority: changing owner or the key itself replaces it, name is fixed once the authority is added, and removing an authority invalidates every certificate it signed. deletion_protection defaults to true, so Terraform will not remove or replace the authority until that is set to false and applied. Rotate a key with lifecycle { create_before_destroy = true } so the new authority exists before the old one is removed; while the owner requires certificates its last authority cannot be removed.
+  Manages one SSH certificate authority an Origin namespace trusts: members of the owning team can use git over SSH on the namespace's repositories with user certificates the authority signed. The Origin API has no update for an authority: changing namespace or the key itself replaces it, name is fixed once the authority is added, and removing an authority invalidates every certificate it signed. deletion_protection defaults to true, so Terraform will not remove or replace the authority until that is set to false and applied. Rotate a key with lifecycle { create_before_destroy = true } so the new authority exists before the old one is removed; while the namespace requires certificates its last authority cannot be removed.
 ---
 
 # cursor_origin_ssh_certificate_authority (Resource)
 
-Manages one SSH certificate authority an Origin owner trusts: members of the owning team can use git over SSH on the owner's repositories with user certificates the authority signed. The Origin API has no update for an authority: changing owner or the key itself replaces it, name is fixed once the authority is added, and removing an authority invalidates every certificate it signed. deletion_protection defaults to true, so Terraform will not remove or replace the authority until that is set to false and applied. Rotate a key with lifecycle { create_before_destroy = true } so the new authority exists before the old one is removed; while the owner requires certificates its last authority cannot be removed.
+Manages one SSH certificate authority an Origin namespace trusts: members of the owning team can use git over SSH on the namespace's repositories with user certificates the authority signed. The Origin API has no update for an authority: changing namespace or the key itself replaces it, name is fixed once the authority is added, and removing an authority invalidates every certificate it signed. deletion_protection defaults to true, so Terraform will not remove or replace the authority until that is set to false and applied. Rotate a key with lifecycle { create_before_destroy = true } so the new authority exists before the old one is removed; while the namespace requires certificates its last authority cannot be removed.
 
 ## Example Usage
 
 ```terraform
 resource "cursor_origin_ssh_certificate_authority" "production" {
-  owner               = "acme"
+  namespace           = "acme"
   name                = "Acme production CA"
   public_key          = file("${path.module}/acme-ssh-ca.pub")
   deletion_protection = true
@@ -33,12 +33,13 @@ resource "cursor_origin_ssh_certificate_authority" "production" {
 ### Required
 
 - `name` (String) Label for the authority, at most 255 characters. Set when the authority is added; the Origin API has no rename, so a later change is rejected at plan time (terraform apply -replace included). To relabel, remove the authority and add it again with the new name, which destroys it first; to accept renames made elsewhere, use lifecycle { ignore_changes = [name] }.
-- `owner` (String) Owner slug of the team namespace that trusts the authority. Changing this replaces the authority. Blocked while deletion_protection is true.
 - `public_key` (String) The authority's public key as one OpenSSH authorized_keys line: <key_type> <base64> [comment]. Accepted key types are ssh-ed25519, ecdsa-sha2-nistp256, ecdsa-sha2-nistp384, ecdsa-sha2-nistp521, and ssh-rsa with at least 2048 bits; certificates are rejected. Changing the key replaces the authority, which is blocked while deletion_protection is true; changing only the comment or whitespace does not.
 
 ### Optional
 
-- `deletion_protection` (Boolean) When true, Terraform will not remove this authority. That includes terraform destroy and replacements caused by changing owner or the key. Set to false and apply before destroying or rotating the authority. Null is treated as protected.
+- `deletion_protection` (Boolean) When true, Terraform will not remove this authority. That includes terraform destroy and replacements caused by changing namespace or the key. Set to false and apply before destroying or rotating the authority. Null is treated as protected.
+- `namespace` (String) Slug of the team namespace that trusts the authority. Required unless the deprecated owner is set. Changing this replaces the authority. Blocked while deletion_protection is true.
+- `owner` (String, Deprecated) Deprecated alias of namespace. Use namespace instead; if both are set they must match.
 
 ### Read-Only
 

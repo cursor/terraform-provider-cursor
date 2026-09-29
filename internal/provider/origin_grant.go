@@ -52,7 +52,8 @@ type originGrantTeamGroup struct {
 }
 
 type originGrantList struct {
-	Grants []originGrant `json:"grants"`
+	Grants        []originGrant `json:"grants"`
+	NextPageToken string        `json:"nextPageToken"`
 }
 
 // originGrantKey is the principal half of a grant's principal × resource identity.
@@ -105,7 +106,7 @@ func originRepoGrantsPath(owner, repo string) string {
 }
 
 func originOwnerGrantsPath(owner string) string {
-	return "/owners/" + url.PathEscape(owner) + "/grants"
+	return "/namespaces/" + url.PathEscape(owner) + "/grants"
 }
 
 func (c *apiClient) listOriginGrants(ctx context.Context, collection string) ([]originGrant, error) {
@@ -146,11 +147,11 @@ func (c *apiClient) findOriginGrant(ctx context.Context, collection string, key 
 	return found, nil
 }
 
-// Paging stops at the first empty or short page.
+// A page can hold fewer than pageSize grants and still have more after it; only an empty nextPageToken marks the last page.
 func (c *apiClient) eachOriginGrantPage(ctx context.Context, collection string, visit func([]originGrant) (stop bool)) error {
-	for page := 1; page <= maxOriginGrantPages; page++ {
-		query := "?page=" + strconv.Itoa(page) + "&pageSize=" + strconv.Itoa(originGrantPageSize)
-		body, err := c.originDo(ctx, http.MethodGet, collection+query, nil, http.StatusOK)
+	query := url.Values{"pageSize": {strconv.Itoa(originGrantPageSize)}}
+	for page := 0; page < maxOriginGrantPages; page++ {
+		body, err := c.originDo(ctx, http.MethodGet, collection+"?"+query.Encode(), nil, http.StatusOK)
 		if err != nil {
 			return err
 		}
@@ -158,12 +159,10 @@ func (c *apiClient) eachOriginGrantPage(ctx context.Context, collection string, 
 		if err := json.Unmarshal(body, &list); err != nil {
 			return fmt.Errorf("decoding Origin grants: %w", err)
 		}
-		if len(list.Grants) == 0 {
+		if visit(list.Grants) || list.NextPageToken == "" {
 			return nil
 		}
-		if visit(list.Grants) || len(list.Grants) < originGrantPageSize {
-			return nil
-		}
+		query.Set("pageToken", list.NextPageToken)
 	}
 	return fmt.Errorf("Origin API returned more than %d pages of grants", maxOriginGrantPages)
 }

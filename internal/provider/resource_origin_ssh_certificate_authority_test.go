@@ -2,17 +2,22 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/provider"
+	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
@@ -25,7 +30,7 @@ func TestOriginSSHCertificateAuthorityCreateKeepsConfiguredLine(t *testing.T) {
 	plan.ID, plan.KeyType, plan.Fingerprint, plan.CreatedAt = types.StringUnknown(), types.StringUnknown(), types.StringUnknown(), types.StringUnknown()
 	plan.PublicKey = types.StringValue(sampleSSHCAKey + " acme-ssh-ca\n")
 	got := createSSHCA(t, res, plan)
-	if body := mock.lastBody("POST /owners/acme/ssh-certificate-authorities"); body != `{"publicKey":"`+sampleSSHCAKey+` acme-ssh-ca","name":"Acme production CA"}` {
+	if body := mock.lastBody("POST /namespaces/acme/ssh-certificate-authorities"); body != `{"publicKey":"`+sampleSSHCAKey+` acme-ssh-ca","name":"Acme production CA"}` {
 		t.Fatalf("create body = %s", body)
 	}
 	if got.PublicKey.ValueString() != sampleSSHCAKey+" acme-ssh-ca\n" {
@@ -83,6 +88,7 @@ func TestOriginSSHCertificateAuthorityReadFillsImportedKey(t *testing.T) {
 	res := &originSSHCertificateAuthorityResource{client: mock.client()}
 	got := readSSHCA(t, res, originSSHCertificateAuthorityModel{
 		ID:                 types.StringValue(stored.ID),
+		Namespace:          types.StringValue("acme"),
 		Owner:              types.StringValue("acme"),
 		Name:               types.StringNull(),
 		PublicKey:          types.StringNull(),
@@ -121,7 +127,7 @@ func TestOriginSSHCertificateAuthorityReadListErrorKeepsState(t *testing.T) {
 	resp := &resource.ReadResponse{State: state}
 	res.Read(context.Background(), resource.ReadRequest{State: state}, resp)
 	if !resp.Diagnostics.HasError() {
-		t.Fatal("expected read error when the owner cannot be listed")
+		t.Fatal("expected read error when the namespace cannot be listed")
 	}
 	if resp.State.Raw.IsNull() {
 		t.Fatal("read removed state on list failure")
@@ -156,7 +162,7 @@ func TestOriginSSHCertificateAuthorityUpdateRecordsCommentOnly(t *testing.T) {
 	if got.PublicKey.ValueString() != sampleSSHCAKey+" renamed-comment" || got.ID.ValueString() != sampleSSHCAID || got.Fingerprint.ValueString() != sampleSSHCAFingerprint {
 		t.Fatalf("state = %#v", got)
 	}
-	if mock.count("POST /owners/acme/ssh-certificate-authorities") != 0 {
+	if mock.count("POST /namespaces/acme/ssh-certificate-authorities") != 0 {
 		t.Fatal("update must not call the API")
 	}
 
@@ -189,7 +195,7 @@ func TestOriginSSHCertificateAuthorityModifyPlanRefusesRename(t *testing.T) {
 			t.Fatal(diags)
 		}
 		resp := &resource.ModifyPlanResponse{Plan: planValue}
-		res.ModifyPlan(ctx, resource.ModifyPlanRequest{Plan: planValue, State: sshCAState(t, res, state)}, resp)
+		res.ModifyPlan(ctx, resource.ModifyPlanRequest{Plan: planValue, Config: sshCAConfig(t, sch, plan), State: sshCAState(t, res, state)}, resp)
 		return resp
 	}
 
@@ -212,9 +218,9 @@ func TestOriginSSHCertificateAuthorityModifyPlanRefusesRename(t *testing.T) {
 		t.Fatalf("rename together with a key change is a replace and must plan: %v", resp.Diagnostics)
 	}
 	moved := renamed
-	moved.Owner = types.StringValue("other")
+	moved.Namespace, moved.Owner = types.StringValue("other"), types.StringValue("other")
 	if resp := modify(moved); resp.Diagnostics.HasError() {
-		t.Fatalf("rename together with an owner change is a replace and must plan: %v", resp.Diagnostics)
+		t.Fatalf("rename together with a namespace change is a replace and must plan: %v", resp.Diagnostics)
 	}
 	deferred := renamed
 	deferred.Name = types.StringUnknown()
@@ -226,7 +232,7 @@ func TestOriginSSHCertificateAuthorityModifyPlanRefusesRename(t *testing.T) {
 	if diags := create.Plan.Set(ctx, &renamed); diags.HasError() {
 		t.Fatal(diags)
 	}
-	res.ModifyPlan(ctx, resource.ModifyPlanRequest{Plan: create.Plan, State: emptyState(ctx, sch)}, create)
+	res.ModifyPlan(ctx, resource.ModifyPlanRequest{Plan: create.Plan, Config: sshCAConfig(t, sch, renamed), State: emptyState(ctx, sch)}, create)
 	if create.Diagnostics.HasError() {
 		t.Fatalf("create must plan: %v", create.Diagnostics)
 	}
@@ -272,9 +278,6 @@ func TestOriginSSHCertificateSchemas(t *testing.T) {
 	if diags := authority.ValidateImplementation(ctx); diags.HasError() {
 		t.Fatalf("authority schema implementation: %v", diags)
 	}
-	if len(authority.Attributes["owner"].(schema.StringAttribute).PlanModifiers) != 1 {
-		t.Fatal("authority.owner must require replace")
-	}
 	if len(authority.Attributes["name"].(schema.StringAttribute).PlanModifiers) != 0 {
 		t.Fatal("authority.name must not replace; ModifyPlan refuses renames")
 	}
@@ -289,6 +292,17 @@ func TestOriginSSHCertificateSchemas(t *testing.T) {
 		protection := sch.Attributes["deletion_protection"].(schema.BoolAttribute)
 		if !protection.Optional || !protection.Computed || protection.Default == nil {
 			t.Fatalf("%s.deletion_protection must be optional and default to true, like origin_repo_ruleset", name)
+		}
+		if sch.Version != 1 {
+			t.Fatalf("%s schema version = %d, want 1 so v0 state gains namespace", name, sch.Version)
+		}
+		namespace := sch.Attributes["namespace"].(schema.StringAttribute)
+		if !namespace.Optional || !namespace.Computed || namespace.DeprecationMessage != "" || len(namespace.PlanModifiers) != 2 {
+			t.Fatalf("%s.namespace must be optional, keep its state value, and require replace", name)
+		}
+		owner := sch.Attributes["owner"].(schema.StringAttribute)
+		if !owner.Optional || !owner.Computed || owner.DeprecationMessage == "" || len(owner.PlanModifiers) != 2 {
+			t.Fatalf("%s.owner must stay an optional deprecated alias that requires replace", name)
 		}
 	}
 }
@@ -308,7 +322,7 @@ func TestOriginSSHCertificateAuthorityDeleteProtection(t *testing.T) {
 	if !resp.Diagnostics.HasError() || !strings.Contains(resp.Diagnostics.Errors()[0].Detail(), "deletion_protection") {
 		t.Fatalf("diagnostics = %v, want deletion_protection to block delete", resp.Diagnostics)
 	}
-	if mock.count("DELETE /owners/acme/ssh-certificate-authorities/"+stored.ID) != 0 {
+	if mock.count("DELETE /namespaces/acme/ssh-certificate-authorities/"+stored.ID) != 0 {
 		t.Fatal("delete request was sent while protected")
 	}
 
@@ -327,7 +341,7 @@ func TestOriginSSHCertificateAuthorityDeleteProtection(t *testing.T) {
 	if resp.Diagnostics.HasError() {
 		t.Fatalf("unprotected delete: %v", resp.Diagnostics)
 	}
-	if mock.count("DELETE /owners/acme/ssh-certificate-authorities/"+stored.ID) != 1 {
+	if mock.count("DELETE /namespaces/acme/ssh-certificate-authorities/"+stored.ID) != 1 {
 		t.Fatal("expected the delete request when deletion_protection is false")
 	}
 }
@@ -368,7 +382,7 @@ func TestOriginSSHCertificateAuthorityReplacementRespectsDeletionProtection(t *t
 			t.Fatal(diags)
 		}
 		resp := &resource.ModifyPlanResponse{Plan: planValue}
-		res.ModifyPlan(ctx, resource.ModifyPlanRequest{Plan: planValue, State: sshCAState(t, res, state)}, resp)
+		res.ModifyPlan(ctx, resource.ModifyPlanRequest{Plan: planValue, Config: sshCAConfig(t, sch, plan), State: sshCAState(t, res, state)}, resp)
 		return resp
 	}
 
@@ -383,9 +397,9 @@ func TestOriginSSHCertificateAuthorityReplacementRespectsDeletionProtection(t *t
 		t.Fatal("rotation with deletion_protection = false only in the plan must be refused")
 	}
 	moved := protected
-	moved.Owner = types.StringValue("other")
-	if resp := modify(protected, moved); !resp.Diagnostics.HasError() || !strings.Contains(resp.Diagnostics.Errors()[0].Detail(), "changing owner") {
-		t.Fatalf("diagnostics = %v, want the owner change refused while protected", resp.Diagnostics)
+	moved.Namespace, moved.Owner = types.StringValue("other"), types.StringValue("other")
+	if resp := modify(protected, moved); !resp.Diagnostics.HasError() || !strings.Contains(resp.Diagnostics.Errors()[0].Detail(), "changing namespace") {
+		t.Fatalf("diagnostics = %v, want the namespace change refused while protected", resp.Diagnostics)
 	}
 	// Unknown values are planned as a replace by the attribute modifiers, so they are refused too.
 	unknownKey := protected
@@ -393,10 +407,10 @@ func TestOriginSSHCertificateAuthorityReplacementRespectsDeletionProtection(t *t
 	if resp := modify(protected, unknownKey); !resp.Diagnostics.HasError() || !strings.Contains(resp.Diagnostics.Errors()[0].Detail(), "public_key is not known until apply") {
 		t.Fatalf("diagnostics = %v, want an unknown key refused while protected", resp.Diagnostics)
 	}
-	unknownOwner := protected
-	unknownOwner.Owner = types.StringUnknown()
-	if resp := modify(protected, unknownOwner); !resp.Diagnostics.HasError() || !strings.Contains(resp.Diagnostics.Errors()[0].Detail(), "owner is not known until apply") {
-		t.Fatalf("diagnostics = %v, want an unknown owner refused while protected", resp.Diagnostics)
+	unknownNamespace := protected
+	unknownNamespace.Namespace, unknownNamespace.Owner = types.StringUnknown(), types.StringUnknown()
+	if resp := modify(protected, unknownNamespace); !resp.Diagnostics.HasError() || !strings.Contains(resp.Diagnostics.Errors()[0].Detail(), "namespace is not known until apply") {
+		t.Fatalf("diagnostics = %v, want an unknown namespace refused while protected", resp.Diagnostics)
 	}
 
 	commentOnly := protected
@@ -416,6 +430,245 @@ func TestOriginSSHCertificateAuthorityReplacementRespectsDeletionProtection(t *t
 	unknownKey.DeletionProtection = types.BoolValue(false)
 	if resp := modify(unprotect, unknownKey); resp.Diagnostics.HasError() {
 		t.Fatalf("unknown key after deletion_protection = false was applied must plan: %v", resp.Diagnostics)
+	}
+}
+
+func TestOriginSSHCertificateAuthorityModifyPlanAlignsNamespaceAlias(t *testing.T) {
+	ctx := context.Background()
+	res := &originSSHCertificateAuthorityResource{}
+	sch := sshCASchema(t, res)
+	modify := func(state *originSSHCertificateAuthorityModel, config, plan originSSHCertificateAuthorityModel) (originSSHCertificateAuthorityModel, *resource.ModifyPlanResponse) {
+		t.Helper()
+		planValue := tfsdk.Plan{Schema: sch}
+		if diags := planValue.Set(ctx, &plan); diags.HasError() {
+			t.Fatal(diags)
+		}
+		prior := emptyState(ctx, sch)
+		if state != nil {
+			prior = sshCAState(t, res, *state)
+		}
+		resp := &resource.ModifyPlanResponse{Plan: planValue}
+		res.ModifyPlan(ctx, resource.ModifyPlanRequest{Plan: planValue, Config: sshCAConfig(t, sch, config), State: prior}, resp)
+		var got originSSHCertificateAuthorityModel
+		if diags := resp.Plan.Get(ctx, &got); diags.HasError() {
+			t.Fatal(diags)
+		}
+		return got, resp
+	}
+
+	namespaceOnly := sampleSSHCAModel()
+	namespaceOnly.Owner = types.StringNull()
+	planned := namespaceOnly
+	planned.Owner = types.StringUnknown()
+	got, resp := modify(nil, namespaceOnly, planned)
+	if resp.Diagnostics.HasError() || got.Namespace.ValueString() != "acme" || got.Owner.ValueString() != "acme" {
+		t.Fatalf("namespace-only create plan = %#v, %v", got, resp.Diagnostics)
+	}
+
+	ownerOnly := sampleSSHCAModel()
+	ownerOnly.Namespace = types.StringNull()
+	planned = ownerOnly
+	planned.Namespace = types.StringUnknown()
+	got, resp = modify(nil, ownerOnly, planned)
+	if resp.Diagnostics.HasError() || got.Namespace.ValueString() != "acme" || got.Owner.ValueString() != "acme" {
+		t.Fatalf("owner-only create plan = %#v, %v", got, resp.Diagnostics)
+	}
+
+	upgraded := sampleSSHCAModel()
+	upgraded.DeletionProtection = types.BoolValue(true)
+	config := upgraded
+	config.Owner = types.StringNull()
+	got, resp = modify(&upgraded, config, upgraded)
+	if resp.Diagnostics.HasError() || got != upgraded {
+		t.Fatalf("switching config from owner to namespace must not change the plan: %#v, %v", got, resp.Diagnostics)
+	}
+
+	movedByOwner := upgraded
+	movedByOwner.Owner = types.StringValue("other")
+	config = movedByOwner
+	config.Namespace = types.StringNull()
+	got, resp = modify(&upgraded, config, movedByOwner)
+	if got.Namespace.ValueString() != "other" || !resp.Diagnostics.HasError() || !strings.Contains(resp.Diagnostics.Errors()[0].Detail(), "changing namespace") {
+		t.Fatalf("plan = %#v, diagnostics = %v, want the deprecated owner change planned as a protected namespace change", got, resp.Diagnostics)
+	}
+}
+
+func TestOriginSSHCertificateStateUpgradeFromV0(t *testing.T) {
+	ctx := context.Background()
+	server, err := providerserver.NewProtocol6WithError(New("test")())()
+	if err != nil {
+		t.Fatal(err)
+	}
+	upgrade := func(typeName string, sch schema.Schema, prior map[string]any, target any) {
+		t.Helper()
+		raw, err := json.Marshal(prior)
+		if err != nil {
+			t.Fatal(err)
+		}
+		resp, err := server.UpgradeResourceState(ctx, &tfprotov6.UpgradeResourceStateRequest{
+			TypeName: typeName,
+			Version:  0,
+			RawState: &tfprotov6.RawState{JSON: raw},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, diag := range resp.Diagnostics {
+			if diag.Severity == tfprotov6.DiagnosticSeverityError {
+				t.Fatalf("%s upgrade: %s: %s", typeName, diag.Summary, diag.Detail)
+			}
+		}
+		value, err := resp.UpgradedState.Unmarshal(sch.Type().TerraformType(ctx))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if diags := (tfsdk.State{Schema: sch, Raw: value}).Get(ctx, target); diags.HasError() {
+			t.Fatal(diags)
+		}
+	}
+
+	var authority originSSHCertificateAuthorityModel
+	upgrade("cursor_origin_ssh_certificate_authority", sshCASchema(t, &originSSHCertificateAuthorityResource{}), map[string]any{
+		"id":                  sampleSSHCAID,
+		"owner":               "acme",
+		"name":                "Acme production CA",
+		"public_key":          sampleSSHCAKey,
+		"key_type":            "ssh-ed25519",
+		"fingerprint":         sampleSSHCAFingerprint,
+		"created_at":          "2026-08-02T14:45:00Z",
+		"deletion_protection": true,
+	}, &authority)
+	want := sampleSSHCAModel()
+	want.DeletionProtection = types.BoolValue(true)
+	if authority != want {
+		t.Fatalf("upgraded authority = %#v, want %#v", authority, want)
+	}
+
+	var requirement originSSHCertificateRequirementModel
+	upgrade("cursor_origin_ssh_certificate_requirement", sshRequirementSchema(t, &originSSHCertificateRequirementResource{}), map[string]any{
+		"id":                   "acme",
+		"owner":                "acme",
+		"require_certificates": true,
+		"deletion_protection":  true,
+	}, &requirement)
+	wantRequirement := originSSHCertificateRequirementModel{ID: types.StringValue("acme"), Namespace: types.StringValue("acme"), Owner: types.StringValue("acme"), RequireCertificates: types.BoolValue(true), DeletionProtection: types.BoolValue(true)}
+	if requirement != wantRequirement {
+		t.Fatalf("upgraded requirement = %#v, want %#v", requirement, wantRequirement)
+	}
+}
+
+type mockClientProvider struct {
+	provider.Provider
+	client *apiClient
+}
+
+func (p mockClientProvider) Configure(_ context.Context, _ provider.ConfigureRequest, resp *provider.ConfigureResponse) {
+	resp.ResourceData = p.client
+}
+
+func TestOriginSSHCertificateAliasesKnownAfterApplyWhenSlugIsUnknownAtPlan(t *testing.T) {
+	mock := newSSHCAMock(t)
+	defer mock.Close()
+	ctx := context.Background()
+	server, err := providerserver.NewProtocol6WithError(mockClientProvider{Provider: New("test")(), client: mock.client()})()
+	if err != nil {
+		t.Fatal(err)
+	}
+	schemas, err := server.GetProviderSchema(ctx, &tfprotov6.GetProviderSchemaRequest{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	object := func(typ tftypes.Type, set map[string]tftypes.Value) tftypes.Value {
+		values := map[string]tftypes.Value{}
+		for name, attr := range typ.(tftypes.Object).AttributeTypes {
+			values[name] = tftypes.NewValue(attr, nil)
+		}
+		maps.Copy(values, set)
+		return tftypes.NewValue(typ, values)
+	}
+	encode := func(typ tftypes.Type, value tftypes.Value) *tfprotov6.DynamicValue {
+		t.Helper()
+		encoded, err := tfprotov6.NewDynamicValue(typ, value)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return &encoded
+	}
+	requireNoErrors := func(step string, diags []*tfprotov6.Diagnostic) {
+		t.Helper()
+		for _, diag := range diags {
+			if diag.Severity == tfprotov6.DiagnosticSeverityError {
+				t.Fatalf("%s: %s: %s", step, diag.Summary, diag.Detail)
+			}
+		}
+	}
+	aliases := func(typ tftypes.Type, state *tfprotov6.DynamicValue) (tftypes.Value, tftypes.Value) {
+		t.Helper()
+		value, err := state.Unmarshal(typ)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var attrs map[string]tftypes.Value
+		if err := value.As(&attrs); err != nil {
+			t.Fatal(err)
+		}
+		return attrs["namespace"], attrs["owner"]
+	}
+
+	providerType := schemas.Provider.ValueType()
+	configured, err := server.ConfigureProvider(ctx, &tfprotov6.ConfigureProviderRequest{Config: encode(providerType, object(providerType, nil))})
+	if err != nil {
+		t.Fatal(err)
+	}
+	requireNoErrors("configure", configured.Diagnostics)
+
+	for _, tc := range []struct{ alias, slug, key string }{
+		{"namespace", "acme", sampleSSHCAKey},
+		{"owner", "globex", secondSSHCAKey},
+	} {
+		for _, r := range []struct {
+			typeName, collection string
+			config               map[string]tftypes.Value
+		}{
+			{"cursor_origin_ssh_certificate_authority", "ssh-certificate-authorities", map[string]tftypes.Value{
+				"name":       tftypes.NewValue(tftypes.String, "Acme production CA"),
+				"public_key": tftypes.NewValue(tftypes.String, tc.key),
+			}},
+			{"cursor_origin_ssh_certificate_requirement", "ssh-certificate-authorities:setRequirement", map[string]tftypes.Value{
+				"require_certificates": tftypes.NewValue(tftypes.Bool, true),
+			}},
+		} {
+			typ := schemas.ResourceSchemas[r.typeName].ValueType()
+			prior := encode(typ, tftypes.NewValue(typ, nil))
+			plan := func(slug any) (*tfprotov6.DynamicValue, *tfprotov6.PlanResourceChangeResponse) {
+				t.Helper()
+				set := maps.Clone(r.config)
+				set[tc.alias] = tftypes.NewValue(tftypes.String, slug)
+				config := encode(typ, object(typ, set))
+				resp, err := server.PlanResourceChange(ctx, &tfprotov6.PlanResourceChangeRequest{TypeName: r.typeName, PriorState: prior, ProposedNewState: config, Config: config})
+				if err != nil {
+					t.Fatal(err)
+				}
+				requireNoErrors(r.typeName+" plan", resp.Diagnostics)
+				return config, resp
+			}
+
+			_, unknown := plan(tftypes.UnknownValue)
+			if namespace, owner := aliases(typ, unknown.PlannedState); namespace.IsKnown() || owner.IsKnown() {
+				t.Fatalf("%s with %s unknown at plan: namespace = %s, owner = %s, want both unknown", r.typeName, tc.alias, namespace, owner)
+			}
+			config, planned := plan(tc.slug)
+			applied, err := server.ApplyResourceChange(ctx, &tfprotov6.ApplyResourceChangeRequest{TypeName: r.typeName, PriorState: prior, PlannedState: planned.PlannedState, PlannedPrivate: planned.PlannedPrivate, Config: config})
+			if err != nil {
+				t.Fatal(err)
+			}
+			requireNoErrors(r.typeName+" apply", applied.Diagnostics)
+			want := tftypes.NewValue(tftypes.String, tc.slug)
+			route := "POST /namespaces/" + tc.slug + "/" + r.collection
+			if namespace, owner := aliases(typ, applied.NewState); !namespace.Equal(want) || !owner.Equal(want) || mock.count(route) != 1 {
+				t.Fatalf("%s with %s known only at apply: namespace = %s, owner = %s, %s calls = %d", r.typeName, tc.alias, namespace, owner, route, mock.count(route))
+			}
+		}
 	}
 }
 
@@ -443,8 +696,8 @@ func TestOriginSSHCertificateAuthorityDeletePreconditionThenNotFound(t *testing.
 	if resp.Diagnostics.HasError() {
 		t.Fatalf("delete diagnostics: %v", resp.Diagnostics)
 	}
-	if mock.count("DELETE /owners/acme/ssh-certificate-authorities/"+stored.ID) != 2 {
-		t.Fatalf("delete calls = %d", mock.count("DELETE /owners/acme/ssh-certificate-authorities/"+stored.ID))
+	if mock.count("DELETE /namespaces/acme/ssh-certificate-authorities/"+stored.ID) != 2 {
+		t.Fatalf("delete calls = %d", mock.count("DELETE /namespaces/acme/ssh-certificate-authorities/"+stored.ID))
 	}
 
 	resp = &resource.DeleteResponse{}
@@ -475,14 +728,14 @@ func TestOriginSSHCertificateAuthorityImportState(t *testing.T) {
 	}
 
 	got, resp := importCA("acme:" + stored.ID)
-	if resp.Diagnostics.HasError() || got.Owner.ValueString() != "acme" || got.ID.ValueString() != stored.ID || !got.PublicKey.IsNull() || !got.DeletionProtection.ValueBool() {
+	if resp.Diagnostics.HasError() || got.Namespace.ValueString() != "acme" || got.Owner.ValueString() != "acme" || got.ID.ValueString() != stored.ID || !got.PublicKey.IsNull() || !got.DeletionProtection.ValueBool() {
 		t.Fatalf("import by id = %#v, %v", got, resp.Diagnostics)
 	}
 	got, resp = importCA("acme:" + sampleSSHCAFingerprint)
 	if resp.Diagnostics.HasError() || got.ID.ValueString() != stored.ID {
 		t.Fatalf("import by fingerprint = %#v, %v", got, resp.Diagnostics)
 	}
-	if mock.count("GET /owners/acme/ssh-certificate-authorities") != 1 {
+	if mock.count("GET /namespaces/acme/ssh-certificate-authorities") != 1 {
 		t.Fatal("import by id must not list; import by fingerprint lists once")
 	}
 	if _, resp = importCA("acme:" + secondSSHCAFingerprint); !resp.Diagnostics.HasError() || !strings.Contains(resp.Diagnostics.Errors()[0].Detail(), "no SSH certificate authority with fingerprint") {
@@ -501,9 +754,19 @@ func TestValidateOriginSSHCertificateAuthority(t *testing.T) {
 		t.Fatalf("valid model rejected: %v", err)
 	}
 	unknown := valid
-	unknown.Owner, unknown.Name, unknown.PublicKey = types.StringUnknown(), types.StringUnknown(), types.StringUnknown()
+	unknown.Namespace, unknown.Owner, unknown.Name, unknown.PublicKey = types.StringUnknown(), types.StringUnknown(), types.StringUnknown(), types.StringUnknown()
 	if err := validateOriginSSHCertificateAuthority(unknown); err != nil {
 		t.Fatalf("unknown values rejected: %v", err)
+	}
+	namespaceOnly := valid
+	namespaceOnly.Owner = types.StringNull()
+	if err := validateOriginSSHCertificateAuthority(namespaceOnly); err != nil {
+		t.Fatalf("namespace without owner rejected: %v", err)
+	}
+	ownerOnly := valid
+	ownerOnly.Namespace = types.StringNull()
+	if err := validateOriginSSHCertificateAuthority(ownerOnly); err != nil {
+		t.Fatalf("deprecated owner without namespace rejected: %v", err)
 	}
 
 	cases := []struct {
@@ -511,7 +774,14 @@ func TestValidateOriginSSHCertificateAuthority(t *testing.T) {
 		mutate func(*originSSHCertificateAuthorityModel)
 		want   string
 	}{
-		{"owner with slash", func(m *originSSHCertificateAuthorityModel) { m.Owner = types.StringValue("acme/rocket") }, "owner must not contain"},
+		{"no namespace", func(m *originSSHCertificateAuthorityModel) {
+			m.Namespace, m.Owner = types.StringNull(), types.StringNull()
+		}, "namespace is required"},
+		{"namespace with slash", func(m *originSSHCertificateAuthorityModel) { m.Namespace = types.StringValue("acme/rocket") }, "namespace must not contain"},
+		{"owner with slash", func(m *originSSHCertificateAuthorityModel) {
+			m.Namespace, m.Owner = types.StringNull(), types.StringValue("acme/rocket")
+		}, "owner must not contain"},
+		{"namespace and owner differ", func(m *originSSHCertificateAuthorityModel) { m.Owner = types.StringValue("other") }, "must match"},
 		{"empty name", func(m *originSSHCertificateAuthorityModel) { m.Name = types.StringValue("") }, "name is required"},
 		{"padded name", func(m *originSSHCertificateAuthorityModel) { m.Name = types.StringValue(" ca") }, "name must not have"},
 		{"long name", func(m *originSSHCertificateAuthorityModel) { m.Name = types.StringValue(strings.Repeat("a", 256)) }, "at most 255"},
@@ -539,6 +809,7 @@ func TestValidateOriginSSHCertificateAuthority(t *testing.T) {
 func sampleSSHCAModel() originSSHCertificateAuthorityModel {
 	return originSSHCertificateAuthorityModel{
 		ID:                 types.StringValue(sampleSSHCAID),
+		Namespace:          types.StringValue("acme"),
 		Owner:              types.StringValue("acme"),
 		Name:               types.StringValue("Acme production CA"),
 		PublicKey:          types.StringValue(sampleSSHCAKey),
@@ -557,6 +828,16 @@ func sshCASchema(t *testing.T, res *originSSHCertificateAuthorityResource) schem
 		t.Fatalf("schema diagnostics: %v", resp.Diagnostics)
 	}
 	return resp.Schema
+}
+
+func sshCAConfig(t *testing.T, sch schema.Schema, model originSSHCertificateAuthorityModel) tfsdk.Config {
+	t.Helper()
+	model.ID, model.KeyType, model.Fingerprint, model.CreatedAt = types.StringNull(), types.StringNull(), types.StringNull(), types.StringNull()
+	value := tfsdk.Plan{Schema: sch}
+	if diags := value.Set(context.Background(), &model); diags.HasError() {
+		t.Fatal(diags)
+	}
+	return tfsdk.Config{Schema: sch, Raw: value.Raw}
 }
 
 func sshCAState(t *testing.T, res *originSSHCertificateAuthorityResource, model originSSHCertificateAuthorityModel) tfsdk.State {

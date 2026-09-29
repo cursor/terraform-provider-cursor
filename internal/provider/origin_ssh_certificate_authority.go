@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 const (
@@ -39,12 +41,41 @@ type originSSHCertificateRequirement struct {
 	RequireCertificates bool `json:"requireCertificates"`
 }
 
-func originSSHCertificateAuthoritiesPath(owner string) string {
-	return "/owners/" + url.PathEscape(owner) + "/ssh-certificate-authorities"
+func originSSHCertificateAuthoritiesPath(namespace string) string {
+	return "/namespaces/" + url.PathEscape(namespace) + "/ssh-certificate-authorities"
 }
 
-func (c *apiClient) listOriginSSHCertificateAuthorities(ctx context.Context, owner string) (*originSSHCertificateAuthorityList, error) {
-	body, err := c.originDo(ctx, http.MethodGet, originSSHCertificateAuthoritiesPath(owner), nil, http.StatusOK)
+func validateOriginNamespaceAlias(namespace, owner types.String) error {
+	if namespace.IsNull() && owner.IsNull() {
+		return fmt.Errorf("namespace is required")
+	}
+	if !namespace.IsNull() {
+		if err := requireIDSafeSlug(namespace, "namespace"); err != nil {
+			return err
+		}
+	}
+	if !owner.IsNull() {
+		if err := requireIDSafeSlug(owner, "owner"); err != nil {
+			return err
+		}
+	}
+	if !namespace.IsNull() && !namespace.IsUnknown() && !owner.IsNull() && !owner.IsUnknown() && namespace.ValueString() != owner.ValueString() {
+		return fmt.Errorf("namespace %q and the deprecated owner %q must match; set only namespace", namespace.ValueString(), owner.ValueString())
+	}
+	return nil
+}
+
+func alignOriginNamespaceAlias(configNamespace, configOwner types.String, namespace, owner *types.String) {
+	switch {
+	case configOwner.IsNull():
+		*owner = *namespace
+	case configNamespace.IsNull():
+		*namespace = *owner
+	}
+}
+
+func (c *apiClient) listOriginSSHCertificateAuthorities(ctx context.Context, namespace string) (*originSSHCertificateAuthorityList, error) {
+	body, err := c.originDo(ctx, http.MethodGet, originSSHCertificateAuthoritiesPath(namespace), nil, http.StatusOK)
 	if err != nil {
 		return nil, err
 	}
@@ -63,8 +94,8 @@ func (c *apiClient) listOriginSSHCertificateAuthorities(ctx context.Context, own
 	return &list, nil
 }
 
-func (c *apiClient) addOriginSSHCertificateAuthority(ctx context.Context, owner string, write originSSHCertificateAuthorityWrite) (*originSSHCertificateAuthority, error) {
-	body, err := c.originDo(ctx, http.MethodPost, originSSHCertificateAuthoritiesPath(owner), write, http.StatusOK, http.StatusCreated)
+func (c *apiClient) addOriginSSHCertificateAuthority(ctx context.Context, namespace string, write originSSHCertificateAuthorityWrite) (*originSSHCertificateAuthority, error) {
+	body, err := c.originDo(ctx, http.MethodPost, originSSHCertificateAuthoritiesPath(namespace), write, http.StatusOK, http.StatusCreated)
 	if err != nil {
 		return nil, err
 	}
@@ -81,16 +112,16 @@ func (c *apiClient) addOriginSSHCertificateAuthority(ctx context.Context, owner 
 	return &authority, nil
 }
 
-func (c *apiClient) deleteOriginSSHCertificateAuthority(ctx context.Context, owner, id string) error {
+func (c *apiClient) deleteOriginSSHCertificateAuthority(ctx context.Context, namespace, id string) error {
 	if id == "" {
 		return fmt.Errorf("certificate authority id is required")
 	}
-	_, err := c.originDo(ctx, http.MethodDelete, originSSHCertificateAuthoritiesPath(owner)+"/"+url.PathEscape(id), nil, http.StatusOK, http.StatusNoContent)
+	_, err := c.originDo(ctx, http.MethodDelete, originSSHCertificateAuthoritiesPath(namespace)+"/"+url.PathEscape(id), nil, http.StatusOK, http.StatusNoContent)
 	return err
 }
 
-func (c *apiClient) setOriginSSHCertificateRequirement(ctx context.Context, owner string, require bool) (bool, error) {
-	body, err := c.originDo(ctx, http.MethodPost, originSSHCertificateAuthoritiesPath(owner)+":setRequirement", originSSHCertificateRequirement{RequireCertificates: require}, http.StatusOK)
+func (c *apiClient) setOriginSSHCertificateRequirement(ctx context.Context, namespace string, require bool) (bool, error) {
+	body, err := c.originDo(ctx, http.MethodPost, originSSHCertificateAuthoritiesPath(namespace)+":setRequirement", originSSHCertificateRequirement{RequireCertificates: require}, http.StatusOK)
 	if err != nil {
 		return false, err
 	}

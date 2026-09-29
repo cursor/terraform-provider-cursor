@@ -60,7 +60,7 @@ func TestOriginRepoGrantsDataSourceRead(t *testing.T) {
 
 func TestOriginOwnerGrantsDataSourceReadMapsPermissions(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet || r.URL.Path != "/owners/acme/grants" {
+		if r.Method != http.MethodGet || r.URL.Path != "/namespaces/acme/grants" {
 			t.Errorf("unexpected %s %s", r.Method, r.URL.Path)
 		}
 		writeJSON(t, w, http.StatusOK, originGrantList{Grants: []originGrant{

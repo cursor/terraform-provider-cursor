@@ -14,6 +14,7 @@ type originSSHCertificateAuthoritiesDataSource struct {
 }
 
 type originSSHCertificateAuthoritiesDataSourceModel struct {
+	Namespace              types.String                                `tfsdk:"namespace"`
 	Owner                  types.String                                `tfsdk:"owner"`
 	RequireCertificates    types.Bool                                  `tfsdk:"require_certificates"`
 	CertificateAuthorities []originSSHCertificateAuthorityElementModel `tfsdk:"certificate_authorities"`
@@ -38,19 +39,26 @@ func (d *originSSHCertificateAuthoritiesDataSource) Metadata(_ context.Context, 
 
 func (d *originSSHCertificateAuthoritiesDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Lists the SSH certificate authorities an Origin owner trusts, newest first, and whether the owner requires certificates. Uses the provider auth token.",
+		Description: "Lists the SSH certificate authorities an Origin namespace trusts, newest first, and whether the namespace requires certificates. Uses the provider auth token.",
 		Attributes: map[string]schema.Attribute{
+			"namespace": schema.StringAttribute{
+				Optional:    true,
+				Computed:    true,
+				Description: "Slug of the team namespace. Required unless the deprecated owner is set.",
+			},
 			"owner": schema.StringAttribute{
-				Required:    true,
-				Description: "Owner slug of the team namespace.",
+				Optional:           true,
+				Computed:           true,
+				Description:        "Deprecated alias of namespace. Use namespace instead; if both are set they must match.",
+				DeprecationMessage: "Use namespace instead.",
 			},
 			"require_certificates": schema.BoolAttribute{
 				Computed:    true,
-				Description: "Whether the owner requires SSH certificates for git over SSH.",
+				Description: "Whether the namespace requires SSH certificates for git over SSH.",
 			},
 			"certificate_authorities": schema.ListNestedAttribute{
 				Computed:    true,
-				Description: "Every authority the owner trusts, newest first.",
+				Description: "Every authority the namespace trusts, newest first.",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"id": schema.StringAttribute{
@@ -106,12 +114,13 @@ func (d *originSSHCertificateAuthoritiesDataSource) Read(ctx context.Context, re
 		resp.Diagnostics.AddError("Provider not configured", "Origin API client is unavailable.")
 		return
 	}
-	if err := requireIDSafeSlug(config.Owner, "owner"); err != nil {
-		resp.Diagnostics.AddError("Invalid Origin owner", err.Error())
+	if err := validateOriginNamespaceAlias(config.Namespace, config.Owner); err != nil {
+		resp.Diagnostics.AddError("Invalid Origin namespace", err.Error())
 		return
 	}
+	alignOriginNamespaceAlias(config.Namespace, config.Owner, &config.Namespace, &config.Owner)
 
-	list, err := d.client.listOriginSSHCertificateAuthorities(ctx, config.Owner.ValueString())
+	list, err := d.client.listOriginSSHCertificateAuthorities(ctx, config.Namespace.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to list Origin SSH certificate authorities", err.Error())
 		return

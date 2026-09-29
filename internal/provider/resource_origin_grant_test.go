@@ -158,7 +158,7 @@ func TestOriginOwnerGrantCreateResolvesGroupName(t *testing.T) {
 	if resp.Diagnostics.HasError() {
 		t.Fatalf("create diagnostics: %v", resp.Diagnostics)
 	}
-	if body := mock.lastBody("POST /owners/acme/grants"); body != `{"group":{"id":"grp_eng"},"permission":"PERMISSION_CONTRIBUTOR"}` {
+	if body := mock.lastBody("POST /namespaces/acme/grants"); body != `{"group":{"id":"grp_eng"},"permission":"PERMISSION_CONTRIBUTOR"}` {
 		t.Fatalf("create body = %s", body)
 	}
 	var got originOwnerGrantModel
@@ -632,7 +632,7 @@ func TestOriginOwnerGrantModifyPlanUnknownOwnerLeavesIDUnknown(t *testing.T) {
 
 func TestOriginOwnerGrantReadMapsCustomPermission(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/owners/acme/grants" {
+		if r.URL.Path != "/namespaces/acme/grants" {
 			t.Errorf("path = %s", r.URL.Path)
 		}
 		writeJSON(t, w, http.StatusOK, originGrantList{Grants: []originGrant{
@@ -1386,7 +1386,7 @@ func (h ownerGrantHarness) principal(t *testing.T, value tftypes.Value) (originG
 }
 
 func (h ownerGrantHarness) resource() string { return "acme" }
-func (h ownerGrantHarness) route() string    { return "/owners/acme/grants" }
+func (h ownerGrantHarness) route() string    { return "/namespaces/acme/grants" }
 func (h ownerGrantHarness) wirePermission() string {
 	return ownerPermissionToWire(originPermissionRead)
 }

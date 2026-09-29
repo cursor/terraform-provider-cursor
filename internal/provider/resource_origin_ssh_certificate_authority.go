@@ -18,6 +18,7 @@ var (
 	_ resource.Resource                   = (*originSSHCertificateAuthorityResource)(nil)
 	_ resource.ResourceWithImportState    = (*originSSHCertificateAuthorityResource)(nil)
 	_ resource.ResourceWithModifyPlan     = (*originSSHCertificateAuthorityResource)(nil)
+	_ resource.ResourceWithUpgradeState   = (*originSSHCertificateAuthorityResource)(nil)
 	_ resource.ResourceWithValidateConfig = (*originSSHCertificateAuthorityResource)(nil)
 )
 
@@ -27,6 +28,7 @@ type originSSHCertificateAuthorityResource struct {
 
 type originSSHCertificateAuthorityModel struct {
 	ID                 types.String `tfsdk:"id"`
+	Namespace          types.String `tfsdk:"namespace"`
 	Owner              types.String `tfsdk:"owner"`
 	Name               types.String `tfsdk:"name"`
 	PublicKey          types.String `tfsdk:"public_key"`
@@ -60,7 +62,8 @@ func (r *originSSHCertificateAuthorityResource) Metadata(_ context.Context, req 
 
 func (r *originSSHCertificateAuthorityResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Manages one SSH certificate authority an Origin owner trusts: members of the owning team can use git over SSH on the owner's repositories with user certificates the authority signed. The Origin API has no update for an authority: changing owner or the key itself replaces it, name is fixed once the authority is added, and removing an authority invalidates every certificate it signed. deletion_protection defaults to true, so Terraform will not remove or replace the authority until that is set to false and applied. Rotate a key with lifecycle { create_before_destroy = true } so the new authority exists before the old one is removed; while the owner requires certificates its last authority cannot be removed.",
+		Version:     1,
+		Description: "Manages one SSH certificate authority an Origin namespace trusts: members of the owning team can use git over SSH on the namespace's repositories with user certificates the authority signed. The Origin API has no update for an authority: changing namespace or the key itself replaces it, name is fixed once the authority is added, and removing an authority invalidates every certificate it signed. deletion_protection defaults to true, so Terraform will not remove or replace the authority until that is set to false and applied. Rotate a key with lifecycle { create_before_destroy = true } so the new authority exists before the old one is removed; while the namespace requires certificates its last authority cannot be removed.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:    true,
@@ -69,10 +72,22 @@ func (r *originSSHCertificateAuthorityResource) Schema(_ context.Context, _ reso
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"owner": schema.StringAttribute{
-				Required:    true,
-				Description: "Owner slug of the team namespace that trusts the authority. Changing this replaces the authority. Blocked while deletion_protection is true.",
+			"namespace": schema.StringAttribute{
+				Optional:    true,
+				Computed:    true,
+				Description: "Slug of the team namespace that trusts the authority. Required unless the deprecated owner is set. Changing this replaces the authority. Blocked while deletion_protection is true.",
 				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.RequiresReplace(),
+				},
+			},
+			"owner": schema.StringAttribute{
+				Optional:           true,
+				Computed:           true,
+				Description:        "Deprecated alias of namespace. Use namespace instead; if both are set they must match.",
+				DeprecationMessage: "Use namespace instead.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
@@ -91,7 +106,7 @@ func (r *originSSHCertificateAuthorityResource) Schema(_ context.Context, _ reso
 				Optional:    true,
 				Computed:    true,
 				Default:     booldefault.StaticBool(true),
-				Description: "When true, Terraform will not remove this authority. That includes terraform destroy and replacements caused by changing owner or the key. Set to false and apply before destroying or rotating the authority. Null is treated as protected.",
+				Description: "When true, Terraform will not remove this authority. That includes terraform destroy and replacements caused by changing namespace or the key. Set to false and apply before destroying or rotating the authority. Null is treated as protected.",
 			},
 			"key_type": schema.StringAttribute{
 				Computed:    true,
@@ -144,11 +159,11 @@ func (r *originSSHCertificateAuthorityResource) Create(ctx context.Context, req 
 		resp.Diagnostics.AddError("Invalid Origin SSH certificate authority", err.Error())
 		return
 	}
-	if plan.Owner.IsUnknown() || plan.Name.IsUnknown() || plan.PublicKey.IsUnknown() {
+	if plan.Namespace.IsUnknown() || plan.Name.IsUnknown() || plan.PublicKey.IsUnknown() {
 		resp.Diagnostics.AddError("Invalid Origin SSH certificate authority", "authority configuration is incomplete")
 		return
 	}
-	authority, err := r.client.addOriginSSHCertificateAuthority(ctx, plan.Owner.ValueString(), originSSHCertificateAuthorityWrite{
+	authority, err := r.client.addOriginSSHCertificateAuthority(ctx, plan.Namespace.ValueString(), originSSHCertificateAuthorityWrite{
 		PublicKey: strings.TrimSpace(plan.PublicKey.ValueString()),
 		Name:      plan.Name.ValueString(),
 	})
@@ -169,7 +184,7 @@ func (r *originSSHCertificateAuthorityResource) Read(ctx context.Context, req re
 		resp.Diagnostics.AddError("Provider not configured", "Origin API client is unavailable.")
 		return
 	}
-	list, err := r.client.listOriginSSHCertificateAuthorities(ctx, state.Owner.ValueString())
+	list, err := r.client.listOriginSSHCertificateAuthorities(ctx, state.Namespace.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to read Origin SSH certificate authority", err.Error())
 		return
@@ -185,9 +200,6 @@ func (r *originSSHCertificateAuthorityResource) Read(ctx context.Context, req re
 // A rename is refused unless the authority is being replaced anyway: the API has no rename, and a
 // same-key replace would have to destroy first, so it is left to an explicit remove and re-add.
 func (r *originSSHCertificateAuthorityResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
-	if req.State.Raw.IsNull() {
-		return
-	}
 	if req.Plan.Raw.IsNull() {
 		var state originSSHCertificateAuthorityModel
 		resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
@@ -199,8 +211,18 @@ func (r *originSSHCertificateAuthorityResource) ModifyPlan(ctx context.Context, 
 		}
 		return
 	}
-	var plan, state originSSHCertificateAuthorityModel
+	var plan, config originSSHCertificateAuthorityModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	alignOriginNamespaceAlias(config.Namespace, config.Owner, &plan.Namespace, &plan.Owner)
+	resp.Diagnostics.Append(resp.Plan.Set(ctx, &plan)...)
+	if resp.Diagnostics.HasError() || req.State.Raw.IsNull() {
+		return
+	}
+	var state originSSHCertificateAuthorityModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -209,7 +231,7 @@ func (r *originSSHCertificateAuthorityResource) ModifyPlan(ctx context.Context, 
 		resp.Diagnostics.AddError("Origin SSH certificate authority is protected from replacement", err.Error())
 		return
 	}
-	if plan.Owner.IsUnknown() || knownStringChanged(state.Owner, plan.Owner) || plan.PublicKey.IsUnknown() || normalizeSSHPublicKey(plan.PublicKey.ValueString()) != normalizeSSHPublicKey(state.PublicKey.ValueString()) {
+	if plan.Namespace.IsUnknown() || knownStringChanged(state.Namespace, plan.Namespace) || plan.PublicKey.IsUnknown() || normalizeSSHPublicKey(plan.PublicKey.ValueString()) != normalizeSSHPublicKey(state.PublicKey.ValueString()) {
 		return
 	}
 	if err := renameError(plan, state); err != nil {
@@ -224,17 +246,17 @@ func refuseSSHCertificateAuthorityDelete(state originSSHCertificateAuthorityMode
 	return nil
 }
 
-// An unknown owner or key is planned as a replace too, so it is refused while protected: with
+// An unknown namespace or key is planned as a replace too, so it is refused while protected: with
 // create_before_destroy the new authority would be added before the protected delete fails.
 func sshCertificateAuthorityReplacementGuard(state, plan originSSHCertificateAuthorityModel) error {
 	if !deletionProtectionEnabled(state.DeletionProtection) {
 		return nil
 	}
-	if plan.Owner.IsUnknown() {
-		return fmt.Errorf("owner is not known until apply, so this plan would replace the authority; set deletion_protection = false and apply first, or make owner known at plan time")
+	if plan.Namespace.IsUnknown() {
+		return fmt.Errorf("namespace is not known until apply, so this plan would replace the authority; set deletion_protection = false and apply first, or make namespace known at plan time")
 	}
-	if knownStringChanged(state.Owner, plan.Owner) {
-		return fmt.Errorf("changing owner removes the existing authority; set deletion_protection = false and apply before moving it")
+	if knownStringChanged(state.Namespace, plan.Namespace) {
+		return fmt.Errorf("changing namespace removes the existing authority; set deletion_protection = false and apply before moving it")
 	}
 	if plan.PublicKey.IsUnknown() {
 		return fmt.Errorf("public_key is not known until apply, so this plan would replace the authority; set deletion_protection = false and apply first, or make public_key known at plan time")
@@ -269,7 +291,7 @@ func renameError(plan, state originSSHCertificateAuthorityModel) error {
 	if plan.Name.IsUnknown() || plan.Name.IsNull() || state.Name.IsNull() || plan.Name.ValueString() == state.Name.ValueString() {
 		return nil
 	}
-	return fmt.Errorf("the Origin API has no rename, so name stays %q for the life of the authority. Set name back to that value, add lifecycle { ignore_changes = [name] } to accept renames made elsewhere, or remove the authority and add it again with the new name; that destroys it first, since the same key cannot be listed twice, and the last authority cannot be removed while the owner requires certificates", state.Name.ValueString())
+	return fmt.Errorf("the Origin API has no rename, so name stays %q for the life of the authority. Set name back to that value, add lifecycle { ignore_changes = [name] } to accept renames made elsewhere, or remove the authority and add it again with the new name; that destroys it first, since the same key cannot be listed twice, and the last authority cannot be removed while the namespace requires certificates", state.Name.ValueString())
 }
 
 func (r *originSSHCertificateAuthorityResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
@@ -286,15 +308,15 @@ func (r *originSSHCertificateAuthorityResource) Delete(ctx context.Context, req 
 		resp.Diagnostics.AddError("Origin SSH certificate authority is protected from deletion", err.Error())
 		return
 	}
-	err := r.client.deleteOriginSSHCertificateAuthority(ctx, state.Owner.ValueString(), state.ID.ValueString())
+	err := r.client.deleteOriginSSHCertificateAuthority(ctx, state.Namespace.ValueString(), state.ID.ValueString())
 	if err != nil && !isOriginNotFound(err) {
 		resp.Diagnostics.AddError("Failed to remove Origin SSH certificate authority", err.Error())
 	}
 }
 
-// Import IDs are owner:nsca_... or owner:SHA256:<fingerprint>; a fingerprint is resolved through the owner's list.
+// Import IDs are namespace:nsca_... or namespace:SHA256:<fingerprint>; a fingerprint is resolved through the namespace's list.
 func (r *originSSHCertificateAuthorityResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	owner, value, err := parseOriginSSHCertificateAuthorityImportID(req.ID)
+	namespace, value, err := parseOriginSSHCertificateAuthorityImportID(req.ID)
 	if err != nil {
 		resp.Diagnostics.AddError("Invalid import ID", err.Error())
 		return
@@ -305,7 +327,7 @@ func (r *originSSHCertificateAuthorityResource) ImportState(ctx context.Context,
 	}
 	id := value
 	if strings.HasPrefix(value, originSSHFingerprintPrefix) {
-		list, err := r.client.listOriginSSHCertificateAuthorities(ctx, owner)
+		list, err := r.client.listOriginSSHCertificateAuthorities(ctx, namespace)
 		if err != nil {
 			resp.Diagnostics.AddError("Failed to import Origin SSH certificate authority", err.Error())
 			return
@@ -318,11 +340,12 @@ func (r *originSSHCertificateAuthorityResource) ImportState(ctx context.Context,
 			}
 		}
 		if id == "" {
-			resp.Diagnostics.AddError("Failed to import Origin SSH certificate authority", fmt.Sprintf("owner %s has no SSH certificate authority with fingerprint %s", owner, value))
+			resp.Diagnostics.AddError("Failed to import Origin SSH certificate authority", fmt.Sprintf("namespace %s has no SSH certificate authority with fingerprint %s", namespace, value))
 			return
 		}
 	}
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("owner"), owner)...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("namespace"), namespace)...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("owner"), namespace)...)
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("deletion_protection"), true)...)
 }
@@ -338,6 +361,54 @@ func (r *originSSHCertificateAuthorityResource) ValidateConfig(ctx context.Conte
 	}
 }
 
+type originSSHCertificateAuthorityModelV0 struct {
+	ID                 types.String `tfsdk:"id"`
+	Owner              types.String `tfsdk:"owner"`
+	Name               types.String `tfsdk:"name"`
+	PublicKey          types.String `tfsdk:"public_key"`
+	KeyType            types.String `tfsdk:"key_type"`
+	Fingerprint        types.String `tfsdk:"fingerprint"`
+	CreatedAt          types.String `tfsdk:"created_at"`
+	DeletionProtection types.Bool   `tfsdk:"deletion_protection"`
+}
+
+func (r *originSSHCertificateAuthorityResource) UpgradeState(context.Context) map[int64]resource.StateUpgrader {
+	return map[int64]resource.StateUpgrader{
+		0: {
+			PriorSchema: &schema.Schema{
+				Attributes: map[string]schema.Attribute{
+					"id":                  schema.StringAttribute{Computed: true},
+					"owner":               schema.StringAttribute{Required: true},
+					"name":                schema.StringAttribute{Required: true},
+					"public_key":          schema.StringAttribute{Required: true},
+					"deletion_protection": schema.BoolAttribute{Optional: true, Computed: true},
+					"key_type":            schema.StringAttribute{Computed: true},
+					"fingerprint":         schema.StringAttribute{Computed: true},
+					"created_at":          schema.StringAttribute{Computed: true},
+				},
+			},
+			StateUpgrader: func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
+				var prior originSSHCertificateAuthorityModelV0
+				resp.Diagnostics.Append(req.State.Get(ctx, &prior)...)
+				if resp.Diagnostics.HasError() {
+					return
+				}
+				resp.Diagnostics.Append(resp.State.Set(ctx, originSSHCertificateAuthorityModel{
+					ID:                 prior.ID,
+					Namespace:          prior.Owner,
+					Owner:              prior.Owner,
+					Name:               prior.Name,
+					PublicKey:          prior.PublicKey,
+					KeyType:            prior.KeyType,
+					Fingerprint:        prior.Fingerprint,
+					CreatedAt:          prior.CreatedAt,
+					DeletionProtection: prior.DeletionProtection,
+				})...)
+			},
+		},
+	}
+}
+
 func sshPublicKeyChanged(_ context.Context, req planmodifier.StringRequest, resp *stringplanmodifier.RequiresReplaceIfFuncResponse) {
 	resp.RequiresReplace = req.PlanValue.IsUnknown() || normalizeSSHPublicKey(req.PlanValue.ValueString()) != normalizeSSHPublicKey(req.StateValue.ValueString())
 }
@@ -345,13 +416,13 @@ func sshPublicKeyChanged(_ context.Context, req planmodifier.StringRequest, resp
 func parseOriginSSHCertificateAuthorityImportID(id string) (string, string, error) {
 	parts := strings.SplitN(id, ":", 2)
 	if len(parts) != 2 || parts[0] == "" || parts[1] == "" || strings.TrimSpace(id) != id || strings.ContainsAny(parts[0], "/") {
-		return "", "", fmt.Errorf("invalid import ID %q, expected owner:certificate_authority_id or owner:SHA256:<fingerprint>", id)
+		return "", "", fmt.Errorf("invalid import ID %q, expected namespace:certificate_authority_id or namespace:SHA256:<fingerprint>", id)
 	}
 	return parts[0], parts[1], nil
 }
 
 func validateOriginSSHCertificateAuthority(model originSSHCertificateAuthorityModel) error {
-	if err := requireIDSafeSlug(model.Owner, "owner"); err != nil {
+	if err := validateOriginNamespaceAlias(model.Namespace, model.Owner); err != nil {
 		return err
 	}
 	if err := requireNonEmptyUnpadded(model.Name, "name"); err != nil {
