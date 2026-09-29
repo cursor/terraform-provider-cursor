@@ -35,7 +35,7 @@ func sampleSSHCA() originSSHCertificateAuthority {
 
 func TestOriginSSHCertificateAuthorityList(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet || r.URL.Path != "/owners/acme/ssh-certificate-authorities" {
+		if r.Method != http.MethodGet || r.URL.Path != "/namespaces/acme/ssh-certificate-authorities" {
 			t.Errorf("unexpected %s %s", r.Method, r.URL.Path)
 		}
 		if got := r.Header.Get("Authorization"); got != "Bearer session-token" {
@@ -89,7 +89,7 @@ func TestOriginSSHCertificateAuthorityAdd(t *testing.T) {
 	if err != nil {
 		t.Fatalf("addOriginSSHCertificateAuthority() error: %v", err)
 	}
-	if body := mock.lastBody("POST /owners/acme/ssh-certificate-authorities"); body != `{"publicKey":"`+sampleSSHCAKey+` acme-ssh-ca","name":"Acme production CA"}` {
+	if body := mock.lastBody("POST /namespaces/acme/ssh-certificate-authorities"); body != `{"publicKey":"`+sampleSSHCAKey+` acme-ssh-ca","name":"Acme production CA"}` {
 		t.Fatalf("add body = %s", body)
 	}
 	if authority.ID == "" || authority.PublicKey != sampleSSHCAKey || authority.Fingerprint != sampleSSHCAFingerprint || authority.KeyType != "ssh-ed25519" {
@@ -119,7 +119,7 @@ func TestOriginSSHCertificateAuthorityAddRejectsForeignKey(t *testing.T) {
 func TestOriginSSHCertificateAuthorityDelete(t *testing.T) {
 	status := http.StatusNoContent
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodDelete || r.URL.Path != "/owners/acme/ssh-certificate-authorities/"+sampleSSHCAID {
+		if r.Method != http.MethodDelete || r.URL.Path != "/namespaces/acme/ssh-certificate-authorities/"+sampleSSHCAID {
 			t.Errorf("unexpected %s %s", r.Method, r.URL.Path)
 		}
 		if status == http.StatusNoContent {
@@ -157,7 +157,7 @@ func TestOriginSSHCertificateRequirementSetSendsFalse(t *testing.T) {
 		if got != want {
 			t.Fatalf("require = %v, want %v", got, want)
 		}
-		if body := mock.lastBody("POST /owners/acme/ssh-certificate-authorities:setRequirement"); body != fmt.Sprintf(`{"requireCertificates":%v}`, want) {
+		if body := mock.lastBody("POST /namespaces/acme/ssh-certificate-authorities:setRequirement"); body != fmt.Sprintf(`{"requireCertificates":%v}`, want) {
 			t.Fatalf("body = %s", body)
 		}
 	}
@@ -178,7 +178,7 @@ func TestNormalizeSSHPublicKey(t *testing.T) {
 	}
 }
 
-// sshCAMock serves the owner SSH certificate authority endpoints with the Origin API's status codes.
+// sshCAMock serves the namespace SSH certificate authority endpoints with the Origin API's status codes.
 type sshCAMock struct {
 	*httptest.Server
 	t           *testing.T
@@ -202,16 +202,17 @@ func (m *sshCAMock) serve(w http.ResponseWriter, r *http.Request) {
 	route := r.Method + " " + r.URL.Path
 	m.hits[route] = append(m.hits[route], strings.TrimSpace(string(raw)))
 
-	// /owners/{owner}/ssh-certificate-authorities[/{id}] or /owners/{owner}/ssh-certificate-authorities:setRequirement
-	parts := strings.Split(strings.TrimPrefix(r.URL.Path, "/owners/"), "/")
-	if len(parts) < 2 || !strings.HasPrefix(parts[1], "ssh-certificate-authorities") {
+	// /namespaces/{namespace}/ssh-certificate-authorities[/{id}] or /namespaces/{namespace}/ssh-certificate-authorities:setRequirement
+	rest, ok := strings.CutPrefix(r.URL.Path, "/namespaces/")
+	parts := strings.Split(rest, "/")
+	if !ok || len(parts) < 2 || !strings.HasPrefix(parts[1], "ssh-certificate-authorities") {
 		http.NotFound(w, r)
 		return
 	}
-	owner, collection := parts[0], parts[1]
+	namespace, collection := parts[0], parts[1]
 	switch {
 	case r.Method == http.MethodGet && len(parts) == 2 && collection == "ssh-certificate-authorities":
-		writeJSON(m.t, w, http.StatusOK, originSSHCertificateAuthorityList{CertificateAuthorities: m.list(owner), RequireCertificates: m.require[owner]})
+		writeJSON(m.t, w, http.StatusOK, originSSHCertificateAuthorityList{CertificateAuthorities: m.list(namespace), RequireCertificates: m.require[namespace]})
 	case r.Method == http.MethodPost && len(parts) == 2 && collection == "ssh-certificate-authorities:setRequirement":
 		var body struct {
 			RequireCertificates *bool `json:"requireCertificates"`
@@ -220,32 +221,32 @@ func (m *sshCAMock) serve(w http.ResponseWriter, r *http.Request) {
 			writeJSON(m.t, w, http.StatusBadRequest, originStatusError{Code: 3, Message: "require_certificates is required"})
 			return
 		}
-		if *body.RequireCertificates && len(m.authorities[owner]) == 0 {
+		if *body.RequireCertificates && len(m.authorities[namespace]) == 0 {
 			writeJSON(m.t, w, http.StatusBadRequest, originStatusError{Code: 9, Message: "add a certificate authority before requiring certificates"})
 			return
 		}
-		m.require[owner] = *body.RequireCertificates
-		writeJSON(m.t, w, http.StatusOK, originSSHCertificateRequirement{RequireCertificates: m.require[owner]})
+		m.require[namespace] = *body.RequireCertificates
+		writeJSON(m.t, w, http.StatusOK, originSSHCertificateRequirement{RequireCertificates: m.require[namespace]})
 	case r.Method == http.MethodPost && len(parts) == 2 && collection == "ssh-certificate-authorities":
 		var write originSSHCertificateAuthorityWrite
 		if err := json.Unmarshal(raw, &write); err != nil || len(strings.Fields(write.PublicKey)) < 2 || strings.TrimSpace(write.Name) == "" {
 			writeJSON(m.t, w, http.StatusBadRequest, originStatusError{Code: 3, Message: "public_key must be a single OpenSSH authorized_keys entry"})
 			return
 		}
-		authority, ok := m.addLocked(owner, write.PublicKey, write.Name)
+		authority, ok := m.addLocked(namespace, write.PublicKey, write.Name)
 		if !ok {
-			writeJSON(m.t, w, http.StatusConflict, originStatusError{Code: 6, Message: "the owner already lists this key"})
+			writeJSON(m.t, w, http.StatusConflict, originStatusError{Code: 6, Message: "the namespace already lists this key"})
 			return
 		}
 		writeJSON(m.t, w, http.StatusOK, authority)
 	case r.Method == http.MethodDelete && len(parts) == 3 && collection == "ssh-certificate-authorities":
-		if m.require[owner] && len(m.authorities[owner]) == 1 && m.authorities[owner][0].ID == parts[2] {
+		if m.require[namespace] && len(m.authorities[namespace]) == 1 && m.authorities[namespace][0].ID == parts[2] {
 			writeJSON(m.t, w, http.StatusBadRequest, originStatusError{Code: 9, Message: "the last certificate authority cannot be removed while certificates are required"})
 			return
 		}
-		for i, authority := range m.authorities[owner] {
+		for i, authority := range m.authorities[namespace] {
 			if authority.ID == parts[2] {
-				m.authorities[owner] = append(m.authorities[owner][:i], m.authorities[owner][i+1:]...)
+				m.authorities[namespace] = append(m.authorities[namespace][:i], m.authorities[namespace][i+1:]...)
 				w.WriteHeader(http.StatusNoContent)
 				return
 			}
@@ -257,8 +258,8 @@ func (m *sshCAMock) serve(w http.ResponseWriter, r *http.Request) {
 }
 
 // Newest first, like the API.
-func (m *sshCAMock) list(owner string) []originSSHCertificateAuthority {
-	stored := m.authorities[owner]
+func (m *sshCAMock) list(namespace string) []originSSHCertificateAuthority {
+	stored := m.authorities[namespace]
 	out := make([]originSSHCertificateAuthority, 0, len(stored))
 	for i := len(stored) - 1; i >= 0; i-- {
 		out = append(out, stored[i])
@@ -266,17 +267,17 @@ func (m *sshCAMock) list(owner string) []originSSHCertificateAuthority {
 	return out
 }
 
-func (m *sshCAMock) add(owner, publicKey, name string) originSSHCertificateAuthority {
+func (m *sshCAMock) add(namespace, publicKey, name string) originSSHCertificateAuthority {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	authority, ok := m.addLocked(owner, publicKey, name)
+	authority, ok := m.addLocked(namespace, publicKey, name)
 	if !ok {
-		m.t.Fatalf("duplicate key for %s", owner)
+		m.t.Fatalf("duplicate key for %s", namespace)
 	}
 	return authority
 }
 
-func (m *sshCAMock) addLocked(owner, publicKey, name string) (originSSHCertificateAuthority, bool) {
+func (m *sshCAMock) addLocked(namespace, publicKey, name string) (originSSHCertificateAuthority, bool) {
 	fields := strings.Fields(publicKey)
 	blob, err := base64.StdEncoding.DecodeString(fields[1])
 	if err != nil {
@@ -284,7 +285,7 @@ func (m *sshCAMock) addLocked(owner, publicKey, name string) (originSSHCertifica
 	}
 	sum := sha256.Sum256(blob)
 	fingerprint := originSSHFingerprintPrefix + strings.TrimRight(base64.StdEncoding.EncodeToString(sum[:]), "=")
-	for _, existing := range m.authorities[owner] {
+	for _, existing := range m.authorities[namespace] {
 		if existing.Fingerprint == fingerprint {
 			return originSSHCertificateAuthority{}, false
 		}
@@ -298,14 +299,14 @@ func (m *sshCAMock) addLocked(owner, publicKey, name string) (originSSHCertifica
 		PublicKey:   fields[0] + " " + fields[1],
 		CreatedAt:   fmt.Sprintf("2026-08-02T14:45:%02dZ", m.nextID),
 	}
-	m.authorities[owner] = append(m.authorities[owner], authority)
+	m.authorities[namespace] = append(m.authorities[namespace], authority)
 	return authority, true
 }
 
-func (m *sshCAMock) setRequire(owner string, require bool) {
+func (m *sshCAMock) setRequire(namespace string, require bool) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.require[owner] = require
+	m.require[namespace] = require
 }
 
 func (m *sshCAMock) client() *apiClient {

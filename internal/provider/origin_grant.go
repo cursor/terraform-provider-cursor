@@ -105,7 +105,7 @@ func originRepoGrantsPath(owner, repo string) string {
 }
 
 func originOwnerGrantsPath(owner string) string {
-	return "/owners/" + url.PathEscape(owner) + "/grants"
+	return "/namespaces/" + url.PathEscape(owner) + "/grants"
 }
 
 func (c *apiClient) listOriginGrants(ctx context.Context, collection string) ([]originGrant, error) {

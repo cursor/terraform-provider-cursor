@@ -134,7 +134,7 @@ func TestOriginGrantUpsertAndDeleteBodies(t *testing.T) {
 		switch {
 		case r.Method == http.MethodPost && r.URL.Path == "/repos/acme/rocket/grants":
 			writeJSON(t, w, http.StatusOK, originGrant{User: &originGrantUser{ID: "user_01"}, Permission: originPermissionWrite})
-		case r.Method == http.MethodPost && r.URL.Path == "/owners/acme/grants":
+		case r.Method == http.MethodPost && r.URL.Path == "/namespaces/acme/grants":
 			writeJSON(t, w, http.StatusCreated, originGrant{TeamGroup: &originGrantTeamGroup{Kind: originTeamGroupAdmins}, Permission: "PERMISSION_ADMIN"})
 		case r.Method == http.MethodDelete && r.URL.Path == "/repos/acme/rocket/grants":
 			w.WriteHeader(http.StatusNoContent)
@@ -169,7 +169,7 @@ func TestOriginGrantUpsertAndDeleteBodies(t *testing.T) {
 
 	want := []string{
 		`POST /repos/acme/rocket/grants {"user":{"id":"user_01"},"permission":"write"}`,
-		`POST /owners/acme/grants {"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"}`,
+		`POST /namespaces/acme/grants {"teamGroup":{"kind":"admins"},"permission":"PERMISSION_ADMIN"}`,
 		`DELETE /repos/acme/rocket/grants {"user":{"id":"user_01"}}`,
 	}
 	if strings.Join(bodies, "\n") != strings.Join(want, "\n") {
@@ -210,10 +210,10 @@ func TestOriginGrantUpsertRequiresPrincipalAndPermission(t *testing.T) {
 	defer server.Close()
 
 	client := testOriginClient(server)
-	if _, err := client.upsertOriginGrant(context.Background(), "/owners/acme/grants", originGrant{Permission: originPermissionRead}); err == nil || !strings.Contains(err.Error(), "exactly one principal") {
+	if _, err := client.upsertOriginGrant(context.Background(), "/namespaces/acme/grants", originGrant{Permission: originPermissionRead}); err == nil || !strings.Contains(err.Error(), "exactly one principal") {
 		t.Fatalf("error = %v, want principal error", err)
 	}
-	if _, err := client.upsertOriginGrant(context.Background(), "/owners/acme/grants", originGrant{User: &originGrantUser{ID: "user_01"}}); err == nil || !strings.Contains(err.Error(), "permission is required") {
+	if _, err := client.upsertOriginGrant(context.Background(), "/namespaces/acme/grants", originGrant{User: &originGrantUser{ID: "user_01"}}); err == nil || !strings.Contains(err.Error(), "permission is required") {
 		t.Fatalf("error = %v, want permission error", err)
 	}
 }

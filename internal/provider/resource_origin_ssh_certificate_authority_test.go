@@ -25,7 +25,7 @@ func TestOriginSSHCertificateAuthorityCreateKeepsConfiguredLine(t *testing.T) {
 	plan.ID, plan.KeyType, plan.Fingerprint, plan.CreatedAt = types.StringUnknown(), types.StringUnknown(), types.StringUnknown(), types.StringUnknown()
 	plan.PublicKey = types.StringValue(sampleSSHCAKey + " acme-ssh-ca\n")
 	got := createSSHCA(t, res, plan)
-	if body := mock.lastBody("POST /owners/acme/ssh-certificate-authorities"); body != `{"publicKey":"`+sampleSSHCAKey+` acme-ssh-ca","name":"Acme production CA"}` {
+	if body := mock.lastBody("POST /namespaces/acme/ssh-certificate-authorities"); body != `{"publicKey":"`+sampleSSHCAKey+` acme-ssh-ca","name":"Acme production CA"}` {
 		t.Fatalf("create body = %s", body)
 	}
 	if got.PublicKey.ValueString() != sampleSSHCAKey+" acme-ssh-ca\n" {
@@ -156,7 +156,7 @@ func TestOriginSSHCertificateAuthorityUpdateRecordsCommentOnly(t *testing.T) {
 	if got.PublicKey.ValueString() != sampleSSHCAKey+" renamed-comment" || got.ID.ValueString() != sampleSSHCAID || got.Fingerprint.ValueString() != sampleSSHCAFingerprint {
 		t.Fatalf("state = %#v", got)
 	}
-	if mock.count("POST /owners/acme/ssh-certificate-authorities") != 0 {
+	if mock.count("POST /namespaces/acme/ssh-certificate-authorities") != 0 {
 		t.Fatal("update must not call the API")
 	}
 
@@ -308,7 +308,7 @@ func TestOriginSSHCertificateAuthorityDeleteProtection(t *testing.T) {
 	if !resp.Diagnostics.HasError() || !strings.Contains(resp.Diagnostics.Errors()[0].Detail(), "deletion_protection") {
 		t.Fatalf("diagnostics = %v, want deletion_protection to block delete", resp.Diagnostics)
 	}
-	if mock.count("DELETE /owners/acme/ssh-certificate-authorities/"+stored.ID) != 0 {
+	if mock.count("DELETE /namespaces/acme/ssh-certificate-authorities/"+stored.ID) != 0 {
 		t.Fatal("delete request was sent while protected")
 	}
 
@@ -327,7 +327,7 @@ func TestOriginSSHCertificateAuthorityDeleteProtection(t *testing.T) {
 	if resp.Diagnostics.HasError() {
 		t.Fatalf("unprotected delete: %v", resp.Diagnostics)
 	}
-	if mock.count("DELETE /owners/acme/ssh-certificate-authorities/"+stored.ID) != 1 {
+	if mock.count("DELETE /namespaces/acme/ssh-certificate-authorities/"+stored.ID) != 1 {
 		t.Fatal("expected the delete request when deletion_protection is false")
 	}
 }
@@ -443,8 +443,8 @@ func TestOriginSSHCertificateAuthorityDeletePreconditionThenNotFound(t *testing.
 	if resp.Diagnostics.HasError() {
 		t.Fatalf("delete diagnostics: %v", resp.Diagnostics)
 	}
-	if mock.count("DELETE /owners/acme/ssh-certificate-authorities/"+stored.ID) != 2 {
-		t.Fatalf("delete calls = %d", mock.count("DELETE /owners/acme/ssh-certificate-authorities/"+stored.ID))
+	if mock.count("DELETE /namespaces/acme/ssh-certificate-authorities/"+stored.ID) != 2 {
+		t.Fatalf("delete calls = %d", mock.count("DELETE /namespaces/acme/ssh-certificate-authorities/"+stored.ID))
 	}
 
 	resp = &resource.DeleteResponse{}
@@ -482,7 +482,7 @@ func TestOriginSSHCertificateAuthorityImportState(t *testing.T) {
 	if resp.Diagnostics.HasError() || got.ID.ValueString() != stored.ID {
 		t.Fatalf("import by fingerprint = %#v, %v", got, resp.Diagnostics)
 	}
-	if mock.count("GET /owners/acme/ssh-certificate-authorities") != 1 {
+	if mock.count("GET /namespaces/acme/ssh-certificate-authorities") != 1 {
 		t.Fatal("import by id must not list; import by fingerprint lists once")
 	}
 	if _, resp = importCA("acme:" + secondSSHCAFingerprint); !resp.Diagnostics.HasError() || !strings.Contains(resp.Diagnostics.Errors()[0].Detail(), "no SSH certificate authority with fingerprint") {

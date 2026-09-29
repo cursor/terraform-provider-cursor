@@ -39,7 +39,7 @@ func TestOriginSSHCertificateRequirementCreateUpdateDelete(t *testing.T) {
 	if got.ID.ValueString() != "acme" || !got.RequireCertificates.ValueBool() || got.DeletionProtection.ValueBool() {
 		t.Fatalf("state = %#v", got)
 	}
-	if body := mock.lastBody("POST /owners/acme/ssh-certificate-authorities:setRequirement"); body != `{"requireCertificates":true}` {
+	if body := mock.lastBody("POST /namespaces/acme/ssh-certificate-authorities:setRequirement"); body != `{"requireCertificates":true}` {
 		t.Fatalf("create body = %s", body)
 	}
 
@@ -52,7 +52,7 @@ func TestOriginSSHCertificateRequirementCreateUpdateDelete(t *testing.T) {
 	if updateResp.Diagnostics.HasError() {
 		t.Fatalf("update diagnostics: %v", updateResp.Diagnostics)
 	}
-	if body := mock.lastBody("POST /owners/acme/ssh-certificate-authorities:setRequirement"); body != `{"requireCertificates":false}` {
+	if body := mock.lastBody("POST /namespaces/acme/ssh-certificate-authorities:setRequirement"); body != `{"requireCertificates":false}` {
 		t.Fatalf("update body = %s", body)
 	}
 
@@ -62,11 +62,11 @@ func TestOriginSSHCertificateRequirementCreateUpdateDelete(t *testing.T) {
 	if deleteResp.Diagnostics.HasError() {
 		t.Fatalf("delete diagnostics: %v", deleteResp.Diagnostics)
 	}
-	if body := mock.lastBody("POST /owners/acme/ssh-certificate-authorities:setRequirement"); body != `{"requireCertificates":false}` {
+	if body := mock.lastBody("POST /namespaces/acme/ssh-certificate-authorities:setRequirement"); body != `{"requireCertificates":false}` {
 		t.Fatalf("delete body = %s", body)
 	}
-	if mock.count("POST /owners/acme/ssh-certificate-authorities:setRequirement") != 3 {
-		t.Fatalf("setRequirement calls = %d", mock.count("POST /owners/acme/ssh-certificate-authorities:setRequirement"))
+	if mock.count("POST /namespaces/acme/ssh-certificate-authorities:setRequirement") != 3 {
+		t.Fatalf("setRequirement calls = %d", mock.count("POST /namespaces/acme/ssh-certificate-authorities:setRequirement"))
 	}
 }
 
@@ -202,7 +202,7 @@ func TestOriginSSHCertificateRequirementUpdateOfDeletionProtectionSkipsAPI(t *te
 	if got.DeletionProtection.ValueBool() || !got.RequireCertificates.ValueBool() || got.ID.ValueString() != "acme" {
 		t.Fatalf("state = %#v", got)
 	}
-	if mock.count("POST /owners/acme/ssh-certificate-authorities:setRequirement") != 0 {
+	if mock.count("POST /namespaces/acme/ssh-certificate-authorities:setRequirement") != 0 {
 		t.Fatal("changing only deletion_protection must not call setRequirement")
 	}
 }
@@ -228,7 +228,7 @@ func TestOriginSSHCertificateRequirementDeleteProtection(t *testing.T) {
 	if !resp.Diagnostics.HasError() {
 		t.Fatal("a null deletion_protection must be treated as protected")
 	}
-	if mock.count("POST /owners/acme/ssh-certificate-authorities:setRequirement") != 0 {
+	if mock.count("POST /namespaces/acme/ssh-certificate-authorities:setRequirement") != 0 {
 		t.Fatal("the flag was cleared while protected")
 	}
 
@@ -239,7 +239,7 @@ func TestOriginSSHCertificateRequirementDeleteProtection(t *testing.T) {
 	if resp.Diagnostics.HasError() {
 		t.Fatalf("unprotected delete: %v", resp.Diagnostics)
 	}
-	if body := mock.lastBody("POST /owners/acme/ssh-certificate-authorities:setRequirement"); body != `{"requireCertificates":false}` {
+	if body := mock.lastBody("POST /namespaces/acme/ssh-certificate-authorities:setRequirement"); body != `{"requireCertificates":false}` {
 		t.Fatalf("delete body = %s, want the flag cleared once deletion_protection is false", body)
 	}
 }
