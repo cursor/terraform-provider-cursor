@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -38,7 +39,7 @@ func TestResolveToken_ExchangesAPIKey(t *testing.T) {
 	defer server.Close()
 
 	httpClient := &http.Client{}
-	got, err := resolveToken(httpClient, server.URL, fakeAPIKey)
+	got, err := resolveToken(context.Background(), httpClient, server.URL, fakeAPIKey)
 	if err != nil {
 		t.Fatalf("resolveToken() error: %v", err)
 	}
@@ -53,7 +54,7 @@ func TestResolveToken_PassthroughNonAPIKey(t *testing.T) {
 	httpClient := &http.Client{}
 	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test"
 
-	got, err := resolveToken(httpClient, "https://should-not-be-called.invalid", token)
+	got, err := resolveToken(context.Background(), httpClient, "https://should-not-be-called.invalid", token)
 	if err != nil {
 		t.Fatalf("resolveToken() error: %v", err)
 	}
@@ -64,7 +65,7 @@ func TestResolveToken_PassthroughNonAPIKey(t *testing.T) {
 
 func TestResolveToken_EmptyToken(t *testing.T) {
 	httpClient := &http.Client{}
-	got, err := resolveToken(httpClient, "https://should-not-be-called.invalid", "")
+	got, err := resolveToken(context.Background(), httpClient, "https://should-not-be-called.invalid", "")
 	if err != nil {
 		t.Fatalf("resolveToken() error: %v", err)
 	}
@@ -80,7 +81,7 @@ func TestResolveToken_ExchangeFailsOnHTTPError(t *testing.T) {
 	defer server.Close()
 
 	httpClient := &http.Client{}
-	_, err := resolveToken(httpClient, server.URL, "key_bad")
+	_, err := resolveToken(context.Background(), httpClient, server.URL, "key_bad")
 	if err == nil {
 		t.Fatal("resolveToken() expected error for 401 response, got nil")
 	}
@@ -94,7 +95,7 @@ func TestResolveToken_ExchangeFailsOnEmptyAccessToken(t *testing.T) {
 	defer server.Close()
 
 	httpClient := &http.Client{}
-	_, err := resolveToken(httpClient, server.URL, "key_empty_response")
+	_, err := resolveToken(context.Background(), httpClient, server.URL, "key_empty_response")
 	if err == nil {
 		t.Fatal("resolveToken() expected error for empty accessToken, got nil")
 	}
@@ -108,7 +109,7 @@ func TestResolveToken_ExchangeFailsOnWhitespaceAccessToken(t *testing.T) {
 	defer server.Close()
 
 	httpClient := &http.Client{}
-	_, err := resolveToken(httpClient, server.URL, "key_whitespace_response")
+	_, err := resolveToken(context.Background(), httpClient, server.URL, "key_whitespace_response")
 	if err == nil {
 		t.Fatal("resolveToken() expected error for whitespace-only accessToken, got nil")
 	}
