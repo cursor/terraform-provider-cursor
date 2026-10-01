@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	maxOriginInboundIPAllowlistEntries        = 100
+	maxOriginInboundIPAllowlistEntries        = 1000
 	maxOriginInboundIPAllowlistDescriptionLen = 255
 )
 
@@ -63,7 +63,7 @@ func (r *originInboundIPAllowlistEntryResource) Metadata(_ context.Context, req 
 
 func (r *originInboundIPAllowlistEntryResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: fmt.Sprintf("Manages one entry on an Origin namespace's inbound IP allowlist. While cursor_origin_inbound_ip_allowlist enforces the list and at least one entry is enabled, only the addresses of enabled entries can reach the namespace's repositories. Changing cidr, description, or enabled updates the entry in place and keeps its ID. A namespace lists at most %d entries and cannot list the same cidr spelling twice. While the list is enforced, Origin can reject a change or removal that would exclude the caller's own address, but it does not check every caller, so keep an entry that admits the address Terraform calls from. deletion_protection defaults to true, so Terraform will not remove or replace the entry until that is set to false and applied.", maxOriginInboundIPAllowlistEntries),
+		Description: fmt.Sprintf("Manages one entry on an Origin namespace's inbound IP allowlist. While cursor_origin_inbound_ip_allowlist enforces the list and at least one entry is enabled, only the addresses of enabled entries can reach the namespace's repositories. Changing cidr, description, or enabled updates the entry in place and keeps its ID. A namespace lists at most %d entries and cannot list the same cidr spelling twice. Do not use this resource for a namespace whose entries are managed by cursor_origin_inbound_ip_allowlist_entries, which removes any entry it does not list. While the list is enforced, Origin can reject a change or removal that would exclude the caller's own address, but it does not check every caller, so keep an entry that admits the address Terraform calls from. deletion_protection defaults to true, so Terraform will not remove or replace the entry until that is set to false and applied.", maxOriginInboundIPAllowlistEntries),
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:    true,
@@ -342,10 +342,14 @@ func validateOriginInboundIPAllowlistEntry(model originInboundIPAllowlistEntryMo
 	if err := validateInboundIPAllowlistCIDR(model.CIDR); err != nil {
 		return err
 	}
-	if model.Description.IsNull() || model.Description.IsUnknown() {
+	return validateInboundIPAllowlistDescription(model.Description)
+}
+
+func validateInboundIPAllowlistDescription(value types.String) error {
+	if value.IsNull() || value.IsUnknown() {
 		return nil
 	}
-	description := model.Description.ValueString()
+	description := value.ValueString()
 	if strings.TrimSpace(description) != description {
 		return fmt.Errorf("description must not have leading or trailing spaces")
 	}

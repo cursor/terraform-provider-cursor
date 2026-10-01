@@ -2,12 +2,15 @@ package provider
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/netip"
+	"sort"
 	"strings"
 	"sync"
 	"testing"
@@ -261,6 +264,15 @@ type mockInboundIPAllowlist struct {
 type mockInboundIPAllowlistJSON struct {
 	Enabled bool                              `json:"enabled,omitempty"`
 	Entries []mockInboundIPAllowlistEntryJSON `json:"entries,omitempty"`
+	Etag    string                            `json:"etag,omitempty"`
+}
+
+type mockInboundIPAllowlistReplaceJSON struct {
+	Allowlist      mockInboundIPAllowlistJSON `json:"allowlist"`
+	AddedCount     int                        `json:"addedCount"`
+	UpdatedCount   int                        `json:"updatedCount"`
+	RemovedCount   int                        `json:"removedCount"`
+	UnchangedCount int                        `json:"unchangedCount"`
 }
 
 type mockInboundIPAllowlistEntryJSON struct {
@@ -285,7 +297,7 @@ func (m *inboundIPAllowlistMock) serve(w http.ResponseWriter, r *http.Request) {
 	m.hits[route] = append(m.hits[route], strings.TrimSpace(string(raw)))
 
 	parts := strings.Split(strings.TrimPrefix(r.URL.Path, "/namespaces/"), "/")
-	if len(parts) < 2 || len(parts) > 4 || parts[1] != "inbound-ip-allowlist" || (len(parts) > 2 && parts[2] != "entries") {
+	if len(parts) < 2 || len(parts) > 4 || parts[1] != "inbound-ip-allowlist" || (len(parts) > 2 && parts[2] != "entries" && parts[2] != "entries:replace") || (len(parts) == 4 && parts[2] != "entries") {
 		http.NotFound(w, r)
 		return
 	}
@@ -297,6 +309,8 @@ func (m *inboundIPAllowlistMock) serve(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case len(parts) == 2 && r.Method == http.MethodGet:
 		writeJSON(m.t, w, http.StatusOK, list.json())
+	case len(parts) == 3 && parts[2] == "entries:replace" && r.Method == http.MethodPost:
+		m.serveReplace(w, raw, list)
 	case len(parts) == 2 && r.Method == http.MethodPatch:
 		var body struct {
 			Enabled *bool `json:"enabled"`
@@ -310,7 +324,7 @@ func (m *inboundIPAllowlistMock) serve(w http.ResponseWriter, r *http.Request) {
 		}
 		list.enabled = *body.Enabled
 		writeJSON(m.t, w, http.StatusOK, list.json())
-	case len(parts) == 3 && r.Method == http.MethodPost:
+	case len(parts) == 3 && parts[2] == "entries" && r.Method == http.MethodPost:
 		var body struct {
 			CIDR        string `json:"cidr"`
 			Description string `json:"description"`
@@ -330,7 +344,7 @@ func (m *inboundIPAllowlistMock) serve(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if len(list.entries) >= maxOriginInboundIPAllowlistEntries {
-			writeJSON(m.t, w, http.StatusBadRequest, originStatusError{Code: 3, Message: "the inbound IP allowlist already holds 100 entries"})
+			writeJSON(m.t, w, http.StatusBadRequest, originStatusError{Code: 3, Message: fmt.Sprintf("the inbound IP allowlist already holds %d entries", maxOriginInboundIPAllowlistEntries)})
 			return
 		}
 		if !m.guardCaller(w, *list, *list) {
@@ -395,6 +409,110 @@ func (m *inboundIPAllowlistMock) serve(w http.ResponseWriter, r *http.Request) {
 	default:
 		http.NotFound(w, r)
 	}
+}
+
+func (m *inboundIPAllowlistMock) serveReplace(w http.ResponseWriter, raw []byte, list *mockInboundIPAllowlist) {
+	var body struct {
+		Entries []struct {
+			CIDR        string `json:"cidr"`
+			Description string `json:"description"`
+			Enabled     *bool  `json:"enabled"`
+		} `json:"entries"`
+		Etag       string `json:"etag"`
+		AllowEmpty bool   `json:"allowEmpty"`
+	}
+	if err := json.Unmarshal(raw, &body); err != nil {
+		writeJSON(m.t, w, http.StatusBadRequest, originStatusError{Code: 3, Message: "invalid body"})
+		return
+	}
+	var violations []originFieldViolation
+	if len(body.Entries) > maxOriginInboundIPAllowlistEntries {
+		violations = append(violations, originFieldViolation{Field: "entries", Description: "at most 1000 entries"})
+	}
+	if len(body.Entries) == 0 && !body.AllowEmpty {
+		violations = append(violations, originFieldViolation{Field: "entries", Description: "set allow_empty to remove every entry"})
+	}
+	seen := map[string]bool{}
+	for i, entry := range body.Entries {
+		cidr := strings.TrimSpace(entry.CIDR)
+		field := fmt.Sprintf("entries[%d]", i)
+		if msg := mockInboundCIDRError(cidr); msg != "" {
+			violations = append(violations, originFieldViolation{Field: field, Description: msg})
+			continue
+		}
+		if seen[cidr] {
+			violations = append(violations, originFieldViolation{Field: field, Description: "duplicate cidr"})
+		}
+		seen[cidr] = true
+		if len([]rune(entry.Description)) > maxOriginInboundIPAllowlistDescriptionLen {
+			violations = append(violations, originFieldViolation{Field: fmt.Sprintf("entries[%d]", i), Description: "description too long"})
+		}
+	}
+	if len(violations) > 0 {
+		writeJSON(m.t, w, http.StatusBadRequest, originStatusError{Code: 3, Message: "invalid inbound IP allowlist entries", Details: []originStatusDetail{{Type: "type.googleapis.com/google.rpc.BadRequest", FieldViolations: violations}}})
+		return
+	}
+	if body.Etag != "" && body.Etag != list.etag() {
+		writeJSON(m.t, w, http.StatusConflict, originStatusError{Code: 10, Message: "the inbound IP allowlist changed; read it again and retry"})
+		return
+	}
+
+	type wanted struct {
+		cidr, description string
+		enabled           bool
+	}
+	want := map[string]wanted{}
+	var order []string
+	for _, entry := range body.Entries {
+		cidr := strings.TrimSpace(entry.CIDR)
+		want[cidr] = wanted{cidr: cidr, description: entry.Description, enabled: entry.Enabled == nil || *entry.Enabled}
+		order = append(order, cidr)
+	}
+	var result mockInboundIPAllowlistReplaceJSON
+	next := mockInboundIPAllowlist{enabled: list.enabled}
+	kept := map[string]bool{}
+	for _, entry := range list.entries {
+		key := entry.CIDR
+		target, ok := want[key]
+		if !ok {
+			result.RemovedCount++
+			continue
+		}
+		kept[key] = true
+		if entry.Description == target.description && entry.Enabled == target.enabled {
+			result.UnchangedCount++
+		} else {
+			result.UpdatedCount++
+		}
+		entry.Description, entry.Enabled = target.description, target.enabled
+		next.entries = append(next.entries, entry)
+	}
+	nextID := m.nextID
+	for _, key := range order {
+		if kept[key] {
+			continue
+		}
+		target := want[key]
+		next.entries = append(next.entries, m.newEntryLocked(target.cidr, target.description, target.enabled))
+		result.AddedCount++
+	}
+	if !m.guardCaller(w, *list, next) {
+		m.nextID = nextID
+		return
+	}
+	list.entries = next.entries
+	result.Allowlist = list.json()
+	writeJSON(m.t, w, http.StatusOK, result)
+}
+
+func (l *mockInboundIPAllowlist) etag() string {
+	entries := append([]originInboundIPAllowlistEntry(nil), l.entries...)
+	sort.Slice(entries, func(i, j int) bool { return entries[i].ID < entries[j].ID })
+	sum := sha256.New()
+	for _, entry := range entries {
+		fmt.Fprintf(sum, "%s\x00%s\x00%s\x00%v\x00", entry.ID, entry.CIDR, entry.Description, entry.Enabled)
+	}
+	return hex.EncodeToString(sum.Sum(nil))[:32]
 }
 
 func (m *inboundIPAllowlistMock) guardCaller(w http.ResponseWriter, current, next mockInboundIPAllowlist) bool {
@@ -465,7 +583,7 @@ func (l *mockInboundIPAllowlist) with(index int, replacement *originInboundIPAll
 }
 
 func (l *mockInboundIPAllowlist) json() mockInboundIPAllowlistJSON {
-	out := mockInboundIPAllowlistJSON{Enabled: l.enabled}
+	out := mockInboundIPAllowlistJSON{Enabled: l.enabled, Etag: l.etag()}
 	for _, entry := range l.entries {
 		out.Entries = append(out.Entries, mockInboundEntryJSON(entry))
 	}
@@ -552,6 +670,12 @@ func (m *inboundIPAllowlistMock) lastBody(route string) string {
 		m.t.Fatalf("no request recorded for %s", route)
 	}
 	return bodies[len(bodies)-1]
+}
+
+func (m *inboundIPAllowlistMock) etag(namespace string) string {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.listLocked(namespace).etag()
 }
 
 func (m *inboundIPAllowlistMock) count(route string) int {

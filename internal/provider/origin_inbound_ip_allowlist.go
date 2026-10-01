@@ -12,6 +12,21 @@ import (
 type originInboundIPAllowlist struct {
 	Enabled bool                            `json:"enabled"`
 	Entries []originInboundIPAllowlistEntry `json:"entries"`
+	Etag    string                          `json:"etag"`
+}
+
+type originInboundIPAllowlistReplace struct {
+	Entries    []originInboundIPAllowlistEntryAdd `json:"entries"`
+	Etag       string                             `json:"etag,omitempty"`
+	AllowEmpty bool                               `json:"allowEmpty,omitempty"`
+}
+
+type originInboundIPAllowlistReplaceResult struct {
+	Allowlist      *originInboundIPAllowlist `json:"allowlist"`
+	AddedCount     int                       `json:"addedCount"`
+	UpdatedCount   int                       `json:"updatedCount"`
+	RemovedCount   int                       `json:"removedCount"`
+	UnchangedCount int                       `json:"unchangedCount"`
 }
 
 type originInboundIPAllowlistEntry struct {
@@ -56,6 +71,50 @@ func (c *apiClient) getOriginInboundIPAllowlist(ctx context.Context, namespace s
 		return nil, err
 	}
 	return decodeOriginInboundIPAllowlist(body)
+}
+
+func (c *apiClient) replaceOriginInboundIPAllowlistEntries(ctx context.Context, namespace string, replace originInboundIPAllowlistReplace) (*originInboundIPAllowlistReplaceResult, error) {
+	if replace.Entries == nil {
+		replace.Entries = []originInboundIPAllowlistEntryAdd{}
+	}
+	body, err := c.originDo(ctx, http.MethodPost, originInboundIPAllowlistPath(namespace)+"/entries:replace", replace, http.StatusOK)
+	if err != nil {
+		return nil, err
+	}
+	var result originInboundIPAllowlistReplaceResult
+	if err := json.Unmarshal(body, &result); err != nil {
+		return nil, fmt.Errorf("decoding Origin inbound IP allowlist replace response: %w", err)
+	}
+	if result.Allowlist == nil {
+		return nil, fmt.Errorf("Origin API returned an inbound IP allowlist replace response without an allowlist")
+	}
+	if result.Allowlist, err = checkOriginInboundIPAllowlist(*result.Allowlist); err != nil {
+		return nil, err
+	}
+	if err := checkOriginInboundIPAllowlistReplaced(replace.Entries, result.Allowlist.Entries); err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+func checkOriginInboundIPAllowlistReplaced(want []originInboundIPAllowlistEntryAdd, got []originInboundIPAllowlistEntry) error {
+	if len(got) != len(want) {
+		return fmt.Errorf("Origin API returned %d inbound IP allowlist entries after replacing them with %d", len(got), len(want))
+	}
+	stored := make(map[string]originInboundIPAllowlistEntry, len(got))
+	for _, entry := range got {
+		stored[entry.CIDR] = entry
+	}
+	for _, entry := range want {
+		match, ok := stored[strings.TrimSpace(entry.CIDR)]
+		if !ok {
+			return fmt.Errorf("Origin API did not return inbound IP allowlist entry %s after replacing the entries", entry.CIDR)
+		}
+		if match.Description != entry.Description || match.Enabled != entry.Enabled {
+			return fmt.Errorf("Origin API returned inbound IP allowlist entry %s with description %q and enabled %v, want %q and %v", entry.CIDR, match.Description, match.Enabled, entry.Description, entry.Enabled)
+		}
+	}
+	return nil
 }
 
 func (c *apiClient) setOriginInboundIPAllowlistEnabled(ctx context.Context, namespace string, enabled bool) (*originInboundIPAllowlist, error) {
@@ -141,6 +200,10 @@ func decodeOriginInboundIPAllowlist(body []byte) (*originInboundIPAllowlist, err
 	if err := json.Unmarshal(body, &list); err != nil {
 		return nil, fmt.Errorf("decoding Origin inbound IP allowlist: %w", err)
 	}
+	return checkOriginInboundIPAllowlist(list)
+}
+
+func checkOriginInboundIPAllowlist(list originInboundIPAllowlist) (*originInboundIPAllowlist, error) {
 	for _, entry := range list.Entries {
 		if err := checkOriginInboundIPAllowlistEntry(entry); err != nil {
 			return nil, err

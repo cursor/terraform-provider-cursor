@@ -3,12 +3,12 @@
 page_title: "cursor_origin_inbound_ip_allowlist_entries Data Source - cursor"
 subcategory: ""
 description: |-
-  Lists the entries on an Origin namespace's inbound IP allowlist, oldest first, and whether the namespace enforces it. A namespace lists at most 100 entries. Uses the provider auth token.
+  Lists the entries on an Origin namespace's inbound IP allowlist, oldest first, and whether the namespace enforces it. A namespace lists at most 1000 entries. Uses the provider auth token.
 ---
 
 # cursor_origin_inbound_ip_allowlist_entries (Data Source)
 
-Lists the entries on an Origin namespace's inbound IP allowlist, oldest first, and whether the namespace enforces it. A namespace lists at most 100 entries. Uses the provider auth token.
+Lists the entries on an Origin namespace's inbound IP allowlist, oldest first, and whether the namespace enforces it. A namespace lists at most 1000 entries. Uses the provider auth token.
 
 ## Example Usage
 
