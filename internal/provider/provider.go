@@ -93,7 +93,7 @@ func (p *cursorProvider) Configure(ctx context.Context, req provider.ConfigureRe
 	}
 	endpoint = strings.TrimRight(endpoint, "/")
 
-	client, err := newAPIClient(endpoint, token, p.version, adminKeys{
+	client, err := newAPIClient(ctx, endpoint, token, p.version, adminKeys{
 		team:         getStringValue(config.TeamAPIKey, envTeamAPIKey),
 		organization: getStringValue(config.OrganizationAPIKey, envOrgAPIKey),
 	})

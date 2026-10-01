@@ -21,7 +21,7 @@ const defaultOriginAPIBase = "https://api.cursor.com/v1/origin"
 
 type apiClient struct {
 	automations v1connect.AutomationsServiceClient
-	httpClient  *http.Client
+	httpClient  httpDoer
 	authHeader  string
 	userAgent   string
 	originBase  string
@@ -36,15 +36,16 @@ type adminKeys struct {
 	organization string
 }
 
-func newAPIClient(endpoint string, token string, version string, admin adminKeys) (*apiClient, error) {
+func newAPIClient(ctx context.Context, endpoint string, token string, version string, admin adminKeys) (*apiClient, error) {
 	if endpoint == "" {
 		return nil, fmt.Errorf("endpoint is required")
 	}
-	httpClient := &http.Client{Timeout: 30 * time.Second}
+	// Retries wrap http.Client so its Timeout bounds each attempt, not the waits between them.
+	httpClient := newRetryClient(&http.Client{Timeout: 30 * time.Second})
 
 	// If the token is a raw API key, exchange it for a session token before
 	// building the Connect client.
-	bearerToken, err := resolveToken(httpClient, endpoint, token)
+	bearerToken, err := resolveToken(ctx, httpClient, endpoint, token)
 	if err != nil {
 		return nil, fmt.Errorf("failed to exchange API key for session token: %w", err)
 	}
@@ -92,7 +93,7 @@ type exchangeResponse struct {
 // If the supplied token is a raw API key (key_ prefix), it is exchanged via
 // the /auth/exchange_user_api_key endpoint first. Otherwise the token is
 // returned as-is.
-func resolveToken(httpClient *http.Client, endpoint string, token string) (string, error) {
+func resolveToken(ctx context.Context, httpClient httpDoer, endpoint string, token string) (string, error) {
 	trimmed := strings.TrimSpace(token)
 	if trimmed == "" {
 		return trimmed, nil
@@ -103,7 +104,7 @@ func resolveToken(httpClient *http.Client, endpoint string, token string) (strin
 
 	url := strings.TrimRight(endpoint, "/") + "/auth/exchange_user_api_key"
 
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader([]byte("{}")))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader([]byte("{}")))
 	if err != nil {
 		return "", fmt.Errorf("building exchange request: %w", err)
 	}
