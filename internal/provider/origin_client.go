@@ -49,14 +49,26 @@ type originMirror struct {
 }
 
 type originStatusError struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
+	Code    int                  `json:"code"`
+	Message string               `json:"message"`
+	Details []originStatusDetail `json:"details,omitempty"`
+}
+
+type originStatusDetail struct {
+	Type            string                 `json:"@type"`
+	FieldViolations []originFieldViolation `json:"fieldViolations,omitempty"`
+}
+
+type originFieldViolation struct {
+	Field       string `json:"field"`
+	Description string `json:"description"`
 }
 
 type originAPIError struct {
-	StatusCode int
-	Message    string
-	RequestID  string
+	StatusCode      int
+	Message         string
+	RequestID       string
+	FieldViolations []originFieldViolation
 }
 
 func (e *originAPIError) Error() string {
@@ -159,7 +171,20 @@ func (c *apiClient) originDo(ctx context.Context, method, path string, payload a
 		return nil, apiErr
 	}
 	apiErr.Message = originErrorMessage(body)
+	apiErr.FieldViolations = originFieldViolations(body)
 	return nil, apiErr
+}
+
+func originFieldViolations(body []byte) []originFieldViolation {
+	var status originStatusError
+	if err := json.Unmarshal(body, &status); err != nil {
+		return nil
+	}
+	var out []originFieldViolation
+	for _, detail := range status.Details {
+		out = append(out, detail.FieldViolations...)
+	}
+	return out
 }
 
 func originNotFoundMessage(body []byte) string {
