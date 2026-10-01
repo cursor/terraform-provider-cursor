@@ -116,6 +116,7 @@ func (p *cursorProvider) Resources(_ context.Context) []func() resource.Resource
 		NewOriginSSHCertificateRequirementResource,
 		NewOriginInboundIPAllowlistResource,
 		NewOriginInboundIPAllowlistEntryResource,
+		NewOriginInboundIPAllowlistEntriesResource,
 	}
 }
 
