@@ -1,0 +1,51 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+~> **Note:** This resource owns every entry on the namespace's allowlist. Do not use it together with `cursor_origin_inbound_ip_allowlist_entry` for the same namespace: each apply of this resource removes entries it does not list, and the per-entry resources then plan to add them back. Use one or the other per namespace.
+
+Each create, update, or destroy is one `ReplaceInboundIpAllowlistEntries` call, however many entries change, so large lists stay well under the Origin API's per-user rate limit. CIDRs are stored as spelled: `10.0.0.1/8` and `10.0.0.0/8` are different entries, and changing an entry's spelling removes the old entry and adds a new one with a new ID.
+
+Updates send the `etag` from the last read. If the entries changed since then, Origin rejects the replace with HTTP 409; run `terraform apply -refresh-only` (or `terraform plan`, which refreshes) to review the current entries, then apply again. Creating the resource replaces whatever entries the namespace already lists, so import an existing set instead if you want to review it first.
+
+## Example Usage
+
+{{ tffile .ExampleFile }}
+
+## Migrating from cursor_origin_inbound_ip_allowlist_entry
+
+Remove the per-entry resources from state without deleting the entries, then import the namespace into this resource. With Terraform 1.7 or later, use `removed` and `import` blocks and list the same entries in `entry` blocks:
+
+{{ tffile "examples/resources/cursor_origin_inbound_ip_allowlist_entries/migrate.tf" }}
+
+OpenTofu's `removed` block always forgets the resource without destroying it and does not accept a `lifecycle` block, so omit `lifecycle` there.
+
+`terraform plan` should then show only the import. Any difference it shows is an entry that the new configuration adds, changes, or removes.
+
+On older Terraform versions, run `terraform state rm` for the per-entry resources and then import:
+
+```shell
+terraform state rm 'cursor_origin_inbound_ip_allowlist_entry.office' 'cursor_origin_inbound_ip_allowlist_entry.egress'
+terraform import cursor_origin_inbound_ip_allowlist_entries.acme acme
+```
+
+Do not run `terraform destroy` on the per-entry resources or apply with them still in configuration, since that deletes the entries.
+
+{{ .SchemaMarkdown | trimspace }}
+{{- if .HasImport }}
+
+## Import
+
+Import is supported using the following syntax:
+
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
+{{ codefile "shell" .ImportFile }}
+{{- end }}
