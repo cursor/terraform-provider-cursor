@@ -71,7 +71,7 @@ resource "cursor_platform_workflow" "example_slack_triage" {
     },
     {
       slack_mention = {
-        channel = "C0123456789"
+        channels = ["C0123456789"]
       }
     },
     {
@@ -86,9 +86,7 @@ resource "cursor_platform_workflow" "example_slack_triage" {
         repos         = ["example-org/example-repo"]
         label_name    = "triage"
         on_added      = true
-        on_removed    = false
         pull_requests = true
-        issues        = false
       }
     }
   ]
@@ -96,8 +94,7 @@ resource "cursor_platform_workflow" "example_slack_triage" {
   action = [
     {
       slack = {
-        channels          = ["C0123456789", "C9876543210"]
-        respond_in_thread = true
+        channels = ["C0123456789", "C9876543210"]
       }
     }
   ]
