@@ -655,20 +655,28 @@ func (r *platformWorkflowResource) Schema(_ context.Context, _ resource.SchemaRe
 									Description: "Case-insensitive label name filter. Omit to match any label.",
 								},
 								"on_added": schema.BoolAttribute{
-									Optional:    true,
-									Description: "Fire when a label is added. At least one of on_added/on_removed must be true.",
+									Optional:      true,
+									Computed:      true,
+									PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+									Description:   "Fire when a label is added. At least one of on_added/on_removed must be true. Defaults to false.",
 								},
 								"on_removed": schema.BoolAttribute{
-									Optional:    true,
-									Description: "Fire when a label is removed. At least one of on_added/on_removed must be true.",
+									Optional:      true,
+									Computed:      true,
+									PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+									Description:   "Fire when a label is removed. At least one of on_added/on_removed must be true. Defaults to false.",
 								},
 								"pull_requests": schema.BoolAttribute{
-									Optional:    true,
-									Description: "Watch pull request labels. At least one of pull_requests/issues must be true.",
+									Optional:      true,
+									Computed:      true,
+									PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+									Description:   "Watch pull request labels. At least one of pull_requests/issues must be true. Defaults to false.",
 								},
 								"issues": schema.BoolAttribute{
-									Optional:    true,
-									Description: "Watch issue labels. At least one of pull_requests/issues must be true.",
+									Optional:      true,
+									Computed:      true,
+									PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+									Description:   "Watch issue labels. At least one of pull_requests/issues must be true. Defaults to false.",
 								},
 							},
 						},
@@ -3719,10 +3727,10 @@ func protoTriggerToModel(ctx context.Context, t *v1.Trigger) (triggerModel, erro
 			tm.GitLabel = &gitLabelModel{
 				Repos:        repos,
 				LabelName:    stringOrNull(label.GetLabelName()),
-				OnAdded:      boolOrNull(label.GetOnAdded()),
-				OnRemoved:    boolOrNull(label.GetOnRemoved()),
-				PullRequests: boolOrNull(label.GetPullRequests()),
-				Issues:       boolOrNull(label.GetIssues()),
+				OnAdded:      types.BoolValue(label.GetOnAdded()),
+				OnRemoved:    types.BoolValue(label.GetOnRemoved()),
+				PullRequests: types.BoolValue(label.GetPullRequests()),
+				Issues:       types.BoolValue(label.GetIssues()),
 			}
 
 		default:

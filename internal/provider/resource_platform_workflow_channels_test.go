@@ -350,9 +350,10 @@ func TestGitLabelTriggerRoundTrip(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		// False flags read back as null so unset configs do not drift.
-		if m.GitLabel.OnRemoved.ValueBool() != event.OnRemoved || (!event.OnRemoved && !m.GitLabel.OnRemoved.IsNull()) {
-			t.Fatalf("on_removed=%v for %v", m.GitLabel.OnRemoved, event)
+		// Flags are Computed and read back as concrete booleans, so an explicit
+		// false in config matches the stored value.
+		if !m.GitLabel.OnRemoved.Equal(types.BoolValue(event.OnRemoved)) || !m.GitLabel.Issues.Equal(types.BoolValue(event.Issues)) {
+			t.Fatalf("on_removed=%v issues=%v for %v", m.GitLabel.OnRemoved, m.GitLabel.Issues, event)
 		}
 		output, err := triggerModelToProto(ctx, &m)
 		if err != nil || !proto.Equal(input, output) {

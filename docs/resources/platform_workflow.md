@@ -239,11 +239,11 @@ Required:
 
 Optional:
 
-- `issues` (Boolean) Watch issue labels. At least one of pull_requests/issues must be true.
+- `issues` (Boolean) Watch issue labels. At least one of pull_requests/issues must be true. Defaults to false.
 - `label_name` (String) Case-insensitive label name filter. Omit to match any label.
-- `on_added` (Boolean) Fire when a label is added. At least one of on_added/on_removed must be true.
-- `on_removed` (Boolean) Fire when a label is removed. At least one of on_added/on_removed must be true.
-- `pull_requests` (Boolean) Watch pull request labels. At least one of pull_requests/issues must be true.
+- `on_added` (Boolean) Fire when a label is added. At least one of on_added/on_removed must be true. Defaults to false.
+- `on_removed` (Boolean) Fire when a label is removed. At least one of on_added/on_removed must be true. Defaults to false.
+- `pull_requests` (Boolean) Watch pull request labels. At least one of pull_requests/issues must be true. Defaults to false.
 
 
 <a id="nestedatt--trigger--git_pull_request"></a>
