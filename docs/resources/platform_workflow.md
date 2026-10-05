@@ -80,7 +80,7 @@ resource "cursor_platform_workflow" "example_slack_triage" {
   trigger = [
     {
       slack_reaction_added = {
-        channel    = "C0123456789"
+        channels   = ["C0123456789", "C9876543210"]
         emoji_name = "eyes"
       }
     },
@@ -88,13 +88,31 @@ resource "cursor_platform_workflow" "example_slack_triage" {
       slack_mention = {
         channel = "C0123456789"
       }
+    },
+    {
+      slack = {
+        channels         = ["C0123456789", "C9876543210"]
+        message_contains = "triage"
+        top_level_only   = true
+      }
+    },
+    {
+      git_label = {
+        repos         = ["example-org/example-repo"]
+        label_name    = "triage"
+        on_added      = true
+        on_removed    = false
+        pull_requests = true
+        issues        = false
+      }
     }
   ]
 
   action = [
     {
       slack = {
-        channel = "C0123456789"
+        channels          = ["C0123456789", "C9876543210"]
+        respond_in_thread = true
       }
     }
   ]
@@ -177,6 +195,7 @@ Optional:
 
 - `cron` (Attributes) Trigger on a cron schedule. (see [below for nested schema](#nestedatt--trigger--cron))
 - `git_ci_completed` (Attributes) Trigger when all CI checks complete on a PR (PR mode) or a specific branch (branch mode). (see [below for nested schema](#nestedatt--trigger--git_ci_completed))
+- `git_label` (Attributes) Trigger when a label is added to or removed from a GitHub pull request or issue. (see [below for nested schema](#nestedatt--trigger--git_label))
 - `git_pull_request` (Attributes) Trigger on GitHub pull request events. (see [below for nested schema](#nestedatt--trigger--git_pull_request))
 - `git_push` (Attributes) Trigger on git push events. (see [below for nested schema](#nestedatt--trigger--git_push))
 - `linear` (Attributes) Trigger on Linear events. (see [below for nested schema](#nestedatt--trigger--linear))
@@ -212,6 +231,22 @@ Optional:
 - `branch` (String) If set, trigger on CI completion for this branch (e.g. "main") instead of on PRs. user_allowlist and ignore_base_failures are ignored in branch mode.
 - `condition` (String) Which CI outcome fires the trigger: "failure", "success", or "any". Server default applies if unset.
 - `ignore_base_failures` (Boolean) If true, ignore CI failures that also exist on the base branch. Only applies in PR mode.
+
+
+<a id="nestedatt--trigger--git_label"></a>
+### Nested Schema for `trigger.git_label`
+
+Required:
+
+- `repos` (List of String) Repositories to watch. At least one is required.
+
+Optional:
+
+- `issues` (Boolean) Watch issues.
+- `label_name` (String) Case-insensitive label name filter. Omit to match any label.
+- `on_added` (Boolean) Fire when a label is added. At least one of on_added/on_removed must be true.
+- `on_removed` (Boolean) Fire when a label is removed.
+- `pull_requests` (Boolean) Watch pull requests. At least one of pull_requests/issues must be true.
 
 
 <a id="nestedatt--trigger--git_pull_request"></a>
@@ -375,29 +410,26 @@ Optional:
 <a id="nestedatt--trigger--slack"></a>
 ### Nested Schema for `trigger.slack`
 
-Required:
-
-- `channel` (String) Slack channel ID.
-
 Optional:
 
 - `block_unauthenticated_slack_users` (Boolean) If true, only Slack users who linked Cursor can trigger. Omit/false = anyone (default).
+- `channel` (String) Legacy Slack channel ID. Set channel or channels; channels takes precedence when populated.
+- `channels` (List of String) Slack channel IDs. The list must be nonempty, with nonblank, unique values. If channel is also set, it must match the first entry. Leave unset to retain the server channel list.
 - `completion_reaction_custom_emoji` (String) Custom Slack reaction emoji in ":emoji_name:" form. Only used when completion_reaction_mode is "custom".
 - `completion_reaction_mode` (String) Controls the emoji reaction added to the triggering Slack message when the automation completes successfully: "on" (default Cursor reaction), "off" (no reaction), or "custom" (use completion_reaction_custom_emoji). Leave unset to use the Cursor default.
 - `message_contains` (String) Only trigger if message contains this text (case-insensitive).
 - `message_contains_is_regex` (Boolean) If true, message_contains is treated as a regex pattern (case-insensitive).
+- `top_level_only` (Boolean) If true, trigger only on top-level messages, not thread replies. Leave unset to retain the server value/default.
 
 
 <a id="nestedatt--trigger--slack_any_reaction_added"></a>
 ### Nested Schema for `trigger.slack_any_reaction_added`
 
-Required:
-
-- `channel` (String) Slack channel ID.
-
 Optional:
 
 - `block_unauthenticated_slack_users` (Boolean) If true, only Slack users who linked Cursor can trigger. Omit/false = anyone (default).
+- `channel` (String) Legacy Slack channel ID. Set channel or channels; channels takes precedence when populated.
+- `channels` (List of String) Slack channel IDs. The list must be nonempty, with nonblank, unique values. If channel is also set, it must match the first entry. Leave unset to retain the server channel list.
 - `only_owner_reactions` (Boolean) If true, only the automation owner's own linked Slack user can trigger it. Stricter than block_unauthenticated_slack_users.
 
 
@@ -412,13 +444,11 @@ Optional:
 <a id="nestedatt--trigger--slack_mention"></a>
 ### Nested Schema for `trigger.slack_mention`
 
-Required:
-
-- `channel` (String) Slack channel ID.
-
 Optional:
 
 - `block_unauthenticated_slack_users` (Boolean) If true, only Slack users who linked Cursor can trigger. Omit/false = anyone (default).
+- `channel` (String) Legacy Slack channel ID. Set channel or channels; channels takes precedence when populated.
+- `channels` (List of String) Slack channel IDs. The list must be nonempty, with nonblank, unique values. If channel is also set, it must match the first entry. Leave unset to retain the server channel list.
 
 
 <a id="nestedatt--trigger--slack_reaction_added"></a>
@@ -426,12 +456,13 @@ Optional:
 
 Required:
 
-- `channel` (String) Slack channel ID.
 - `emoji_name` (String) Slack emoji short name without colons, lowercase (e.g. "thumbsup", "white_check_mark").
 
 Optional:
 
 - `block_unauthenticated_slack_users` (Boolean) If true, only Slack users who linked Cursor can trigger. Omit/false = anyone (default).
+- `channel` (String) Legacy Slack channel ID. Set channel or channels; channels takes precedence when populated.
+- `channels` (List of String) Slack channel IDs. The list must be nonempty, with nonblank, unique values. If channel is also set, it must match the first entry. Leave unset to retain the server channel list.
 - `only_owner_reactions` (Boolean) If true, only the automation owner's own linked Slack user can trigger it. Stricter than block_unauthenticated_slack_users.
 
 
@@ -525,7 +556,8 @@ Optional:
 
 Optional:
 
-- `channel` (String) Slack channel ID to post to.
+- `channel` (String) Legacy Slack destination ID. channels takes precedence when populated.
+- `channels` (List of String) Slack channel IDs. The list must be nonempty, with nonblank, unique values. If channel is also set, it must match the first entry. Leave unset to retain the server channel list.
 - `generalized` (Boolean) If true, agent can list and send to any Slack channel or DM dynamically.
 - `post_as_thread` (Boolean) If true, post a parent message with the automation name and reply in the thread.
 - `respond_in_thread` (Boolean, Deprecated) Deprecated: the server ignores this flag and always replies in the triggering Slack thread. Kept for compatibility with existing configurations.

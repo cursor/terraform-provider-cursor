@@ -65,7 +65,7 @@ resource "cursor_platform_workflow" "example_slack_triage" {
   trigger = [
     {
       slack_reaction_added = {
-        channel    = "C0123456789"
+        channels   = ["C0123456789", "C9876543210"]
         emoji_name = "eyes"
       }
     },
@@ -73,13 +73,31 @@ resource "cursor_platform_workflow" "example_slack_triage" {
       slack_mention = {
         channel = "C0123456789"
       }
+    },
+    {
+      slack = {
+        channels         = ["C0123456789", "C9876543210"]
+        message_contains = "triage"
+        top_level_only   = true
+      }
+    },
+    {
+      git_label = {
+        repos         = ["example-org/example-repo"]
+        label_name    = "triage"
+        on_added      = true
+        on_removed    = false
+        pull_requests = true
+        issues        = false
+      }
     }
   ]
 
   action = [
     {
       slack = {
-        channel = "C0123456789"
+        channels          = ["C0123456789", "C9876543210"]
+        respond_in_thread = true
       }
     }
   ]

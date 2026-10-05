@@ -214,6 +214,18 @@ func (d *platformWorkflowDataSource) Schema(_ context.Context, _ datasource.Sche
 								},
 							},
 						},
+						"git_label": schema.SingleNestedAttribute{
+							Computed:    true,
+							Description: "Trigger on GitHub pull request or issue label changes.",
+							Attributes: map[string]schema.Attribute{
+								"repos":         schema.ListAttribute{Computed: true, ElementType: types.StringType, Description: "Repositories to watch."},
+								"label_name":    schema.StringAttribute{Computed: true, Description: "Case-insensitive label name filter."},
+								"on_added":      schema.BoolAttribute{Computed: true, Description: "Whether label additions trigger."},
+								"on_removed":    schema.BoolAttribute{Computed: true, Description: "Whether label removals trigger."},
+								"pull_requests": schema.BoolAttribute{Computed: true, Description: "Whether pull requests are watched."},
+								"issues":        schema.BoolAttribute{Computed: true, Description: "Whether issues are watched."},
+							},
+						},
 						"slack": schema.SingleNestedAttribute{
 							Computed:    true,
 							Description: "Trigger on Slack messages.",
@@ -222,6 +234,8 @@ func (d *platformWorkflowDataSource) Schema(_ context.Context, _ datasource.Sche
 									Computed:    true,
 									Description: "Slack channel ID.",
 								},
+								"channels":       slackChannelsDataSourceAttribute(),
+								"top_level_only": schema.BoolAttribute{Computed: true, Description: "Whether only top-level Slack messages trigger."},
 								"message_contains": schema.StringAttribute{
 									Computed:    true,
 									Description: "Message text filter (case-insensitive).",
@@ -262,6 +276,7 @@ func (d *platformWorkflowDataSource) Schema(_ context.Context, _ datasource.Sche
 									Computed:    true,
 									Description: "Slack channel ID.",
 								},
+								"channels": slackChannelsDataSourceAttribute(),
 								"emoji_name": schema.StringAttribute{
 									Computed:    true,
 									Description: "Slack emoji short name without colons.",
@@ -284,6 +299,7 @@ func (d *platformWorkflowDataSource) Schema(_ context.Context, _ datasource.Sche
 									Computed:    true,
 									Description: "Slack channel ID.",
 								},
+								"channels": slackChannelsDataSourceAttribute(),
 								"block_unauthenticated_slack_users": schema.BoolAttribute{
 									Computed:    true,
 									Description: "Whether only Slack users who linked Cursor can trigger.",
@@ -298,6 +314,7 @@ func (d *platformWorkflowDataSource) Schema(_ context.Context, _ datasource.Sche
 									Computed:    true,
 									Description: "Slack channel ID.",
 								},
+								"channels": slackChannelsDataSourceAttribute(),
 								"block_unauthenticated_slack_users": schema.BoolAttribute{
 									Computed:    true,
 									Description: "Whether only Slack users who linked Cursor can trigger.",
@@ -547,6 +564,7 @@ func (d *platformWorkflowDataSource) Schema(_ context.Context, _ datasource.Sche
 									Computed:    true,
 									Description: "Slack channel ID to post to.",
 								},
+								"channels": slackChannelsDataSourceAttribute(),
 								"generalized": schema.BoolAttribute{
 									Computed:    true,
 									Description: "If true, agent can list and send to any Slack channel or DM dynamically.",
@@ -634,6 +652,13 @@ func (d *platformWorkflowDataSource) Schema(_ context.Context, _ datasource.Sche
 				Description: "Unix timestamp (seconds) when the automation was last updated.",
 			},
 		},
+	}
+}
+
+func slackChannelsDataSourceAttribute() schema.ListAttribute {
+	return schema.ListAttribute{
+		Computed: true, ElementType: types.StringType,
+		Description: "Complete Slack channel ID list, including the legacy channel when no repeated channels are stored.",
 	}
 }
 

@@ -165,6 +165,7 @@ type triggerModel struct {
 	GitPullRequest               *gitPullRequestModel                      `tfsdk:"git_pull_request"`
 	GitPush                      *gitPushModel                             `tfsdk:"git_push"`
 	GitCICompleted               *gitCICompletedModel                      `tfsdk:"git_ci_completed"`
+	GitLabel                     *gitLabelModel                            `tfsdk:"git_label"`
 	Cron                         *cronModel                                `tfsdk:"cron"`
 	Slack                        *slackTriggerModel                        `tfsdk:"slack"`
 	SlackChannelCreated          *slackChannelCreatedTriggerModel          `tfsdk:"slack_channel_created"`
@@ -182,7 +183,7 @@ type triggerModel struct {
 
 // triggerTypeNames lists the trigger block names in schema order, used for
 // the "exactly one trigger type" error message.
-const triggerTypeNames = "git_pull_request, git_push, git_ci_completed, cron, slack, slack_channel_created, slack_reaction_added, slack_mention, slack_any_reaction_added, linear, webhook, pagerduty, sentry, microsoft_teams, or microsoft_teams_channel_created"
+const triggerTypeNames = "git_pull_request, git_push, git_ci_completed, git_label, cron, slack, slack_channel_created, slack_reaction_added, slack_mention, slack_any_reaction_added, linear, webhook, pagerduty, sentry, microsoft_teams, or microsoft_teams_channel_created"
 
 const actionTypeNames = "pr_comment, git_pr, request_reviewers, mcp, slack, read_slack, microsoft_teams, read_microsoft_teams, manage_check_run, approve_pr, or resolve_review_threads"
 
@@ -211,8 +212,19 @@ type cronModel struct {
 	Schedule types.String `tfsdk:"schedule"`
 }
 
+type gitLabelModel struct {
+	Repos        types.List   `tfsdk:"repos"`
+	LabelName    types.String `tfsdk:"label_name"`
+	OnAdded      types.Bool   `tfsdk:"on_added"`
+	OnRemoved    types.Bool   `tfsdk:"on_removed"`
+	PullRequests types.Bool   `tfsdk:"pull_requests"`
+	Issues       types.Bool   `tfsdk:"issues"`
+}
+
 type slackTriggerModel struct {
 	Channel                        types.String `tfsdk:"channel"`
+	Channels                       types.List   `tfsdk:"channels"`
+	TopLevelOnly                   types.Bool   `tfsdk:"top_level_only"`
 	MessageContains                types.String `tfsdk:"message_contains"`
 	MessageContainsIsRegex         types.Bool   `tfsdk:"message_contains_is_regex"`
 	BlockUnauthenticatedSlackUsers types.Bool   `tfsdk:"block_unauthenticated_slack_users"`
@@ -226,6 +238,7 @@ type slackChannelCreatedTriggerModel struct {
 
 type slackReactionAddedTriggerModel struct {
 	Channel                        types.String `tfsdk:"channel"`
+	Channels                       types.List   `tfsdk:"channels"`
 	EmojiName                      types.String `tfsdk:"emoji_name"`
 	BlockUnauthenticatedSlackUsers types.Bool   `tfsdk:"block_unauthenticated_slack_users"`
 	OnlyOwnerReactions             types.Bool   `tfsdk:"only_owner_reactions"`
@@ -233,11 +246,13 @@ type slackReactionAddedTriggerModel struct {
 
 type slackMentionTriggerModel struct {
 	Channel                        types.String `tfsdk:"channel"`
+	Channels                       types.List   `tfsdk:"channels"`
 	BlockUnauthenticatedSlackUsers types.Bool   `tfsdk:"block_unauthenticated_slack_users"`
 }
 
 type slackAnyReactionAddedTriggerModel struct {
 	Channel                        types.String `tfsdk:"channel"`
+	Channels                       types.List   `tfsdk:"channels"`
 	BlockUnauthenticatedSlackUsers types.Bool   `tfsdk:"block_unauthenticated_slack_users"`
 	OnlyOwnerReactions             types.Bool   `tfsdk:"only_owner_reactions"`
 }
@@ -350,6 +365,7 @@ type mcpActionModel struct {
 
 type slackActionModel struct {
 	Channel         types.String `tfsdk:"channel"`
+	Channels        types.List   `tfsdk:"channels"`
 	Generalized     types.Bool   `tfsdk:"generalized"`
 	RespondInThread types.Bool   `tfsdk:"respond_in_thread"`
 	PostAsThread    types.Bool   `tfsdk:"post_as_thread"`
@@ -624,13 +640,31 @@ func (r *platformWorkflowResource) Schema(_ context.Context, _ resource.SchemaRe
 								},
 							},
 						},
+						"git_label": schema.SingleNestedAttribute{
+							Optional:    true,
+							Description: "Trigger when a label is added to or removed from a GitHub pull request or issue.",
+							Attributes: map[string]schema.Attribute{
+								"repos":         schema.ListAttribute{Required: true, ElementType: types.StringType, Description: "Repositories to watch. At least one is required."},
+								"label_name":    schema.StringAttribute{Optional: true, Description: "Case-insensitive label name filter. Omit to match any label."},
+								"on_added":      schema.BoolAttribute{Optional: true, Computed: true, PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()}, Description: "Fire when a label is added. At least one of on_added/on_removed must be true."},
+								"on_removed":    schema.BoolAttribute{Optional: true, Computed: true, PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()}, Description: "Fire when a label is removed."},
+								"pull_requests": schema.BoolAttribute{Optional: true, Computed: true, PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()}, Description: "Watch pull requests. At least one of pull_requests/issues must be true."},
+								"issues":        schema.BoolAttribute{Optional: true, Computed: true, PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()}, Description: "Watch issues."},
+							},
+						},
 						"slack": schema.SingleNestedAttribute{
 							Optional:    true,
 							Description: "Trigger on Slack messages.",
 							Attributes: map[string]schema.Attribute{
 								"channel": schema.StringAttribute{
-									Required:    true,
-									Description: "Slack channel ID.",
+									Optional: true, Computed: true,
+									Description: "Legacy Slack channel ID. Set channel or channels; channels takes precedence when populated.",
+								},
+								"channels": slackChannelsAttribute(),
+								"top_level_only": schema.BoolAttribute{
+									Optional: true, Computed: true,
+									PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+									Description:   "If true, trigger only on top-level messages, not thread replies. Leave unset to retain the server value/default.",
 								},
 								"message_contains": schema.StringAttribute{
 									Optional:    true,
@@ -673,9 +707,10 @@ func (r *platformWorkflowResource) Schema(_ context.Context, _ resource.SchemaRe
 							Description: "Trigger when a specific emoji reaction is added to a message in a Slack channel.",
 							Attributes: map[string]schema.Attribute{
 								"channel": schema.StringAttribute{
-									Required:    true,
-									Description: "Slack channel ID.",
+									Optional: true, Computed: true,
+									Description: "Legacy Slack channel ID. Set channel or channels; channels takes precedence when populated.",
 								},
+								"channels": slackChannelsAttribute(),
 								"emoji_name": schema.StringAttribute{
 									Required:    true,
 									Description: `Slack emoji short name without colons, lowercase (e.g. "thumbsup", "white_check_mark").`,
@@ -695,9 +730,10 @@ func (r *platformWorkflowResource) Schema(_ context.Context, _ resource.SchemaRe
 							Description: "Trigger when the Cursor Slack app is mentioned in a Slack channel.",
 							Attributes: map[string]schema.Attribute{
 								"channel": schema.StringAttribute{
-									Required:    true,
-									Description: "Slack channel ID.",
+									Optional: true, Computed: true,
+									Description: "Legacy Slack channel ID. Set channel or channels; channels takes precedence when populated.",
 								},
+								"channels": slackChannelsAttribute(),
 								"block_unauthenticated_slack_users": schema.BoolAttribute{
 									Optional:    true,
 									Description: "If true, only Slack users who linked Cursor can trigger. Omit/false = anyone (default).",
@@ -709,9 +745,10 @@ func (r *platformWorkflowResource) Schema(_ context.Context, _ resource.SchemaRe
 							Description: "Trigger when any emoji reaction is added to a message in a Slack channel.",
 							Attributes: map[string]schema.Attribute{
 								"channel": schema.StringAttribute{
-									Required:    true,
-									Description: "Slack channel ID.",
+									Optional: true, Computed: true,
+									Description: "Legacy Slack channel ID. Set channel or channels; channels takes precedence when populated.",
 								},
+								"channels": slackChannelsAttribute(),
 								"block_unauthenticated_slack_users": schema.BoolAttribute{
 									Optional:    true,
 									Description: "If true, only Slack users who linked Cursor can trigger. Omit/false = anyone (default).",
@@ -962,8 +999,10 @@ func (r *platformWorkflowResource) Schema(_ context.Context, _ resource.SchemaRe
 							Attributes: map[string]schema.Attribute{
 								"channel": schema.StringAttribute{
 									Optional:    true,
-									Description: "Slack channel ID to post to.",
+									Computed:    true,
+									Description: "Legacy Slack destination ID. channels takes precedence when populated.",
 								},
+								"channels": slackChannelsAttribute(),
 								"generalized": schema.BoolAttribute{
 									Optional:    true,
 									Computed:    true,
@@ -2196,6 +2235,11 @@ func gitConfigRepos(gitRepo string, triggers []*v1.Trigger) []string {
 		if push := git.GetPush(); push != nil {
 			add(push.GetRepo())
 		}
+		if label := git.GetLabel(); label != nil {
+			for _, repo := range label.GetRepos() {
+				add(repo)
+			}
+		}
 	}
 	return repos
 }
@@ -2302,9 +2346,11 @@ func actionModelToProto(a *actionModel) (*v1.Action, error) {
 	}
 	if a.Slack != nil {
 		slack := &v1.SlackAction{}
-		if !a.Slack.Channel.IsNull() && !a.Slack.Channel.IsUnknown() {
-			slack.Channel = a.Slack.Channel.ValueString()
+		channel, channels, err := slackChannelSelection(context.Background(), a.Slack.Channel, a.Slack.Channels, "slack", false)
+		if err != nil {
+			return nil, err
 		}
+		slack.Channel, slack.Channels = channel, channels
 		if !a.Slack.Generalized.IsNull() && !a.Slack.Generalized.IsUnknown() {
 			slack.Generalized = a.Slack.Generalized.ValueBool()
 		}
@@ -2380,6 +2426,9 @@ func triggerModelToProto(ctx context.Context, t *triggerModel) (*v1.Trigger, err
 		count++
 	}
 	if t.GitCICompleted != nil {
+		count++
+	}
+	if t.GitLabel != nil {
 		count++
 	}
 	if t.Cron != nil {
@@ -2536,6 +2585,34 @@ func triggerModelToProto(ctx context.Context, t *triggerModel) (*v1.Trigger, err
 		trigger.Trigger = &v1.Trigger_Git{Git: gitTrigger}
 	}
 
+	if label := t.GitLabel; label != nil {
+		repos, err := readNonBlankStringList(ctx, label.Repos, "git_label.repos")
+		if err != nil {
+			return nil, err
+		}
+		if len(repos) == 0 {
+			return nil, fmt.Errorf("git_label must specify at least one repo")
+		}
+		event := &v1.GitLabelEvent{
+			Repos: repos, LabelName: label.LabelName.ValueString(),
+			OnAdded: boolIsTrue(label.OnAdded), OnRemoved: boolIsTrue(label.OnRemoved),
+			PullRequests: boolIsTrue(label.PullRequests), Issues: boolIsTrue(label.Issues),
+		}
+		if !event.OnAdded && !event.OnRemoved {
+			return nil, fmt.Errorf("git_label requires on_added or on_removed to be true")
+		}
+		if !event.PullRequests && !event.Issues {
+			return nil, fmt.Errorf("git_label requires pull_requests or issues to be true")
+		}
+		users, err := readStringList(ctx, t.UserAllowlist, "user_allowlist")
+		if err != nil {
+			return nil, err
+		}
+		trigger.Trigger = &v1.Trigger_Git{Git: &v1.GitTrigger{
+			Event: &v1.GitTrigger_Label{Label: event}, UserAllowlist: users,
+		}}
+	}
+
 	// Cron
 	if cron := t.Cron; cron != nil {
 		trigger.Trigger = &v1.Trigger_Cron{
@@ -2545,7 +2622,15 @@ func triggerModelToProto(ctx context.Context, t *triggerModel) (*v1.Trigger, err
 
 	// Slack
 	if slack := t.Slack; slack != nil {
-		st := &v1.SlackTrigger{Channel: slack.Channel.ValueString()}
+		channel, channels, err := slackChannelSelection(ctx, slack.Channel, slack.Channels, "slack", true)
+		if err != nil {
+			return nil, err
+		}
+		st := &v1.SlackTrigger{Channel: channel, Channels: channels}
+		if !slack.TopLevelOnly.IsNull() && !slack.TopLevelOnly.IsUnknown() {
+			value := slack.TopLevelOnly.ValueBool()
+			st.TopLevelOnly = &value
+		}
 		if !slack.MessageContains.IsNull() && !slack.MessageContains.IsUnknown() {
 			st.MessageContains = slack.MessageContains.ValueString()
 		}
@@ -2572,7 +2657,7 @@ func triggerModelToProto(ctx context.Context, t *triggerModel) (*v1.Trigger, err
 
 	// Slack reaction added
 	if sra := t.SlackReactionAdded; sra != nil {
-		channel, err := requiredSlackChannel(sra.Channel, "slack_reaction_added")
+		channel, channels, err := slackChannelSelection(ctx, sra.Channel, sra.Channels, "slack_reaction_added", true)
 		if err != nil {
 			return nil, err
 		}
@@ -2582,6 +2667,7 @@ func triggerModelToProto(ctx context.Context, t *triggerModel) (*v1.Trigger, err
 		}
 		st := &v1.SlackReactionAddedTrigger{
 			Channel:                        channel,
+			Channels:                       channels,
 			EmojiName:                      emojiName,
 			BlockUnauthenticatedSlackUsers: boolIsTrue(sra.BlockUnauthenticatedSlackUsers),
 			OnlyOwnerReactions:             boolIsTrue(sra.OnlyOwnerReactions),
@@ -2591,12 +2677,13 @@ func triggerModelToProto(ctx context.Context, t *triggerModel) (*v1.Trigger, err
 
 	// Slack mention
 	if sm := t.SlackMention; sm != nil {
-		channel, err := requiredSlackChannel(sm.Channel, "slack_mention")
+		channel, channels, err := slackChannelSelection(ctx, sm.Channel, sm.Channels, "slack_mention", true)
 		if err != nil {
 			return nil, err
 		}
 		st := &v1.SlackMentionTrigger{
 			Channel:                        channel,
+			Channels:                       channels,
 			BlockUnauthenticatedSlackUsers: boolIsTrue(sm.BlockUnauthenticatedSlackUsers),
 		}
 		trigger.Trigger = &v1.Trigger_SlackMention{SlackMention: st}
@@ -2604,12 +2691,13 @@ func triggerModelToProto(ctx context.Context, t *triggerModel) (*v1.Trigger, err
 
 	// Slack any reaction added
 	if sar := t.SlackAnyReactionAdded; sar != nil {
-		channel, err := requiredSlackChannel(sar.Channel, "slack_any_reaction_added")
+		channel, channels, err := slackChannelSelection(ctx, sar.Channel, sar.Channels, "slack_any_reaction_added", true)
 		if err != nil {
 			return nil, err
 		}
 		st := &v1.SlackAnyReactionAddedTrigger{
 			Channel:                        channel,
+			Channels:                       channels,
 			BlockUnauthenticatedSlackUsers: boolIsTrue(sar.BlockUnauthenticatedSlackUsers),
 			OnlyOwnerReactions:             boolIsTrue(sar.OnlyOwnerReactions),
 		}
@@ -2840,11 +2928,88 @@ func stringOrNull(value string) types.String {
 	return types.StringValue(value)
 }
 
-func requiredSlackChannel(value types.String, block string) (string, error) {
-	if value.IsNull() || value.IsUnknown() || strings.TrimSpace(value.ValueString()) == "" {
-		return "", fmt.Errorf("%s.channel is required", block)
+func slackChannelsAttribute() schema.ListAttribute {
+	return schema.ListAttribute{
+		Optional: true, Computed: true, ElementType: types.StringType,
+		PlanModifiers: []planmodifier.List{slackChannelsUseStateUnlessChannelChanged{}},
+		Description:   "Slack channel IDs. The list must be nonempty, with nonblank, unique values. If channel is also set, it must match the first entry. Leave unset to retain the server channel list.",
 	}
-	return strings.TrimSpace(value.ValueString()), nil
+}
+
+// Preserve imported allowlists on unrelated updates, but allow legacy channel
+// configuration to intentionally replace the destination/trigger channel.
+type slackChannelsUseStateUnlessChannelChanged struct{}
+
+func (slackChannelsUseStateUnlessChannelChanged) Description(context.Context) string {
+	return "Preserves the full channel list unless a configured legacy channel changes."
+}
+
+func (m slackChannelsUseStateUnlessChannelChanged) MarkdownDescription(ctx context.Context) string {
+	return m.Description(ctx)
+}
+
+func (slackChannelsUseStateUnlessChannelChanged) PlanModifyList(ctx context.Context, req planmodifier.ListRequest, resp *planmodifier.ListResponse) {
+	if req.Plan.Raw.IsNull() || !req.ConfigValue.IsNull() {
+		return
+	}
+	var configured, prior types.String
+	channelPath := req.Path.ParentPath().AtName("channel")
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, channelPath, &configured)...)
+	if resp.Diagnostics.HasError() || configured.IsUnknown() {
+		return
+	}
+	if !req.State.Raw.IsNull() {
+		resp.Diagnostics.Append(req.State.GetAttribute(ctx, channelPath, &prior)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	}
+	if !configured.IsNull() && !configured.Equal(prior) {
+		resp.PlanValue, _ = types.ListValueFrom(ctx, types.StringType, []string{configured.ValueString()})
+		return
+	}
+	if !req.State.Raw.IsNull() && !req.StateValue.IsUnknown() {
+		resp.PlanValue = req.StateValue
+	}
+}
+
+func slackChannelSelection(ctx context.Context, channel types.String, channels types.List, block string, required bool) (string, []string, error) {
+	values, err := readNonBlankStringList(ctx, channels, block+".channels")
+	if err != nil {
+		return "", nil, err
+	}
+	if !channels.IsNull() && !channels.IsUnknown() && len(values) == 0 {
+		return "", nil, fmt.Errorf("%s.channels must not be empty; omit channels to use channel", block)
+	}
+	seen := make(map[string]bool)
+	for _, value := range values {
+		if seen[value] {
+			return "", nil, fmt.Errorf("%s.channels must not contain duplicates", block)
+		}
+		seen[value] = true
+	}
+	if len(values) > 0 {
+		if !channel.IsNull() && !channel.IsUnknown() && channel.ValueString() != values[0] {
+			return "", nil, fmt.Errorf("%s.channel must match the first channels entry when both are set", block)
+		}
+		return values[0], values, nil
+	}
+	value := strings.TrimSpace(channel.ValueString())
+	if value == "" && required {
+		return "", nil, fmt.Errorf("%s.channel is required when channels is empty", block)
+	}
+	return value, nil, nil
+}
+
+func slackChannelsToModel(ctx context.Context, channel string, channels []string) types.List {
+	if len(channels) == 0 && channel != "" {
+		channels = []string{channel}
+	}
+	if len(channels) == 0 {
+		return types.ListNull(types.StringType)
+	}
+	value, _ := types.ListValueFrom(ctx, types.StringType, channels)
+	return value
 }
 
 // validateSlackEmojiShortName requires the canonical form the server stores
@@ -3170,12 +3335,13 @@ func protoActionToModel(a *v1.Action) actionModel {
 	case *v1.Action_Slack:
 		slack := action.Slack
 		sm := &slackActionModel{
+			Channels:        slackChannelsToModel(context.Background(), slack.GetChannel(), slack.GetChannels()),
 			Generalized:     types.BoolValue(slack.GetGeneralized()),
 			RespondInThread: types.BoolValue(slack.GetRespondInThread()),
 			PostAsThread:    types.BoolValue(slack.GetPostAsThread()),
 		}
-		if slack.GetChannel() != "" {
-			sm.Channel = types.StringValue(slack.GetChannel())
+		if channel := firstSlackChannel(slack.GetChannel(), slack.GetChannels()); channel != "" {
+			sm.Channel = types.StringValue(channel)
 		} else {
 			sm.Channel = types.StringNull()
 		}
@@ -3295,6 +3461,15 @@ func protoTriggerToModel(ctx context.Context, t *v1.Trigger) (triggerModel, erro
 			}
 			tm.GitCICompleted = ciModel
 
+		case *v1.GitTrigger_Label:
+			label := event.Label
+			repos, _ := types.ListValueFrom(ctx, types.StringType, label.GetRepos())
+			tm.GitLabel = &gitLabelModel{
+				Repos: repos, LabelName: stringOrNull(label.GetLabelName()),
+				OnAdded: types.BoolValue(label.GetOnAdded()), OnRemoved: types.BoolValue(label.GetOnRemoved()),
+				PullRequests: types.BoolValue(label.GetPullRequests()), Issues: types.BoolValue(label.GetIssues()),
+			}
+
 		default:
 			// Unsupported git trigger sub-type; leave all nil
 		}
@@ -3315,7 +3490,12 @@ func protoTriggerToModel(ctx context.Context, t *v1.Trigger) (triggerModel, erro
 	case *v1.Trigger_SlackTrigger:
 		slack := trigger.SlackTrigger
 		sm := &slackTriggerModel{
-			Channel: types.StringValue(slack.GetChannel()),
+			Channel:      types.StringValue(firstSlackChannel(slack.GetChannel(), slack.GetChannels())),
+			Channels:     slackChannelsToModel(ctx, slack.GetChannel(), slack.GetChannels()),
+			TopLevelOnly: types.BoolNull(),
+		}
+		if slack.TopLevelOnly != nil {
+			sm.TopLevelOnly = types.BoolValue(slack.GetTopLevelOnly())
 		}
 		if slack.GetMessageContains() != "" {
 			sm.MessageContains = types.StringValue(slack.GetMessageContains())
@@ -3356,6 +3536,7 @@ func protoTriggerToModel(ctx context.Context, t *v1.Trigger) (triggerModel, erro
 		sra := trigger.SlackReactionAdded
 		tm.SlackReactionAdded = &slackReactionAddedTriggerModel{
 			Channel:                        types.StringValue(firstSlackChannel(sra.GetChannel(), sra.GetChannels())),
+			Channels:                       slackChannelsToModel(ctx, sra.GetChannel(), sra.GetChannels()),
 			EmojiName:                      types.StringValue(sra.GetEmojiName()),
 			BlockUnauthenticatedSlackUsers: boolOrNull(sra.GetBlockUnauthenticatedSlackUsers()),
 			OnlyOwnerReactions:             boolOrNull(sra.GetOnlyOwnerReactions()),
@@ -3366,6 +3547,7 @@ func protoTriggerToModel(ctx context.Context, t *v1.Trigger) (triggerModel, erro
 		sm := trigger.SlackMention
 		tm.SlackMention = &slackMentionTriggerModel{
 			Channel:                        types.StringValue(firstSlackChannel(sm.GetChannel(), sm.GetChannels())),
+			Channels:                       slackChannelsToModel(ctx, sm.GetChannel(), sm.GetChannels()),
 			BlockUnauthenticatedSlackUsers: boolOrNull(sm.GetBlockUnauthenticatedSlackUsers()),
 		}
 		tm.UserAllowlist = types.ListNull(types.StringType)
@@ -3374,6 +3556,7 @@ func protoTriggerToModel(ctx context.Context, t *v1.Trigger) (triggerModel, erro
 		sar := trigger.SlackAnyReactionAdded
 		tm.SlackAnyReactionAdded = &slackAnyReactionAddedTriggerModel{
 			Channel:                        types.StringValue(firstSlackChannel(sar.GetChannel(), sar.GetChannels())),
+			Channels:                       slackChannelsToModel(ctx, sar.GetChannel(), sar.GetChannels()),
 			BlockUnauthenticatedSlackUsers: boolOrNull(sar.GetBlockUnauthenticatedSlackUsers()),
 			OnlyOwnerReactions:             boolOrNull(sar.GetOnlyOwnerReactions()),
 		}
@@ -3529,8 +3712,8 @@ func protoTriggerToModel(ctx context.Context, t *v1.Trigger) (triggerModel, erro
 }
 
 // firstSlackChannel mirrors the server's preferRepeated: the repeated
-// `channels` field wins over the singular `channel` when populated. Only the
-// first channel is exposed, matching the existing `slack` trigger.
+// `channels` field wins over the singular `channel` when populated. The first
+// channel remains exposed for backwards compatibility alongside the full list.
 func firstSlackChannel(channel string, channels []string) string {
 	for _, c := range channels {
 		if strings.TrimSpace(c) != "" {
