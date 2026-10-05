@@ -2932,7 +2932,7 @@ func slackChannelsAttribute() schema.ListAttribute {
 	return schema.ListAttribute{
 		Optional: true, Computed: true, ElementType: types.StringType,
 		PlanModifiers: []planmodifier.List{slackChannelsUseStateUnlessChannelChanged{}},
-		Description:   "Slack channel IDs. The list must be nonempty, with nonblank, unique values. If channel is also set, it must match the first entry. Leave unset to retain the server channel list.",
+		Description:   "Slack channel IDs. The list must be nonempty, with nonblank, unique values. May be used alongside channel; the API uses channels for routing when populated. Leave unset to retain the server channel list.",
 	}
 }
 
@@ -2989,8 +2989,10 @@ func slackChannelSelection(ctx context.Context, channel types.String, channels t
 		seen[value] = true
 	}
 	if len(values) > 0 {
-		if !channel.IsNull() && !channel.IsUnknown() && channel.ValueString() != values[0] {
-			return "", nil, fmt.Errorf("%s.channel must match the first channels entry when both are set", block)
+		// Keep an explicitly configured legacy scalar intact rather than
+		// rejecting it or overwriting it with the first repeated channel.
+		if !channel.IsNull() && !channel.IsUnknown() {
+			return channel.ValueString(), values, nil
 		}
 		return values[0], values, nil
 	}
@@ -3711,10 +3713,13 @@ func protoTriggerToModel(ctx context.Context, t *v1.Trigger) (triggerModel, erro
 	return tm, nil
 }
 
-// firstSlackChannel mirrors the server's preferRepeated: the repeated
-// `channels` field wins over the singular `channel` when populated. The first
-// channel remains exposed for backwards compatibility alongside the full list.
+// firstSlackChannel preserves the legacy scalar independently of the repeated
+// routing list. Fall back to the first repeated channel only if the scalar is
+// absent, so channels-only API responses still populate the legacy attribute.
 func firstSlackChannel(channel string, channels []string) string {
+	if channel != "" {
+		return channel
+	}
 	for _, c := range channels {
 		if strings.TrimSpace(c) != "" {
 			return strings.TrimSpace(c)

@@ -66,6 +66,60 @@ func TestSlackMultiChannelActionRoundTrip(t *testing.T) {
 	}
 }
 
+func TestSlackLegacyChannelCompatibility(t *testing.T) {
+	ctx := context.Background()
+	for _, channels := range [][]string{nil, {"C001", "C002"}} {
+		for name, input := range map[string]*v1.Trigger{
+			"message":      {Trigger: &v1.Trigger_SlackTrigger{SlackTrigger: &v1.SlackTrigger{Channel: "C999", Channels: channels}}},
+			"reaction":     {Trigger: &v1.Trigger_SlackReactionAdded{SlackReactionAdded: &v1.SlackReactionAddedTrigger{Channel: "C999", Channels: channels, EmojiName: "eyes"}}},
+			"mention":      {Trigger: &v1.Trigger_SlackMention{SlackMention: &v1.SlackMentionTrigger{Channel: "C999", Channels: channels}}},
+			"any_reaction": {Trigger: &v1.Trigger_SlackAnyReactionAdded{SlackAnyReactionAdded: &v1.SlackAnyReactionAddedTrigger{Channel: "C999", Channels: channels}}},
+		} {
+			t.Run(name+"/"+strings.Join(channels, ","), func(t *testing.T) {
+				m, err := protoTriggerToModel(ctx, input)
+				if err != nil {
+					t.Fatal(err)
+				}
+				output, err := triggerModelToProto(ctx, &m)
+				if err != nil {
+					t.Fatal(err)
+				}
+				// Legacy API responses without a repeated list are normalized
+				// to the equivalent single-channel list in Terraform state.
+				want := proto.Clone(input).(*v1.Trigger)
+				if channels == nil {
+					switch trigger := want.Trigger.(type) {
+					case *v1.Trigger_SlackTrigger:
+						trigger.SlackTrigger.Channels = []string{"C999"}
+					case *v1.Trigger_SlackReactionAdded:
+						trigger.SlackReactionAdded.Channels = []string{"C999"}
+					case *v1.Trigger_SlackMention:
+						trigger.SlackMention.Channels = []string{"C999"}
+					case *v1.Trigger_SlackAnyReactionAdded:
+						trigger.SlackAnyReactionAdded.Channels = []string{"C999"}
+					}
+				}
+				if !proto.Equal(want, output) {
+					t.Fatalf("legacy scalar or routing changed: want=%v got=%v", want, output)
+				}
+			})
+		}
+		input := &v1.Action{Action: &v1.Action_Slack{Slack: &v1.SlackAction{Channel: "C999", Channels: channels}}}
+		m := protoActionToModel(input)
+		output, err := actionModelToProto(&m)
+		want := proto.Clone(input).(*v1.Action)
+		if channels == nil {
+			want.GetSlack().Channels = []string{"C999"}
+		}
+		if err != nil || !proto.Equal(want, output) {
+			t.Fatalf("legacy action changed: want=%v got=%v err=%v", want, output, err)
+		}
+	}
+	if got := firstSlackChannel("", []string{"C001", "C002"}); got != "C001" {
+		t.Fatalf("channels-only response should populate legacy scalar: %q", got)
+	}
+}
+
 func TestSlackChannelSelection(t *testing.T) {
 	ctx := context.Background()
 	for _, tc := range []struct {
@@ -78,7 +132,7 @@ func TestSlackChannelSelection(t *testing.T) {
 		{"legacy", types.StringValue("C001"), nil, "C001", ""},
 		{"list_only", types.StringNull(), []string{"C001", "C002"}, "C001", ""},
 		{"matching_both", types.StringValue("C001"), []string{"C001", "C002"}, "C001", ""},
-		{"conflicting_both", types.StringValue("C999"), []string{"C001", "C002"}, "", "must match"},
+		{"independent_both", types.StringValue("C999"), []string{"C001", "C002"}, "C999", ""},
 		{"missing", types.StringNull(), nil, "", "is required"},
 		{"empty_list", types.StringValue("C001"), []string{}, "", "must not be empty"},
 		{"blank", types.StringNull(), []string{" "}, "", "must not be empty"},
@@ -101,10 +155,10 @@ func TestSlackChannelSelection(t *testing.T) {
 			}
 		})
 	}
-	// The server may return only repeated channels or a stale legacy channel.
+	// Preserve the scalar even when the repeated routing list differs.
 	m, err := protoTriggerToModel(ctx, &v1.Trigger{Trigger: &v1.Trigger_SlackTrigger{SlackTrigger: &v1.SlackTrigger{Channel: "C999", Channels: []string{"C001", "C002"}}}})
-	if err != nil || m.Slack.Channel.ValueString() != "C001" {
-		t.Fatalf("repeated channels should take precedence on read: %v %v", m, err)
+	if err != nil || m.Slack.Channel.ValueString() != "C999" {
+		t.Fatalf("legacy channel must not be overwritten on read: %v %v", m, err)
 	}
 }
 

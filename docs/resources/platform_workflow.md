@@ -414,7 +414,7 @@ Optional:
 
 - `block_unauthenticated_slack_users` (Boolean) If true, only Slack users who linked Cursor can trigger. Omit/false = anyone (default).
 - `channel` (String) Legacy Slack channel ID. Set channel or channels; channels takes precedence when populated.
-- `channels` (List of String) Slack channel IDs. The list must be nonempty, with nonblank, unique values. If channel is also set, it must match the first entry. Leave unset to retain the server channel list.
+- `channels` (List of String) Slack channel IDs. The list must be nonempty, with nonblank, unique values. May be used alongside channel; the API uses channels for routing when populated. Leave unset to retain the server channel list.
 - `completion_reaction_custom_emoji` (String) Custom Slack reaction emoji in ":emoji_name:" form. Only used when completion_reaction_mode is "custom".
 - `completion_reaction_mode` (String) Controls the emoji reaction added to the triggering Slack message when the automation completes successfully: "on" (default Cursor reaction), "off" (no reaction), or "custom" (use completion_reaction_custom_emoji). Leave unset to use the Cursor default.
 - `message_contains` (String) Only trigger if message contains this text (case-insensitive).
@@ -429,7 +429,7 @@ Optional:
 
 - `block_unauthenticated_slack_users` (Boolean) If true, only Slack users who linked Cursor can trigger. Omit/false = anyone (default).
 - `channel` (String) Legacy Slack channel ID. Set channel or channels; channels takes precedence when populated.
-- `channels` (List of String) Slack channel IDs. The list must be nonempty, with nonblank, unique values. If channel is also set, it must match the first entry. Leave unset to retain the server channel list.
+- `channels` (List of String) Slack channel IDs. The list must be nonempty, with nonblank, unique values. May be used alongside channel; the API uses channels for routing when populated. Leave unset to retain the server channel list.
 - `only_owner_reactions` (Boolean) If true, only the automation owner's own linked Slack user can trigger it. Stricter than block_unauthenticated_slack_users.
 
 
@@ -448,7 +448,7 @@ Optional:
 
 - `block_unauthenticated_slack_users` (Boolean) If true, only Slack users who linked Cursor can trigger. Omit/false = anyone (default).
 - `channel` (String) Legacy Slack channel ID. Set channel or channels; channels takes precedence when populated.
-- `channels` (List of String) Slack channel IDs. The list must be nonempty, with nonblank, unique values. If channel is also set, it must match the first entry. Leave unset to retain the server channel list.
+- `channels` (List of String) Slack channel IDs. The list must be nonempty, with nonblank, unique values. May be used alongside channel; the API uses channels for routing when populated. Leave unset to retain the server channel list.
 
 
 <a id="nestedatt--trigger--slack_reaction_added"></a>
@@ -462,7 +462,7 @@ Optional:
 
 - `block_unauthenticated_slack_users` (Boolean) If true, only Slack users who linked Cursor can trigger. Omit/false = anyone (default).
 - `channel` (String) Legacy Slack channel ID. Set channel or channels; channels takes precedence when populated.
-- `channels` (List of String) Slack channel IDs. The list must be nonempty, with nonblank, unique values. If channel is also set, it must match the first entry. Leave unset to retain the server channel list.
+- `channels` (List of String) Slack channel IDs. The list must be nonempty, with nonblank, unique values. May be used alongside channel; the API uses channels for routing when populated. Leave unset to retain the server channel list.
 - `only_owner_reactions` (Boolean) If true, only the automation owner's own linked Slack user can trigger it. Stricter than block_unauthenticated_slack_users.
 
 
@@ -557,7 +557,7 @@ Optional:
 Optional:
 
 - `channel` (String) Legacy Slack destination ID. channels takes precedence when populated.
-- `channels` (List of String) Slack channel IDs. The list must be nonempty, with nonblank, unique values. If channel is also set, it must match the first entry. Leave unset to retain the server channel list.
+- `channels` (List of String) Slack channel IDs. The list must be nonempty, with nonblank, unique values. May be used alongside channel; the API uses channels for routing when populated. Leave unset to retain the server channel list.
 - `generalized` (Boolean) If true, agent can list and send to any Slack channel or DM dynamically.
 - `post_as_thread` (Boolean) If true, post a parent message with the automation name and reply in the thread.
 - `respond_in_thread` (Boolean, Deprecated) Deprecated: the server ignores this flag and always replies in the triggering Slack thread. Kept for compatibility with existing configurations.
