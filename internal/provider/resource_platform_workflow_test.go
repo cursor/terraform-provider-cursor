@@ -2636,7 +2636,7 @@ func TestSlackReactionAddedTriggerRoundTrip(t *testing.T) {
 			},
 		}
 		_, err := modelToWorkflow(ctx, m)
-		if err == nil || !strings.Contains(err.Error(), "slack_reaction_added.channel is required") {
+		if err == nil || !strings.Contains(err.Error(), "slack_reaction_added requires channels") {
 			t.Fatalf("expected channel required error, got %v", err)
 		}
 	})
@@ -2942,7 +2942,7 @@ func TestEmptyActionsRoundTrip(t *testing.T) {
 	})
 
 	t.Run("model_to_proto_rejects_multiple_action_types", func(t *testing.T) {
-		_, err := actionModelToProto(&actionModel{
+		_, err := actionModelToProto(context.Background(), &actionModel{
 			ManageCheckRun:       &manageCheckRunActionModel{},
 			ResolveReviewThreads: &resolveReviewThreadsActionModel{},
 		})
@@ -2978,7 +2978,7 @@ func TestEmptyActionsRoundTrip(t *testing.T) {
 }
 
 func TestMicrosoftTeamsActionRejectsRespondAndPostAsThread(t *testing.T) {
-	_, err := actionModelToProto(&actionModel{
+	_, err := actionModelToProto(context.Background(), &actionModel{
 		MicrosoftTeams: &microsoftTeamsActionModel{
 			TenantID:        types.StringValue("tenant"),
 			TeamID:          types.StringValue("team"),

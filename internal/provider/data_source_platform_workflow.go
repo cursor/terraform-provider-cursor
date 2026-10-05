@@ -230,12 +230,12 @@ func (d *platformWorkflowDataSource) Schema(_ context.Context, _ datasource.Sche
 							Computed:    true,
 							Description: "Trigger on Slack messages.",
 							Attributes: map[string]schema.Attribute{
-								"channel": schema.StringAttribute{
+								"channel":  slackChannelDataSourceAttribute(),
+								"channels": slackChannelsDataSourceAttribute(),
+								"top_level_only": schema.BoolAttribute{
 									Computed:    true,
-									Description: "Slack channel ID.",
+									Description: "Whether only top-level channel messages fire the trigger (thread replies ignored). Null when the server has no explicit value.",
 								},
-								"channels":       slackChannelsDataSourceAttribute(),
-								"top_level_only": schema.BoolAttribute{Computed: true, Description: "Whether only top-level Slack messages trigger."},
 								"message_contains": schema.StringAttribute{
 									Computed:    true,
 									Description: "Message text filter (case-insensitive).",
@@ -272,10 +272,7 @@ func (d *platformWorkflowDataSource) Schema(_ context.Context, _ datasource.Sche
 							Computed:    true,
 							Description: "Trigger when a specific emoji reaction is added in a Slack channel.",
 							Attributes: map[string]schema.Attribute{
-								"channel": schema.StringAttribute{
-									Computed:    true,
-									Description: "Slack channel ID.",
-								},
+								"channel":  slackChannelDataSourceAttribute(),
 								"channels": slackChannelsDataSourceAttribute(),
 								"emoji_name": schema.StringAttribute{
 									Computed:    true,
@@ -295,10 +292,7 @@ func (d *platformWorkflowDataSource) Schema(_ context.Context, _ datasource.Sche
 							Computed:    true,
 							Description: "Trigger when the Cursor Slack app is mentioned in a channel.",
 							Attributes: map[string]schema.Attribute{
-								"channel": schema.StringAttribute{
-									Computed:    true,
-									Description: "Slack channel ID.",
-								},
+								"channel":  slackChannelDataSourceAttribute(),
 								"channels": slackChannelsDataSourceAttribute(),
 								"block_unauthenticated_slack_users": schema.BoolAttribute{
 									Computed:    true,
@@ -310,10 +304,7 @@ func (d *platformWorkflowDataSource) Schema(_ context.Context, _ datasource.Sche
 							Computed:    true,
 							Description: "Trigger when any emoji reaction is added in a Slack channel.",
 							Attributes: map[string]schema.Attribute{
-								"channel": schema.StringAttribute{
-									Computed:    true,
-									Description: "Slack channel ID.",
-								},
+								"channel":  slackChannelDataSourceAttribute(),
 								"channels": slackChannelsDataSourceAttribute(),
 								"block_unauthenticated_slack_users": schema.BoolAttribute{
 									Computed:    true,
@@ -560,10 +551,7 @@ func (d *platformWorkflowDataSource) Schema(_ context.Context, _ datasource.Sche
 							Computed:    true,
 							Description: "Post messages to a Slack channel.",
 							Attributes: map[string]schema.Attribute{
-								"channel": schema.StringAttribute{
-									Computed:    true,
-									Description: "Slack channel ID to post to.",
-								},
+								"channel":  slackChannelDataSourceAttribute(),
 								"channels": slackChannelsDataSourceAttribute(),
 								"generalized": schema.BoolAttribute{
 									Computed:    true,
@@ -655,10 +643,19 @@ func (d *platformWorkflowDataSource) Schema(_ context.Context, _ datasource.Sche
 	}
 }
 
+func slackChannelDataSourceAttribute() schema.StringAttribute {
+	return schema.StringAttribute{
+		Computed:           true,
+		Description:        "First Slack channel ID (channels[0]). Deprecated; use channels.",
+		DeprecationMessage: "Use channels. channel always mirrors channels[0].",
+	}
+}
+
 func slackChannelsDataSourceAttribute() schema.ListAttribute {
 	return schema.ListAttribute{
-		Computed: true, ElementType: types.StringType,
-		Description: "Complete Slack channel ID list, including the legacy channel when no repeated channels are stored.",
+		Computed:    true,
+		ElementType: types.StringType,
+		Description: "Slack channel IDs. Falls back to the legacy single channel when the automation stores no channel list.",
 	}
 }
 
