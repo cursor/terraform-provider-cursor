@@ -646,10 +646,10 @@ func (r *platformWorkflowResource) Schema(_ context.Context, _ resource.SchemaRe
 							Attributes: map[string]schema.Attribute{
 								"repos":         schema.ListAttribute{Required: true, ElementType: types.StringType, Description: "Repositories to watch. At least one is required."},
 								"label_name":    schema.StringAttribute{Optional: true, Description: "Case-insensitive label name filter. Omit to match any label."},
-								"on_added":      schema.BoolAttribute{Optional: true, Computed: true, PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()}, Description: "Fire when a label is added. At least one of on_added/on_removed must be true."},
-								"on_removed":    schema.BoolAttribute{Optional: true, Computed: true, PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()}, Description: "Fire when a label is removed."},
-								"pull_requests": schema.BoolAttribute{Optional: true, Computed: true, PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()}, Description: "Watch pull requests. At least one of pull_requests/issues must be true."},
-								"issues":        schema.BoolAttribute{Optional: true, Computed: true, PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()}, Description: "Watch issues."},
+								"on_added":      schema.BoolAttribute{Optional: true, Computed: true, PlanModifiers: []planmodifier.Bool{optionalBooleanUseStateForUnknown{}}, Description: "Fire when a label is added. At least one of on_added/on_removed must be true."},
+								"on_removed":    schema.BoolAttribute{Optional: true, Computed: true, PlanModifiers: []planmodifier.Bool{optionalBooleanUseStateForUnknown{}}, Description: "Fire when a label is removed."},
+								"pull_requests": schema.BoolAttribute{Optional: true, Computed: true, PlanModifiers: []planmodifier.Bool{optionalBooleanUseStateForUnknown{}}, Description: "Watch pull requests. At least one of pull_requests/issues must be true."},
+								"issues":        schema.BoolAttribute{Optional: true, Computed: true, PlanModifiers: []planmodifier.Bool{optionalBooleanUseStateForUnknown{}}, Description: "Watch issues."},
 							},
 						},
 						"slack": schema.SingleNestedAttribute{
@@ -663,7 +663,7 @@ func (r *platformWorkflowResource) Schema(_ context.Context, _ resource.SchemaRe
 								"channels": slackChannelsAttribute(),
 								"top_level_only": schema.BoolAttribute{
 									Optional: true, Computed: true,
-									PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+									PlanModifiers: []planmodifier.Bool{optionalBooleanUseStateForUnknown{}},
 									Description:   "If true, trigger only on top-level messages, not thread replies. Leave unset to retain the server value/default.",
 								},
 								"message_contains": schema.StringAttribute{
@@ -1192,7 +1192,44 @@ func preserveConfiguredValues(ctx context.Context, state *platformWorkflowModel,
 	preserveEquivalentEnvironmentPublicID(state, reference)
 	preserveEquivalentModelSelection(state, reference)
 	preserveEmptyDescription(state, reference)
+	preserveEmptySlackChannels(ctx, state, reference)
 	state.TeamID = reference.TeamID
+}
+
+// Empty channels is a legacy-scalar fallback, not a request to erase routing.
+// Preserve its configured representation only when the server reports the
+// same scalar and no additional channels. Never hide multi-channel drift.
+func preserveEmptySlackChannels(ctx context.Context, state *platformWorkflowModel, reference platformWorkflowModel) {
+	preserve := func(channel types.String, channels *types.List, refChannel types.String, refChannels types.List) {
+		if refChannels.IsNull() || refChannels.IsUnknown() || len(refChannels.Elements()) != 0 || !channel.Equal(refChannel) {
+			return
+		}
+		values, err := readStringList(ctx, *channels, "channels")
+		if err == nil && (len(values) == 0 || len(values) == 1 && values[0] == channel.ValueString()) {
+			*channels = refChannels
+		}
+	}
+	for i := 0; i < len(state.Triggers) && i < len(reference.Triggers); i++ {
+		s, r := &state.Triggers[i], &reference.Triggers[i]
+		if s.Slack != nil && r.Slack != nil {
+			preserve(s.Slack.Channel, &s.Slack.Channels, r.Slack.Channel, r.Slack.Channels)
+		}
+		if s.SlackReactionAdded != nil && r.SlackReactionAdded != nil {
+			preserve(s.SlackReactionAdded.Channel, &s.SlackReactionAdded.Channels, r.SlackReactionAdded.Channel, r.SlackReactionAdded.Channels)
+		}
+		if s.SlackMention != nil && r.SlackMention != nil {
+			preserve(s.SlackMention.Channel, &s.SlackMention.Channels, r.SlackMention.Channel, r.SlackMention.Channels)
+		}
+		if s.SlackAnyReactionAdded != nil && r.SlackAnyReactionAdded != nil {
+			preserve(s.SlackAnyReactionAdded.Channel, &s.SlackAnyReactionAdded.Channels, r.SlackAnyReactionAdded.Channel, r.SlackAnyReactionAdded.Channels)
+		}
+	}
+	for i := 0; i < len(state.Actions) && i < len(reference.Actions); i++ {
+		s, r := state.Actions[i].Slack, reference.Actions[i].Slack
+		if s != nil && r != nil {
+			preserve(s.Channel, &s.Channels, r.Channel, r.Channels)
+		}
+	}
 }
 
 // An explicitly empty description is never sent and reads back as null; keep
@@ -2932,8 +2969,28 @@ func slackChannelsAttribute() schema.ListAttribute {
 	return schema.ListAttribute{
 		Optional: true, Computed: true, ElementType: types.StringType,
 		PlanModifiers: []planmodifier.List{slackChannelsUseStateUnlessChannelChanged{}},
-		Description:   "Slack channel IDs. The list must be nonempty, with nonblank, unique values. May be used alongside channel; the API uses channels for routing when populated. Leave unset to retain the server channel list.",
+		Description:   "Slack channel IDs with nonblank, unique values. An empty list falls back to channel. May be used alongside channel; the API uses channels for routing when populated. Leave unset to retain the server channel list; set an explicit single-entry list to reduce multi-channel routing.",
 	}
+}
+
+// A new nested trigger can have null prior attributes even when the resource
+// already exists. Do not carry those nulls into computed flags: the server
+// returns concrete booleans, which would otherwise violate the plan.
+type optionalBooleanUseStateForUnknown struct{}
+
+func (optionalBooleanUseStateForUnknown) Description(context.Context) string {
+	return "Preserves an existing boolean value, leaving absent values unknown until the API returns them."
+}
+
+func (m optionalBooleanUseStateForUnknown) MarkdownDescription(ctx context.Context) string {
+	return m.Description(ctx)
+}
+
+func (optionalBooleanUseStateForUnknown) PlanModifyBool(ctx context.Context, req planmodifier.BoolRequest, resp *planmodifier.BoolResponse) {
+	if req.StateValue.IsNull() {
+		return
+	}
+	boolplanmodifier.UseStateForUnknown().PlanModifyBool(ctx, req, resp)
 }
 
 // Preserve imported allowlists on unrelated updates, but allow legacy channel
@@ -2977,9 +3034,6 @@ func slackChannelSelection(ctx context.Context, channel types.String, channels t
 	values, err := readNonBlankStringList(ctx, channels, block+".channels")
 	if err != nil {
 		return "", nil, err
-	}
-	if !channels.IsNull() && !channels.IsUnknown() && len(values) == 0 {
-		return "", nil, fmt.Errorf("%s.channels must not be empty; omit channels to use channel", block)
 	}
 	seen := make(map[string]bool)
 	for _, value := range values {

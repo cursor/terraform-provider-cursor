@@ -134,7 +134,8 @@ func TestSlackChannelSelection(t *testing.T) {
 		{"matching_both", types.StringValue("C001"), []string{"C001", "C002"}, "C001", ""},
 		{"independent_both", types.StringValue("C999"), []string{"C001", "C002"}, "C999", ""},
 		{"missing", types.StringNull(), nil, "", "is required"},
-		{"empty_list", types.StringValue("C001"), []string{}, "", "must not be empty"},
+		{"empty_list", types.StringValue("C001"), []string{}, "C001", ""},
+		{"empty_list_missing_scalar", types.StringNull(), []string{}, "", "is required"},
 		{"blank", types.StringNull(), []string{" "}, "", "must not be empty"},
 		{"duplicate", types.StringNull(), []string{"C001", "C001"}, "", "duplicates"},
 	} {
@@ -150,7 +151,7 @@ func TestSlackChannelSelection(t *testing.T) {
 				}
 				return
 			}
-			if err != nil || channel != tc.wantChannel || !reflect.DeepEqual(channels, tc.channels) {
+			if err != nil || channel != tc.wantChannel || len(channels) != len(tc.channels) || len(channels) > 0 && !reflect.DeepEqual(channels, tc.channels) {
 				t.Fatalf("got %q %v %v", channel, channels, err)
 			}
 		})
@@ -209,7 +210,12 @@ func (s *workflowCaptureServer) UpdateAutomation(_ context.Context, req *connect
 	s.update = proto.Clone(req.Msg).(*v1.UpdateAutomationRequest)
 	s.definition = proto.Clone(s.definition).(*v1.AutomationWithOwner)
 	s.definition.Workflow.Workflow = req.Msg.Workflow
-	s.definition.Workflow.Scope = req.Msg.GetScope()
+	if req.Msg.Scope != nil {
+		s.definition.Workflow.Scope = req.Msg.GetScope()
+	}
+	if req.Msg.Name != nil {
+		s.definition.Workflow.Name = req.Msg.GetName()
+	}
 	return connect.NewResponse(&v1.UpdateAutomationResponse{Workflow: s.definition}), nil
 }
 
@@ -219,11 +225,13 @@ func TestImportedWorkflowScopeUpdatePreservesRouting(t *testing.T) {
 		Prompts: []*v1.Prompt{{Prompt: "review"}}, Model: proto.String("composer-2.5"),
 		Triggers: []*v1.Trigger{
 			{Trigger: &v1.Trigger_SlackReactionAdded{SlackReactionAdded: &v1.SlackReactionAddedTrigger{Channel: "C001", Channels: []string{"C001", "C002", "C003", "C004", "C005"}, EmojiName: "jira"}}},
-			{Trigger: &v1.Trigger_SlackTrigger{SlackTrigger: &v1.SlackTrigger{Channel: "C001", Channels: []string{"C001", "C002"}, TopLevelOnly: proto.Bool(true)}}},
+			{Trigger: &v1.Trigger_SlackTrigger{SlackTrigger: &v1.SlackTrigger{Channel: "C001", Channels: []string{"C001", "C002"}, TopLevelOnly: proto.Bool(true), BlockUnauthenticatedSlackUsers: true, SlackCompletionReactionMode: v1.SlackCompletionReactionMode_SLACK_COMPLETION_REACTION_MODE_OFF.Enum()}}},
 			{Trigger: &v1.Trigger_Git{Git: &v1.GitTrigger{Event: &v1.GitTrigger_Label{Label: &v1.GitLabelEvent{Repos: []string{"example/repo"}, LabelName: "cursor", OnAdded: true, PullRequests: true}}}}},
 		},
-		Actions:   []*v1.Action{{Action: &v1.Action_Slack{Slack: &v1.SlackAction{Channel: "C001", Channels: []string{"C001", "C002"}}}}},
-		GitConfig: &v1.GitConfig{Repo: "example/repo", Repos: []string{"example/repo"}},
+		Actions:       []*v1.Action{{Action: &v1.Action_Slack{Slack: &v1.SlackAction{Channel: "C001", Channels: []string{"C001", "C002"}, RespondInThread: true}}}, {Action: &v1.Action_ReadSlack{ReadSlack: &v1.ReadSlackAction{}}}},
+		GitConfig:     &v1.GitConfig{Repo: "example/repo", Repos: []string{"example/repo"}},
+		MemoryEnabled: proto.Bool(false),
+		AgentOptions:  &v1.AgentOptions{SkipInstall: proto.Bool(false), PrivateWorker: &v1.AgentPrivateWorkerConfig{Labels: []*v1.AgentPrivateWorkerLabel{{Key: "pool", Value: "example-workers"}}}},
 	}
 	mock := &workflowCaptureServer{definition: &v1.AutomationWithOwner{Workflow: &v1.Automation{
 		AutomationId: "11111111-1111-4111-8111-111111111111", Name: "Existing", Enabled: true,
@@ -245,17 +253,31 @@ func TestImportedWorkflowScopeUpdatePreservesRouting(t *testing.T) {
 	if read.Diagnostics.HasError() {
 		t.Fatal(read.Diagnostics)
 	}
-	plan := tfsdk.Plan{Schema: sch.Schema, Raw: read.State.Raw}
-	if diags := plan.SetAttribute(ctx, path.Root("scope"), types.StringValue("team")); diags.HasError() {
-		t.Fatal(diags)
-	}
-	updated := &resource.UpdateResponse{State: read.State}
-	r.Update(ctx, resource.UpdateRequest{State: read.State, Plan: plan}, updated)
-	if updated.Diagnostics.HasError() {
-		t.Fatal(updated.Diagnostics)
-	}
-	if mock.update.GetScope() != v1.AutomationScope_AUTOMATION_SCOPE_TEAM || !proto.Equal(wf, mock.update.Workflow) {
-		t.Fatalf("scope-only update changed workflow:\ninput=%v\noutput=%v", wf, mock.update)
+	initialDefinition := proto.Clone(mock.definition).(*v1.AutomationWithOwner)
+	for _, field := range []string{"scope", "name", "prompt"} {
+		t.Run(field, func(t *testing.T) {
+			mock.definition = proto.Clone(initialDefinition).(*v1.AutomationWithOwner)
+			plan := tfsdk.Plan{Schema: sch.Schema, Raw: read.State.Raw}
+			value := "updated"
+			if field == "scope" {
+				value = "team"
+			}
+			if diags := plan.SetAttribute(ctx, path.Root(field), types.StringValue(value)); diags.HasError() {
+				t.Fatal(diags)
+			}
+			updated := &resource.UpdateResponse{State: read.State}
+			r.Update(ctx, resource.UpdateRequest{State: read.State, Plan: plan}, updated)
+			if updated.Diagnostics.HasError() {
+				t.Fatal(updated.Diagnostics)
+			}
+			want := proto.Clone(wf).(*v1.Workflow)
+			if field == "prompt" {
+				want.Prompts[0].Prompt = value
+			}
+			if !proto.Equal(want, mock.update.Workflow) {
+				t.Fatalf("%s-only update changed unrelated workflow fields:\ninput=%v\noutput=%v", field, want, mock.update)
+			}
+		})
 	}
 }
 
@@ -305,6 +327,50 @@ func TestSlackChannelsPlanPreservesImportedLists(t *testing.T) {
 			slackChannelsUseStateUnlessChannelChanged{}.PlanModifyList(ctx, req, resp)
 			if resp.Diagnostics.HasError() || !resp.PlanValue.Equal(mustStringList(t, ctx, tc.want)) {
 				t.Fatalf("plan=%v diagnostics=%v", resp.PlanValue, resp.Diagnostics)
+			}
+		})
+	}
+}
+
+func TestPreserveEmptySlackChannelsDoesNotHideDrift(t *testing.T) {
+	ctx := context.Background()
+	for _, tc := range []struct {
+		name      string
+		channel   string
+		channels  []string
+		wantEmpty bool
+	}{
+		{"scalar_only", "C001", nil, true},
+		{"equivalent_single_entry", "C001", []string{"C001"}, true},
+		{"extra_destination", "C001", []string{"C001", "C002"}, false},
+		{"different_destination", "C001", []string{"C002"}, false},
+		{"changed_scalar", "C002", nil, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			state := platformWorkflowModel{
+				Triggers: []triggerModel{
+					{Slack: &slackTriggerModel{Channel: types.StringValue(tc.channel), Channels: slackChannelsToModel(ctx, tc.channel, tc.channels)}},
+					{SlackReactionAdded: &slackReactionAddedTriggerModel{Channel: types.StringValue(tc.channel), Channels: slackChannelsToModel(ctx, tc.channel, tc.channels)}},
+					{SlackMention: &slackMentionTriggerModel{Channel: types.StringValue(tc.channel), Channels: slackChannelsToModel(ctx, tc.channel, tc.channels)}},
+					{SlackAnyReactionAdded: &slackAnyReactionAddedTriggerModel{Channel: types.StringValue(tc.channel), Channels: slackChannelsToModel(ctx, tc.channel, tc.channels)}},
+				},
+				Actions: []actionModel{{Slack: &slackActionModel{Channel: types.StringValue(tc.channel), Channels: slackChannelsToModel(ctx, tc.channel, tc.channels)}}},
+			}
+			empty := mustStringList(t, ctx, []string{})
+			reference := platformWorkflowModel{
+				Triggers: []triggerModel{
+					{Slack: &slackTriggerModel{Channel: types.StringValue("C001"), Channels: empty}},
+					{SlackReactionAdded: &slackReactionAddedTriggerModel{Channel: types.StringValue("C001"), Channels: empty}},
+					{SlackMention: &slackMentionTriggerModel{Channel: types.StringValue("C001"), Channels: empty}},
+					{SlackAnyReactionAdded: &slackAnyReactionAddedTriggerModel{Channel: types.StringValue("C001"), Channels: empty}},
+				},
+				Actions: []actionModel{{Slack: &slackActionModel{Channel: types.StringValue("C001"), Channels: empty}}},
+			}
+			preserveEmptySlackChannels(ctx, &state, reference)
+			for _, got := range []types.List{state.Triggers[0].Slack.Channels, state.Triggers[1].SlackReactionAdded.Channels, state.Triggers[2].SlackMention.Channels, state.Triggers[3].SlackAnyReactionAdded.Channels, state.Actions[0].Slack.Channels} {
+				if got.Equal(empty) != tc.wantEmpty {
+					t.Fatalf("channels=%v wantEmpty=%v", got, tc.wantEmpty)
+				}
 			}
 		})
 	}
