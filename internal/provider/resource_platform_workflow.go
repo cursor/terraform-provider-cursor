@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/mapdefault"
@@ -655,28 +656,28 @@ func (r *platformWorkflowResource) Schema(_ context.Context, _ resource.SchemaRe
 									Description: "Case-insensitive label name filter. Omit to match any label.",
 								},
 								"on_added": schema.BoolAttribute{
-									Optional:      true,
-									Computed:      true,
-									PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
-									Description:   "Fire when a label is added. At least one of on_added/on_removed must be true. Defaults to false.",
+									Optional:    true,
+									Computed:    true,
+									Default:     booldefault.StaticBool(false),
+									Description: "Fire when a label is added. At least one of on_added/on_removed must be true. Defaults to false.",
 								},
 								"on_removed": schema.BoolAttribute{
-									Optional:      true,
-									Computed:      true,
-									PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
-									Description:   "Fire when a label is removed. At least one of on_added/on_removed must be true. Defaults to false.",
+									Optional:    true,
+									Computed:    true,
+									Default:     booldefault.StaticBool(false),
+									Description: "Fire when a label is removed. At least one of on_added/on_removed must be true. Defaults to false.",
 								},
 								"pull_requests": schema.BoolAttribute{
-									Optional:      true,
-									Computed:      true,
-									PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
-									Description:   "Watch pull request labels. At least one of pull_requests/issues must be true. Defaults to false.",
+									Optional:    true,
+									Computed:    true,
+									Default:     booldefault.StaticBool(false),
+									Description: "Watch pull request labels. At least one of pull_requests/issues must be true. Defaults to false.",
 								},
 								"issues": schema.BoolAttribute{
-									Optional:      true,
-									Computed:      true,
-									PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
-									Description:   "Watch issue labels. At least one of pull_requests/issues must be true. Defaults to false.",
+									Optional:    true,
+									Computed:    true,
+									Default:     booldefault.StaticBool(false),
+									Description: "Watch issue labels. At least one of pull_requests/issues must be true. Defaults to false.",
 								},
 							},
 						},

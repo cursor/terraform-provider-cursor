@@ -13,6 +13,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/defaults"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -336,6 +338,29 @@ func TestValidateConfigSlackChannels(t *testing.T) {
 			t.Fatalf("unknown flags must not be rejected: %s", got)
 		}
 	})
+}
+
+// git_label flags default to false rather than carrying the prior state, so
+// dropping a flag from config disables it, and an explicit false reads back
+// unchanged (the server stores concrete proto3 booleans).
+func TestGitLabelFlagsDefaultToFalse(t *testing.T) {
+	ctx := context.Background()
+	r := &platformWorkflowResource{}
+	sch := &resource.SchemaResponse{}
+	r.Schema(ctx, resource.SchemaRequest{}, sch)
+	trigger := sch.Schema.Attributes["trigger"].(schema.ListNestedAttribute)
+	label := trigger.NestedObject.Attributes["git_label"].(schema.SingleNestedAttribute)
+	for _, name := range []string{"on_added", "on_removed", "pull_requests", "issues"} {
+		flag := label.Attributes[name].(schema.BoolAttribute)
+		if !flag.Optional || !flag.Computed || flag.Default == nil || len(flag.PlanModifiers) != 0 {
+			t.Fatalf("%s must be Optional+Computed with a static default and no state-carrying plan modifier: %+v", name, flag)
+		}
+		resp := defaults.BoolResponse{}
+		flag.Default.DefaultBool(ctx, defaults.BoolRequest{}, &resp)
+		if !resp.PlanValue.Equal(types.BoolValue(false)) {
+			t.Fatalf("%s default = %v, want false", name, resp.PlanValue)
+		}
+	}
 }
 
 func TestGitLabelTriggerRoundTrip(t *testing.T) {
