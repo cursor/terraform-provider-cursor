@@ -133,7 +133,8 @@ Read-Only:
 
 Read-Only:
 
-- `channel` (String) Slack channel ID to post to.
+- `channel` (String, Deprecated) First Slack channel ID (channels[0]). Deprecated; use channels.
+- `channels` (List of String) Slack channel IDs. Falls back to the legacy single channel when the automation stores no channel list.
 - `generalized` (Boolean) If true, agent can list and send to any Slack channel or DM dynamically.
 - `post_as_thread` (Boolean) If true, post a parent message with the automation name and reply in the thread.
 - `respond_in_thread` (Boolean, Deprecated) Deprecated: ignored by the server, which always replies in the triggering Slack thread.
@@ -174,6 +175,7 @@ Read-Only:
 
 - `cron` (Attributes) Trigger on a cron schedule. (see [below for nested schema](#nestedatt--trigger--cron))
 - `git_ci_completed` (Attributes) Trigger when all CI checks complete on a PR or a specific branch. (see [below for nested schema](#nestedatt--trigger--git_ci_completed))
+- `git_label` (Attributes) Trigger on GitHub pull request or issue label changes. (see [below for nested schema](#nestedatt--trigger--git_label))
 - `git_pull_request` (Attributes) Trigger on GitHub pull request events. (see [below for nested schema](#nestedatt--trigger--git_pull_request))
 - `git_push` (Attributes) Trigger on git push events. (see [below for nested schema](#nestedatt--trigger--git_push))
 - `linear` (Attributes) Trigger on Linear events. (see [below for nested schema](#nestedatt--trigger--linear))
@@ -206,6 +208,19 @@ Read-Only:
 - `condition` (String) CI outcome that fires the trigger: "failure", "success", or "any".
 - `ignore_base_failures` (Boolean) Whether CI failures that also exist on the base branch are ignored.
 - `repos` (List of String) GitHub repos to watch.
+
+
+<a id="nestedatt--trigger--git_label"></a>
+### Nested Schema for `trigger.git_label`
+
+Read-Only:
+
+- `issues` (Boolean) Whether issues are watched.
+- `label_name` (String) Case-insensitive label name filter.
+- `on_added` (Boolean) Whether label additions trigger.
+- `on_removed` (Boolean) Whether label removals trigger.
+- `pull_requests` (Boolean) Whether pull requests are watched.
+- `repos` (List of String) Repositories to watch.
 
 
 <a id="nestedatt--trigger--git_pull_request"></a>
@@ -363,11 +378,13 @@ Read-Only:
 Read-Only:
 
 - `block_unauthenticated_slack_users` (Boolean) Whether only Slack users who linked Cursor can trigger.
-- `channel` (String) Slack channel ID.
+- `channel` (String, Deprecated) First Slack channel ID (channels[0]). Deprecated; use channels.
+- `channels` (List of String) Slack channel IDs. Falls back to the legacy single channel when the automation stores no channel list.
 - `completion_reaction_custom_emoji` (String) Custom Slack reaction emoji in ":emoji_name:" form, used when completion_reaction_mode is "custom".
 - `completion_reaction_mode` (String) Emoji reaction behavior on successful completion: "on", "off", or "custom".
 - `message_contains` (String) Message text filter (case-insensitive).
 - `message_contains_is_regex` (Boolean) Whether message_contains is a regex pattern.
+- `top_level_only` (Boolean) Whether only top-level channel messages fire the trigger (thread replies ignored). Null when the server has no explicit value.
 
 
 <a id="nestedatt--trigger--slack_any_reaction_added"></a>
@@ -376,7 +393,8 @@ Read-Only:
 Read-Only:
 
 - `block_unauthenticated_slack_users` (Boolean) Whether only Slack users who linked Cursor can trigger.
-- `channel` (String) Slack channel ID.
+- `channel` (String, Deprecated) First Slack channel ID (channels[0]). Deprecated; use channels.
+- `channels` (List of String) Slack channel IDs. Falls back to the legacy single channel when the automation stores no channel list.
 - `only_owner_reactions` (Boolean) Whether only the automation owner's reactions trigger it.
 
 
@@ -394,7 +412,8 @@ Read-Only:
 Read-Only:
 
 - `block_unauthenticated_slack_users` (Boolean) Whether only Slack users who linked Cursor can trigger.
-- `channel` (String) Slack channel ID.
+- `channel` (String, Deprecated) First Slack channel ID (channels[0]). Deprecated; use channels.
+- `channels` (List of String) Slack channel IDs. Falls back to the legacy single channel when the automation stores no channel list.
 
 
 <a id="nestedatt--trigger--slack_reaction_added"></a>
@@ -403,7 +422,8 @@ Read-Only:
 Read-Only:
 
 - `block_unauthenticated_slack_users` (Boolean) Whether only Slack users who linked Cursor can trigger.
-- `channel` (String) Slack channel ID.
+- `channel` (String, Deprecated) First Slack channel ID (channels[0]). Deprecated; use channels.
+- `channels` (List of String) Slack channel IDs. Falls back to the legacy single channel when the automation stores no channel list.
 - `emoji_name` (String) Slack emoji short name without colons.
 - `only_owner_reactions` (Boolean) Whether only the automation owner's reactions trigger it.
 
