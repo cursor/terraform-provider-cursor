@@ -2,6 +2,8 @@ module github.com/cursor/terraform-provider-cursor
 
 go 1.26.0
 
+toolchain go1.26.9
+
 require (
 	connectrpc.com/connect v1.21.0
 	github.com/hashicorp/terraform-plugin-framework v1.19.0
