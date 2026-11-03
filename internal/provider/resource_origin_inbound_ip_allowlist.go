@@ -25,10 +25,11 @@ type originInboundIPAllowlistResource struct {
 }
 
 type originInboundIPAllowlistModel struct {
-	ID                 types.String `tfsdk:"id"`
-	Namespace          types.String `tfsdk:"namespace"`
-	Enabled            types.Bool   `tfsdk:"enabled"`
-	DeletionProtection types.Bool   `tfsdk:"deletion_protection"`
+	ID                  types.String `tfsdk:"id"`
+	Namespace           types.String `tfsdk:"namespace"`
+	Enabled             types.Bool   `tfsdk:"enabled"`
+	TrustAppDeclaredIPs types.Bool   `tfsdk:"trust_app_declared_ips"`
+	DeletionProtection  types.Bool   `tfsdk:"deletion_protection"`
 }
 
 func NewOriginInboundIPAllowlistResource() resource.Resource {
@@ -60,6 +61,10 @@ func (r *originInboundIPAllowlistResource) Schema(_ context.Context, _ resource.
 			"enabled": schema.BoolAttribute{
 				Required:    true,
 				Description: "True to enforce the namespace's inbound IP allowlist, false to stop enforcing it.",
+			},
+			"trust_app_declared_ips": schema.BoolAttribute{
+				Optional:    true,
+				Description: "True to also admit the egress IP addresses that apps installed on the namespace declare while the allowlist is enforced, false to stop. This is the dashboard's \"Trust IP addresses declared by installed apps\" setting. Omit to leave the setting unmanaged. Origin rejects setting it while trusting app-declared IP addresses is unavailable. Destroying this resource leaves the setting as it is.",
 			},
 			"deletion_protection": schema.BoolAttribute{
 				Optional:    true,
@@ -93,7 +98,7 @@ func (r *originInboundIPAllowlistResource) Create(ctx context.Context, req resou
 		resp.Diagnostics.AddError("Provider not configured", "Origin API client is unavailable.")
 		return
 	}
-	state, err := r.set(ctx, plan)
+	state, err := r.set(ctx, plan, originInboundIPAllowlistModel{})
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to update Origin inbound IP allowlist", err.Error())
 		return
@@ -118,6 +123,9 @@ func (r *originInboundIPAllowlistResource) Read(ctx context.Context, req resourc
 	}
 	state.ID = state.Namespace
 	state.Enabled = types.BoolValue(list.Enabled)
+	if !state.TrustAppDeclaredIPs.IsNull() {
+		state.TrustAppDeclaredIPs = types.BoolValue(list.TrustAppDeclaredIPs)
+	}
 	state.DeletionProtection = boolOrDefault(state.DeletionProtection, true)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
@@ -133,13 +141,7 @@ func (r *originInboundIPAllowlistResource) Update(ctx context.Context, req resou
 		resp.Diagnostics.AddError("Provider not configured", "Origin API client is unavailable.")
 		return
 	}
-	if !plan.Enabled.IsUnknown() && !prior.Enabled.IsNull() && plan.Enabled.Equal(prior.Enabled) {
-		plan.ID = plan.Namespace
-		plan.DeletionProtection = boolOrDefault(plan.DeletionProtection, true)
-		resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
-		return
-	}
-	state, err := r.set(ctx, plan)
+	state, err := r.set(ctx, plan, prior)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to update Origin inbound IP allowlist", err.Error())
 		return
@@ -227,19 +229,35 @@ func (r *originInboundIPAllowlistResource) ValidateConfig(ctx context.Context, r
 	}
 }
 
-func (r *originInboundIPAllowlistResource) set(ctx context.Context, plan originInboundIPAllowlistModel) (originInboundIPAllowlistModel, error) {
+// set writes only what differs from prior; pass a zero prior on create to write everything configured.
+func (r *originInboundIPAllowlistResource) set(ctx context.Context, plan, prior originInboundIPAllowlistModel) (originInboundIPAllowlistModel, error) {
 	if err := requireIDSafeSlug(plan.Namespace, "namespace"); err != nil {
 		return plan, err
 	}
-	if plan.Namespace.IsUnknown() || plan.Enabled.IsUnknown() || plan.Enabled.IsNull() {
+	if plan.Namespace.IsUnknown() || plan.Enabled.IsUnknown() || plan.Enabled.IsNull() || plan.TrustAppDeclaredIPs.IsUnknown() {
 		return plan, fmt.Errorf("allowlist configuration is incomplete")
 	}
-	list, err := r.client.setOriginInboundIPAllowlistEnabled(ctx, plan.Namespace.ValueString(), plan.Enabled.ValueBool())
+	plan.ID = plan.Namespace
+	plan.DeletionProtection = boolOrDefault(plan.DeletionProtection, true)
+	var update originInboundIPAllowlistUpdate
+	if !plan.Enabled.Equal(prior.Enabled) {
+		enabled := plan.Enabled.ValueBool()
+		update.Enabled = &enabled
+	}
+	if !plan.TrustAppDeclaredIPs.IsNull() && !plan.TrustAppDeclaredIPs.Equal(prior.TrustAppDeclaredIPs) {
+		trust := plan.TrustAppDeclaredIPs.ValueBool()
+		update.TrustAppDeclaredIPs = &trust
+	}
+	if update.empty() {
+		return plan, nil
+	}
+	list, err := r.client.updateOriginInboundIPAllowlist(ctx, plan.Namespace.ValueString(), update)
 	if err != nil {
 		return plan, err
 	}
-	plan.ID = plan.Namespace
 	plan.Enabled = types.BoolValue(list.Enabled)
-	plan.DeletionProtection = boolOrDefault(plan.DeletionProtection, true)
+	if !plan.TrustAppDeclaredIPs.IsNull() {
+		plan.TrustAppDeclaredIPs = types.BoolValue(list.TrustAppDeclaredIPs)
+	}
 	return plan, nil
 }

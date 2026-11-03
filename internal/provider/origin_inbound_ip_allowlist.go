@@ -10,9 +10,10 @@ import (
 )
 
 type originInboundIPAllowlist struct {
-	Enabled bool                            `json:"enabled"`
-	Entries []originInboundIPAllowlistEntry `json:"entries"`
-	Etag    string                          `json:"etag"`
+	Enabled             bool                            `json:"enabled"`
+	Entries             []originInboundIPAllowlistEntry `json:"entries"`
+	Etag                string                          `json:"etag"`
+	TrustAppDeclaredIPs bool                            `json:"trustAppDeclaredIps"`
 }
 
 type originInboundIPAllowlistReplace struct {
@@ -38,7 +39,12 @@ type originInboundIPAllowlistEntry struct {
 }
 
 type originInboundIPAllowlistUpdate struct {
-	Enabled bool `json:"enabled"`
+	Enabled             *bool `json:"enabled,omitempty"`
+	TrustAppDeclaredIPs *bool `json:"trustAppDeclaredIps,omitempty"`
+}
+
+func (u originInboundIPAllowlistUpdate) empty() bool {
+	return u.Enabled == nil && u.TrustAppDeclaredIPs == nil
 }
 
 type originInboundIPAllowlistEntryAdd struct {
@@ -118,7 +124,12 @@ func checkOriginInboundIPAllowlistReplaced(want []originInboundIPAllowlistEntryA
 }
 
 func (c *apiClient) setOriginInboundIPAllowlistEnabled(ctx context.Context, namespace string, enabled bool) (*originInboundIPAllowlist, error) {
-	body, err := c.originDo(ctx, http.MethodPatch, originInboundIPAllowlistPath(namespace), originInboundIPAllowlistUpdate{Enabled: enabled}, http.StatusOK)
+	return c.updateOriginInboundIPAllowlist(ctx, namespace, originInboundIPAllowlistUpdate{Enabled: &enabled})
+}
+
+// Origin applies trust_app_declared_ips before enabled, so a failed enabled write can leave the new trust setting in place.
+func (c *apiClient) updateOriginInboundIPAllowlist(ctx context.Context, namespace string, update originInboundIPAllowlistUpdate) (*originInboundIPAllowlist, error) {
+	body, err := c.originDo(ctx, http.MethodPatch, originInboundIPAllowlistPath(namespace), update, http.StatusOK)
 	if err != nil {
 		return nil, err
 	}
