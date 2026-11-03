@@ -70,6 +70,83 @@ func TestOriginInboundIPAllowlistCreateUpdateDelete(t *testing.T) {
 	}
 }
 
+func TestOriginInboundIPAllowlistTrustAppDeclaredIPs(t *testing.T) {
+	mock := newInboundIPAllowlistMock(t)
+	defer mock.Close()
+	mock.add("acme", "203.0.113.0/24", "Office", true)
+
+	ctx := context.Background()
+	res := &originInboundIPAllowlistResource{client: mock.client()}
+	sch := inboundAllowlistSchema(t, res)
+	route := "PATCH /namespaces/acme/inbound-ip-allowlist"
+	apply := func(prior *tfsdk.State, plan originInboundIPAllowlistModel) tfsdk.State {
+		t.Helper()
+		planValue := tfsdk.Plan{Schema: sch}
+		if diags := planValue.Set(ctx, &plan); diags.HasError() {
+			t.Fatal(diags)
+		}
+		if prior == nil {
+			resp := &resource.CreateResponse{State: tfsdk.State{Schema: sch}}
+			res.Create(ctx, resource.CreateRequest{Plan: planValue}, resp)
+			if resp.Diagnostics.HasError() {
+				t.Fatalf("create diagnostics: %v", resp.Diagnostics)
+			}
+			return resp.State
+		}
+		resp := &resource.UpdateResponse{State: tfsdk.State{Schema: sch}}
+		res.Update(ctx, resource.UpdateRequest{Plan: planValue, State: *prior}, resp)
+		if resp.Diagnostics.HasError() {
+			t.Fatalf("update diagnostics: %v", resp.Diagnostics)
+		}
+		return resp.State
+	}
+	stateOf := func(state tfsdk.State) originInboundIPAllowlistModel {
+		t.Helper()
+		var got originInboundIPAllowlistModel
+		if diags := state.Get(ctx, &got); diags.HasError() {
+			t.Fatal(diags)
+		}
+		return got
+	}
+
+	plan := originInboundIPAllowlistModel{ID: types.StringUnknown(), Namespace: types.StringValue("acme"), Enabled: types.BoolValue(true), TrustAppDeclaredIPs: types.BoolValue(true), DeletionProtection: types.BoolValue(false)}
+	state := apply(nil, plan)
+	if body := mock.lastBody(route); body != `{"enabled":true,"trustAppDeclaredIps":true}` || !mock.trustAppDeclaredIPs("acme") {
+		t.Fatalf("create body = %s, trust = %v", body, mock.trustAppDeclaredIPs("acme"))
+	}
+	if got := stateOf(state); !got.TrustAppDeclaredIPs.ValueBool() || !got.Enabled.ValueBool() {
+		t.Fatalf("created state = %#v", got)
+	}
+
+	plan.TrustAppDeclaredIPs = types.BoolValue(false)
+	state = apply(&state, plan)
+	if body := mock.lastBody(route); body != `{"trustAppDeclaredIps":false}` || mock.trustAppDeclaredIPs("acme") || !mock.enabled("acme") {
+		t.Fatalf("trust-only update body = %s, want enabled left out", body)
+	}
+
+	mock.setTrustAppDeclaredIPs("acme", true)
+	readResp := &resource.ReadResponse{State: state}
+	res.Read(ctx, resource.ReadRequest{State: state}, readResp)
+	if got := stateOf(readResp.State); readResp.Diagnostics.HasError() || !got.TrustAppDeclaredIPs.ValueBool() {
+		t.Fatalf("read state = %#v, %v, want drift in a managed trust setting picked up", got, readResp.Diagnostics)
+	}
+
+	calls := mock.count(route)
+	plan.TrustAppDeclaredIPs = types.BoolNull()
+	state = apply(&readResp.State, plan)
+	if mock.count(route) != calls || !mock.trustAppDeclaredIPs("acme") {
+		t.Fatal("dropping trust_app_declared_ips from config must leave the setting alone without calling the API")
+	}
+	if got := stateOf(state); !got.TrustAppDeclaredIPs.IsNull() {
+		t.Fatalf("unmanaged state = %#v", got)
+	}
+	readResp = &resource.ReadResponse{State: state}
+	res.Read(ctx, resource.ReadRequest{State: state}, readResp)
+	if got := stateOf(readResp.State); !got.TrustAppDeclaredIPs.IsNull() {
+		t.Fatalf("read state = %#v, want an unmanaged trust setting left null", got)
+	}
+}
+
 func TestOriginInboundIPAllowlistEnableExcludingCallerFails(t *testing.T) {
 	mock := newInboundIPAllowlistMock(t)
 	defer mock.Close()

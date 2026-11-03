@@ -15,9 +15,10 @@ Manages whether an Origin namespace enforces its inbound IP allowlist. While enf
 ```terraform
 # depends_on adds the office entry before enforcement starts and stops enforcement before the entry is removed.
 resource "cursor_origin_inbound_ip_allowlist" "acme" {
-  namespace           = "acme"
-  enabled             = true
-  deletion_protection = true
+  namespace              = "acme"
+  enabled                = true
+  trust_app_declared_ips = true
+  deletion_protection    = true
 
   depends_on = [cursor_origin_inbound_ip_allowlist_entry.office]
 }
@@ -34,6 +35,7 @@ resource "cursor_origin_inbound_ip_allowlist" "acme" {
 ### Optional
 
 - `deletion_protection` (Boolean) When true, Terraform will not destroy this resource, which would stop enforcing the allowlist. That includes terraform destroy and replacements caused by changing namespace. Set to false and apply before destroying or moving it. Null is treated as protected.
+- `trust_app_declared_ips` (Boolean) True to also admit the egress IP addresses that apps installed on the namespace declare while the allowlist is enforced, false to stop. This is the dashboard's "Trust IP addresses declared by installed apps" setting. Omit to leave the setting unmanaged. Origin rejects setting it while trusting app-declared IP addresses is unavailable. Destroying this resource leaves the setting as it is.
 
 ### Read-Only
 

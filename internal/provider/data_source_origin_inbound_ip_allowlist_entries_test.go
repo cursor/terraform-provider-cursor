@@ -15,13 +15,14 @@ func TestOriginInboundIPAllowlistEntriesDataSourceRead(t *testing.T) {
 	office := mock.add("acme", "203.0.113.0/24", "Office", true)
 	vpn := mock.add("acme", "198.51.100.7", "", false)
 	mock.setEnabled("acme", true)
+	mock.setTrustAppDeclaredIPs("acme", true)
 
 	ds := &originInboundIPAllowlistEntriesDataSource{client: mock.client()}
 	state, resp := readInboundAllowlistDataSource(t, ds, "acme")
 	if resp.Diagnostics.HasError() {
 		t.Fatalf("read diagnostics: %v", resp.Diagnostics)
 	}
-	if !state.Enabled.ValueBool() || len(state.Entries) != 2 {
+	if !state.Enabled.ValueBool() || !state.TrustAppDeclaredIPs.ValueBool() || len(state.Entries) != 2 {
 		t.Fatalf("state = %#v", state)
 	}
 	if got := state.Entries[0]; got.ID.ValueString() != office.ID || got.CIDR.ValueString() != "203.0.113.0/24" || got.Description.ValueString() != "Office" || !got.Enabled.ValueBool() || got.CreatedAt.ValueString() != office.CreatedAt {
@@ -32,7 +33,7 @@ func TestOriginInboundIPAllowlistEntriesDataSourceRead(t *testing.T) {
 	}
 
 	empty, resp := readInboundAllowlistDataSource(t, ds, "other")
-	if resp.Diagnostics.HasError() || empty.Enabled.ValueBool() || empty.Entries == nil || len(empty.Entries) != 0 {
+	if resp.Diagnostics.HasError() || empty.Enabled.ValueBool() || empty.TrustAppDeclaredIPs.IsNull() || empty.TrustAppDeclaredIPs.ValueBool() || empty.Entries == nil || len(empty.Entries) != 0 {
 		t.Fatalf("empty namespace = %#v, %v", empty, resp.Diagnostics)
 	}
 
@@ -52,9 +53,10 @@ func readInboundAllowlistDataSource(t *testing.T, ds *originInboundIPAllowlistEn
 	ds.Schema(ctx, datasource.SchemaRequest{}, schemaResp)
 	objType := schemaResp.Schema.Type().TerraformType(ctx).(tftypes.Object)
 	config := tfsdk.Config{Schema: schemaResp.Schema, Raw: tftypes.NewValue(objType, map[string]tftypes.Value{
-		"namespace": tftypes.NewValue(tftypes.String, namespace),
-		"enabled":   tftypes.NewValue(tftypes.Bool, nil),
-		"entries":   tftypes.NewValue(objType.AttributeTypes["entries"], nil),
+		"namespace":              tftypes.NewValue(tftypes.String, namespace),
+		"enabled":                tftypes.NewValue(tftypes.Bool, nil),
+		"trust_app_declared_ips": tftypes.NewValue(tftypes.Bool, nil),
+		"entries":                tftypes.NewValue(objType.AttributeTypes["entries"], nil),
 	})}
 	resp := &datasource.ReadResponse{State: tfsdk.State{Schema: schemaResp.Schema}}
 	ds.Read(ctx, datasource.ReadRequest{Config: config}, resp)

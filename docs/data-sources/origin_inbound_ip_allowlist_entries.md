@@ -3,12 +3,12 @@
 page_title: "cursor_origin_inbound_ip_allowlist_entries Data Source - cursor"
 subcategory: ""
 description: |-
-  Lists the entries on an Origin namespace's inbound IP allowlist, oldest first, and whether the namespace enforces it. A namespace lists at most 1000 entries. Uses the provider auth token.
+  Lists the entries on an Origin namespace's inbound IP allowlist, oldest first, whether the namespace enforces it, and whether it trusts IP addresses declared by installed apps. A namespace lists at most 1000 entries. Uses the provider auth token.
 ---
 
 # cursor_origin_inbound_ip_allowlist_entries (Data Source)
 
-Lists the entries on an Origin namespace's inbound IP allowlist, oldest first, and whether the namespace enforces it. A namespace lists at most 1000 entries. Uses the provider auth token.
+Lists the entries on an Origin namespace's inbound IP allowlist, oldest first, whether the namespace enforces it, and whether it trusts IP addresses declared by installed apps. A namespace lists at most 1000 entries. Uses the provider auth token.
 
 ## Example Usage
 
@@ -33,6 +33,7 @@ output "acme_admitted_cidrs" {
 
 - `enabled` (Boolean) Whether the namespace enforces the allowlist. The list takes effect only while this is true and at least one entry is enabled.
 - `entries` (Attributes List) Every entry on the allowlist, oldest first. (see [below for nested schema](#nestedatt--entries))
+- `trust_app_declared_ips` (Boolean) Whether the egress IP addresses that apps installed on the namespace declare are also admitted while the allowlist is enforced. Reads as false while trusting app-declared IP addresses is unavailable.
 
 <a id="nestedatt--entries"></a>
 ### Nested Schema for `entries`

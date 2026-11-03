@@ -27,7 +27,7 @@ func TestOriginInboundIPAllowlistGet(t *testing.T) {
 			t.Errorf("Authorization = %q", got)
 		}
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = io.WriteString(w, `{"enabled":true,"entries":[{"id":"nsip_01k2ja2000e0080000000000c4","cidr":"203.0.113.0/24","description":"Office","enabled":true,"createdAt":"2026-08-02T14:45:00Z"},{"id":"nsip_01k2ja2000e0080000000000c5","cidr":"198.51.100.7","createdAt":"2026-08-03T09:10:00Z"}]}`)
+		_, _ = io.WriteString(w, `{"enabled":true,"trustAppDeclaredIps":true,"entries":[{"id":"nsip_01k2ja2000e0080000000000c4","cidr":"203.0.113.0/24","description":"Office","enabled":true,"createdAt":"2026-08-02T14:45:00Z"},{"id":"nsip_01k2ja2000e0080000000000c5","cidr":"198.51.100.7","createdAt":"2026-08-03T09:10:00Z"}]}`)
 	}))
 	defer server.Close()
 
@@ -35,7 +35,7 @@ func TestOriginInboundIPAllowlistGet(t *testing.T) {
 	if err != nil {
 		t.Fatalf("getOriginInboundIPAllowlist() error: %v", err)
 	}
-	if !list.Enabled || len(list.Entries) != 2 {
+	if !list.Enabled || !list.TrustAppDeclaredIPs || len(list.Entries) != 2 {
 		t.Fatalf("list = %#v", list)
 	}
 	if got := list.Entries[0]; got.ID != sampleInboundIPEntryID || got.CIDR != "203.0.113.0/24" || got.Description != "Office" || !got.Enabled || got.CreatedAt != "2026-08-02T14:45:00Z" {
@@ -59,7 +59,7 @@ func TestOriginInboundIPAllowlistGetEmptyAndInvalid(t *testing.T) {
 	if err != nil {
 		t.Fatalf("empty list error: %v", err)
 	}
-	if list.Enabled || list.Entries == nil || len(list.Entries) != 0 {
+	if list.Enabled || list.TrustAppDeclaredIPs || list.Entries == nil || len(list.Entries) != 0 {
 		t.Fatalf("empty list = %#v", list)
 	}
 
@@ -92,6 +92,37 @@ func TestOriginInboundIPAllowlistSetEnabledSendsFalse(t *testing.T) {
 		if body := mock.lastBody("PATCH /namespaces/acme/inbound-ip-allowlist"); body != fmt.Sprintf(`{"enabled":%v}`, want) {
 			t.Fatalf("body = %s", body)
 		}
+	}
+}
+
+func TestOriginInboundIPAllowlistUpdateSendsOnlySetFields(t *testing.T) {
+	mock := newInboundIPAllowlistMock(t)
+	defer mock.Close()
+	mock.add("acme", "203.0.113.0/24", "Office", true)
+
+	ctx := context.Background()
+	client := mock.client()
+	route := "PATCH /namespaces/acme/inbound-ip-allowlist"
+	enabled, trust, distrust := true, true, false
+	list, err := client.updateOriginInboundIPAllowlist(ctx, "acme", originInboundIPAllowlistUpdate{Enabled: &enabled, TrustAppDeclaredIPs: &trust})
+	if err != nil {
+		t.Fatalf("update both error: %v", err)
+	}
+	if body := mock.lastBody(route); body != `{"enabled":true,"trustAppDeclaredIps":true}` || !list.Enabled || !list.TrustAppDeclaredIPs {
+		t.Fatalf("both body = %s, list = %#v", body, list)
+	}
+
+	list, err = client.updateOriginInboundIPAllowlist(ctx, "acme", originInboundIPAllowlistUpdate{TrustAppDeclaredIPs: &distrust})
+	if err != nil {
+		t.Fatalf("update trust error: %v", err)
+	}
+	if body := mock.lastBody(route); body != `{"trustAppDeclaredIps":false}` || !list.Enabled || list.TrustAppDeclaredIPs {
+		t.Fatalf("trust body = %s, list = %#v, want enforcement left on", body, list)
+	}
+
+	mock.appDeclaredIPsUnavailable = true
+	if _, err := client.updateOriginInboundIPAllowlist(ctx, "acme", originInboundIPAllowlistUpdate{TrustAppDeclaredIPs: &trust}); err == nil || !strings.Contains(err.Error(), "not available") {
+		t.Fatalf("unavailable error = %v, want the FAILED_PRECONDITION surfaced", err)
 	}
 }
 
@@ -254,17 +285,21 @@ type inboundIPAllowlistMock struct {
 	hidden map[string]bool
 	caller netip.Addr
 	nextID int
+
+	appDeclaredIPsUnavailable bool
 }
 
 type mockInboundIPAllowlist struct {
-	enabled bool
-	entries []originInboundIPAllowlistEntry
+	enabled             bool
+	trustAppDeclaredIPs bool
+	entries             []originInboundIPAllowlistEntry
 }
 
 type mockInboundIPAllowlistJSON struct {
-	Enabled bool                              `json:"enabled,omitempty"`
-	Entries []mockInboundIPAllowlistEntryJSON `json:"entries,omitempty"`
-	Etag    string                            `json:"etag,omitempty"`
+	Enabled             bool                              `json:"enabled,omitempty"`
+	Entries             []mockInboundIPAllowlistEntryJSON `json:"entries,omitempty"`
+	Etag                string                            `json:"etag,omitempty"`
+	TrustAppDeclaredIPs bool                              `json:"trustAppDeclaredIps,omitempty"`
 }
 
 type mockInboundIPAllowlistReplaceJSON struct {
@@ -313,16 +348,26 @@ func (m *inboundIPAllowlistMock) serve(w http.ResponseWriter, r *http.Request) {
 		m.serveReplace(w, raw, list)
 	case len(parts) == 2 && r.Method == http.MethodPatch:
 		var body struct {
-			Enabled *bool `json:"enabled"`
+			Enabled             *bool `json:"enabled"`
+			TrustAppDeclaredIPs *bool `json:"trustAppDeclaredIps"`
 		}
-		if err := json.Unmarshal(raw, &body); err != nil || body.Enabled == nil {
-			writeJSON(m.t, w, http.StatusBadRequest, originStatusError{Code: 3, Message: "enabled is required"})
+		if err := json.Unmarshal(raw, &body); err != nil || (body.Enabled == nil && body.TrustAppDeclaredIPs == nil) {
+			writeJSON(m.t, w, http.StatusBadRequest, originStatusError{Code: 3, Message: "set enabled, trust_app_declared_ips, or both"})
 			return
 		}
-		if !m.guardCaller(w, *list, mockInboundIPAllowlist{enabled: *body.Enabled, entries: list.entries}) {
-			return
+		if body.TrustAppDeclaredIPs != nil {
+			if m.appDeclaredIPsUnavailable {
+				writeJSON(m.t, w, http.StatusBadRequest, originStatusError{Code: 9, Message: "Trusting IP addresses declared by installed apps is not available"})
+				return
+			}
+			list.trustAppDeclaredIPs = *body.TrustAppDeclaredIPs
 		}
-		list.enabled = *body.Enabled
+		if body.Enabled != nil {
+			if !m.guardCaller(w, *list, mockInboundIPAllowlist{enabled: *body.Enabled, entries: list.entries}) {
+				return
+			}
+			list.enabled = *body.Enabled
+		}
 		writeJSON(m.t, w, http.StatusOK, list.json())
 	case len(parts) == 3 && parts[2] == "entries" && r.Method == http.MethodPost:
 		var body struct {
@@ -583,7 +628,7 @@ func (l *mockInboundIPAllowlist) with(index int, replacement *originInboundIPAll
 }
 
 func (l *mockInboundIPAllowlist) json() mockInboundIPAllowlistJSON {
-	out := mockInboundIPAllowlistJSON{Enabled: l.enabled, Etag: l.etag()}
+	out := mockInboundIPAllowlistJSON{Enabled: l.enabled, Etag: l.etag(), TrustAppDeclaredIPs: l.trustAppDeclaredIPs}
 	for _, entry := range l.entries {
 		out.Entries = append(out.Entries, mockInboundEntryJSON(entry))
 	}
@@ -627,6 +672,18 @@ func (m *inboundIPAllowlistMock) setEnabled(namespace string, enabled bool) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.listLocked(namespace).enabled = enabled
+}
+
+func (m *inboundIPAllowlistMock) setTrustAppDeclaredIPs(namespace string, trust bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.listLocked(namespace).trustAppDeclaredIPs = trust
+}
+
+func (m *inboundIPAllowlistMock) trustAppDeclaredIPs(namespace string) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.listLocked(namespace).trustAppDeclaredIPs
 }
 
 func (m *inboundIPAllowlistMock) setCaller(addr string) {

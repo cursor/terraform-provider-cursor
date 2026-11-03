@@ -14,9 +14,10 @@ type originInboundIPAllowlistEntriesDataSource struct {
 }
 
 type originInboundIPAllowlistEntriesDataSourceModel struct {
-	Namespace types.String                                `tfsdk:"namespace"`
-	Enabled   types.Bool                                  `tfsdk:"enabled"`
-	Entries   []originInboundIPAllowlistEntryElementModel `tfsdk:"entries"`
+	Namespace           types.String                                `tfsdk:"namespace"`
+	Enabled             types.Bool                                  `tfsdk:"enabled"`
+	TrustAppDeclaredIPs types.Bool                                  `tfsdk:"trust_app_declared_ips"`
+	Entries             []originInboundIPAllowlistEntryElementModel `tfsdk:"entries"`
 }
 
 type originInboundIPAllowlistEntryElementModel struct {
@@ -37,7 +38,7 @@ func (d *originInboundIPAllowlistEntriesDataSource) Metadata(_ context.Context, 
 
 func (d *originInboundIPAllowlistEntriesDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: fmt.Sprintf("Lists the entries on an Origin namespace's inbound IP allowlist, oldest first, and whether the namespace enforces it. A namespace lists at most %d entries. Uses the provider auth token.", maxOriginInboundIPAllowlistEntries),
+		Description: fmt.Sprintf("Lists the entries on an Origin namespace's inbound IP allowlist, oldest first, whether the namespace enforces it, and whether it trusts IP addresses declared by installed apps. A namespace lists at most %d entries. Uses the provider auth token.", maxOriginInboundIPAllowlistEntries),
 		Attributes: map[string]schema.Attribute{
 			"namespace": schema.StringAttribute{
 				Required:    true,
@@ -46,6 +47,10 @@ func (d *originInboundIPAllowlistEntriesDataSource) Schema(_ context.Context, _ 
 			"enabled": schema.BoolAttribute{
 				Computed:    true,
 				Description: "Whether the namespace enforces the allowlist. The list takes effect only while this is true and at least one entry is enabled.",
+			},
+			"trust_app_declared_ips": schema.BoolAttribute{
+				Computed:    true,
+				Description: "Whether the egress IP addresses that apps installed on the namespace declare are also admitted while the allowlist is enforced. Reads as false while trusting app-declared IP addresses is unavailable.",
 			},
 			"entries": schema.ListNestedAttribute{
 				Computed:    true,
@@ -112,6 +117,7 @@ func (d *originInboundIPAllowlistEntriesDataSource) Read(ctx context.Context, re
 		return
 	}
 	config.Enabled = types.BoolValue(list.Enabled)
+	config.TrustAppDeclaredIPs = types.BoolValue(list.TrustAppDeclaredIPs)
 	config.Entries = make([]originInboundIPAllowlistEntryElementModel, 0, len(list.Entries))
 	for _, entry := range list.Entries {
 		config.Entries = append(config.Entries, originInboundIPAllowlistEntryElementModel{
