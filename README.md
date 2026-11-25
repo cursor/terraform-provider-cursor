@@ -23,7 +23,7 @@ terraform {
 
 Use explicit configuration or environment variables:
 
-- `CURSOR_TOKEN` - Cursor API token. Required. Raw `key_` and `crsr_` API keys are exchanged for a session token automatically.
+- `CURSOR_TOKEN` - Cursor API token. Required. Raw `key_`, `crsr_`, and `grok_` API keys are exchanged for a session token automatically.
 - `CURSOR_ENDPOINT` - Cursor API base URL. Optional, defaults to `https://api2.cursor.sh`.
 - `CURSOR_TEAM_API_KEY` - Team Admin API key. Optional; needed only for Origin grants keyed by `user_email`.
 - `CURSOR_ORGANIZATION_API_KEY` - Organization Admin API key. Optional; needed only for Origin grants keyed by `group_name`.
@@ -81,7 +81,7 @@ data "cursor_origin_repo" "rocket" {
 }
 ```
 
-`clone_url`, `default_branch`, `visibility`, and mirror metadata come from `GET /v1/origin/repos/{owner}/{name}` on the public Origin API (`https://api.cursor.com/v1/origin`). A raw `key_` or `crsr_` API key is exchanged for a session token first, the same way Automations calls are authenticated.
+`clone_url`, `default_branch`, `visibility`, and mirror metadata come from `GET /v1/origin/repos/{owner}/{name}` on the public Origin API (`https://api.cursor.com/v1/origin`). A raw `key_`, `crsr_`, or `grok_` API key is exchanged for a session token first, the same way Automations calls are authenticated.
 
 Manage a repository ruleset with the same token. Each `rule` block sets exactly one typed block; the block name is the Origin rule type and its snake_case arguments map to the camelCase parameters Origin stores. Update replaces the ruleset, including its rules and bypass actors. `deletion_protection` defaults to true: Terraform will not delete the ruleset, or replace it because `owner` or `repo` changed, until that is set to false and applied. A ruleset with no rules, no included refs, or `enforcement = "disabled"` is rejected unless `allow_unenforced` is true. `origin_role` `repository_write` bypasses every principal with write access and requires `allow_broad_bypass`.
 
